@@ -1,0 +1,1585 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSimDocument Version="20302">
+    <ControlSet name="CMC_ControlSet">
+        <defaults>
+            <ControlLinear name="default">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+        </defaults>
+        <objects>
+            <!-- ********************************************************************** -->
+            <!--        Residual Controls                                               -->
+            <!-- ********************************************************************** -->
+            <ControlLinear name="FX.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> false </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="FY.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> false </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="FZ.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> false </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="MX.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> false </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="MY.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> false </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="MZ.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> false </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <!-- ********************************************************************** -->
+            <!--        Reserve Controls - Right Leg                                    -->
+            <!-- ********************************************************************** -->
+            <ControlLinear name="hip_flexion_r_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="hip_adduction_r_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="hip_rotation_r_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="knee_angle_r_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="ankle_angle_r_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="subtalar_angle_r_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="mtp_angle_r_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <!-- ********************************************************************** -->
+            <!--        Reserve Controls - Left Leg                                     -->
+            <!-- ********************************************************************** -->
+            <ControlLinear name="hip_flexion_l_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="hip_adduction_l_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="hip_rotation_l_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="knee_angle_l_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="ankle_angle_l_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="subtalar_angle_l_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="mtp_angle_l_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>      -1.00000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <!-- ********************************************************************** -->
+            <!--        Reserve Controls - Back                                         -->
+            <!-- ********************************************************************** -->
+            <ControlLinear name="lumbar_extension_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="lumbar_bending_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="lumbar_rotation_reserve.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>   -1000.00000000 </default_min>
+                <default_max>    1000.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <!-- ********************************************************************** -->
+            <!--        Muscles                                                         -->
+            <!-- ********************************************************************** -->
+            <ControlLinear name="addbrev_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addlong_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagDist_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagIsch_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagMid_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagProx_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="bflh_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="bfsh_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="edl_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="ehl_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="fdl_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="fhl_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="gaslat_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="gasmed_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="gem_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmax1_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmax2_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmax3_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmed1_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmed2_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmed3_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmin1_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmin2_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmin3_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="grac_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="iliacus_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="patlig_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="pect_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="perbrev_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="perlong_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="pertert_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="piri_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="psoas_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="quadfem_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="recfem_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="sart_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="semimem_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="semiten_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="soleus_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="tfl_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="tibant_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="tibpost_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="vasint_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="vaslat_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="vasmed_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addbrev_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addlong_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagDist_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagIsch_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagMid_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="addmagProx_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="bflh_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="bfsh_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="edl_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="ehl_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="fdl_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="fhl_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="gaslat_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="gasmed_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="gem_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmax1_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmax2_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmax3_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmed1_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmed2_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmed3_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmin1_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmin2_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="glmin3_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="grac_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="iliacus_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="patlig_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="pect_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="perbrev_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="perlong_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="pertert_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="piri_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="psoas_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="quadfem_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="recfem_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="sart_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="semimem_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="semiten_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="soleus_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="tfl_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="tibant_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="tibpost_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="vasint_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="vaslat_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="vasmed_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="ercspn_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="ercspn_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="intobl_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="intobl_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="extobl_r.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+            <ControlLinear name="extobl_l.excitation">
+                <is_model_control> true </is_model_control>
+                <extrapolate> true </extrapolate>
+                <default_min>       0.02000000 </default_min>
+                <default_max>       1.00000000 </default_max>
+                <filter_on> false </filter_on>
+                <use_steps> true </use_steps>
+                <x_nodes/>
+                <min_nodes/>
+                <max_nodes/>
+                <kp>     100.00000000 </kp>
+                <kv>      20.00000000 </kv>
+            </ControlLinear>
+        </objects>
+        <groups/>
+    </ControlSet>
+</OpenSimDocument>
