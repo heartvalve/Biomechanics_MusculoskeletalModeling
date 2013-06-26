@@ -12,7 +12,7 @@
 
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-06-25
+    Last Modified 2013-06-26
 ----------------------------------------------------------------------
 """
 
@@ -67,26 +67,26 @@ def createSetupXML_Scale(genericModelName,genDir,subDir,persInfo):
     scaleTool.setSubjectMass(persInfo['mass'])
     scaleTool.setSubjectHeight(persInfo['height'])
     # Update GenericModelMaker
-    scaleTool.getGenericModelMaker().setModelFileName(genDir['Rel']+genericModelName+'_simbody.osim')
-    scaleTool.getGenericModelMaker().setMarkerSetFileName(genDir['Rel']+genericModelName+'_'+persInfo['markerSet']+'_Scale_MarkerSet.xml')
+    scaleTool.getGenericModelMaker().setModelFileName(genDir['Full']+genericModelName+'_simbody.osim')
+    scaleTool.getGenericModelMaker().setMarkerSetFileName(genDir['Full']+genericModelName+'_'+persInfo['markerSet']+'_Scale_MarkerSet.xml')
     # Update ModelScaler
     scaleTool.getModelScaler().setApply(True)
     scaleOrder = modeling.ArrayStr()
     scaleOrder.setitem(0,'measurements')
     scaleTool.getModelScaler().setScalingOrder(scaleOrder)
     scaleTool.getModelScaler().getMeasurementSet().assign(modeling.MeasurementSet().makeObjectFromFile(genDir['Full']+genericModelName+'_'+persInfo['markerSet']+'_Scale_MeasurementSet.xml'))
-    scaleTool.getModelScaler().setMarkerFileName(trcFileName)
+    scaleTool.getModelScaler().setMarkerFileName(subDir+trcFileName)
     scaleTool.getModelScaler().setTimeRange(timeRange)
     scaleTool.getModelScaler().setPreserveMassDist(True)
-    scaleTool.getModelScaler().setOutputModelFileName('TempScaled.osim')
-    scaleTool.getModelScaler().setOutputScaleFileName(trcFileName.replace('.trc','_ScaleSet.xml'))
+    scaleTool.getModelScaler().setOutputModelFileName(subDir+'TempScaled.osim')
+    scaleTool.getModelScaler().setOutputScaleFileName(subDir+trcFileName.replace('.trc','_ScaleSet.xml'))
     # Update MarkerPlacer
     scaleTool.getMarkerPlacer().setApply(True)
     scaleTool.getMarkerPlacer().getIKTaskSet().assign(modeling.IKTaskSet(genDir['Full']+genericModelName+'_'+persInfo['markerSet']+'_Scale_IKTaskSet.xml'))
-    scaleTool.getMarkerPlacer().setStaticPoseFileName(trcFileName)
+    scaleTool.getMarkerPlacer().setStaticPoseFileName(subDir+trcFileName)
     scaleTool.getMarkerPlacer().setTimeRange(timeRange)
-    scaleTool.getMarkerPlacer().setOutputMotionFileName(trcFileName.replace('.trc','.mot'))
-    scaleTool.getMarkerPlacer().setOutputModelFileName(persInfo['subID']+'__Simbody.osim')
+    scaleTool.getMarkerPlacer().setOutputMotionFileName(subDir+trcFileName.replace('.trc','_Scale.mot'))
+    scaleTool.getMarkerPlacer().setOutputModelFileName(subDir+persInfo['subID']+'__Simbody.osim')
     scaleTool.getMarkerPlacer().setOutputMarkerFileName('')
     # Write changes to XML setup file
     scaleTool.print(subDir+trcFileName.replace('.trc','__Setup_Scale.xml'))
@@ -113,7 +113,7 @@ def createSetupXML_IK(genericModelName,genDir,subDir,persInfo,commandList):
         # <IKTaskSet>
         ikTool.getIKTaskSet().assign(modeling.IKTaskSet(genDir['Full']+genericModelName+'_'+persInfo['markerSet']+'_IK_IKTaskSet.xml'))
         # <marker_file>
-        ikTool.setMarkerDataFileName(trcFileName)
+        ikTool.setMarkerDataFileName(trcFilePath)
         # <coordinate_file>
         ikTool.setCoordinateFileName('')
         # Create MarkerData object to read starting and ending times from TRC file
@@ -122,7 +122,7 @@ def createSetupXML_IK(genericModelName,genDir,subDir,persInfo,commandList):
         ikTool.setStartTime(markerData.getStartFrameTime())
         ikTool.setEndTime(markerData.getLastFrameTime())
         # <output_motion_file>
-        ikTool.setOutputMotionFileName(trcFileName.replace('.trc','_IK.mot'))
+        ikTool.setOutputMotionFileName(trcFilePath.replace('.trc','_IK.mot'))
         # Write changes to XML setup file
         xmlSetupFilePath = trcFilePath.replace('.trc','__Setup_IK.xml')
         ikTool.print(xmlSetupFilePath)
@@ -131,7 +131,7 @@ def createSetupXML_IK(genericModelName,genDir,subDir,persInfo,commandList):
         #
         # **** Temporary fix for setting model name using XML parsing ****
         dom = parse(xmlSetupFilePath)
-        dom.getElementsByTagName('model_file')[0].firstChild.nodeValue = persInfo['subID']+'__Simbody.osim'
+        dom.getElementsByTagName('model_file')[0].firstChild.nodeValue = subDir+persInfo['subID']+'__Simbody.osim'
         xmlstring = dom.toxml('UTF-8')        
         xmlFile = open(xmlSetupFilePath,'w')
         xmlFile.write(xmlstring)
@@ -152,9 +152,9 @@ def createExternalLoadsXML(genDir,subDir,persInfo):
         # Name of object
         extLoads.setName(os.path.splitext(trcFileName)[0])        
         # <datafile>
-        extLoads.setDataFileName(trcFileName.replace('.trc','.mot'))
+        extLoads.setDataFileName(trcFilePath.replace('.trc','.mot'))
         # <external_loads_model_kinematics_file>
-        extLoads.setExternalLoadsModelKinematicsFileName(trcFileName.replace('.trc','_IK.mot'))
+        extLoads.setExternalLoadsModelKinematicsFileName(trcFilePath.replace('.trc','_IK.mot'))
         # <lowpass_cutoff_frequency_for_load_kinematics>
         extLoads.setLowpassCutoffFrequencyForLoadKinematics(-1)
         # Write changes to XML file
@@ -185,9 +185,9 @@ def createSetupXML_ID(genDir,subDir,persInfo,commandList):
         idTool.setStartTime(motData.getFirstTime())
         idTool.setEndTime(motData.getLastTime())
         # <external_loads_file>
-        idTool.setExternalLoadsFileName(trcFileName.replace('.trc','_ExternalLoads.xml'))
+        idTool.setExternalLoadsFileName(trcFilePath.replace('.trc','_ExternalLoads.xml'))
         # <coordinates_file>
-        idTool.setCoordinatesFileName(trcFileName.replace('.trc','_IK.mot'))
+        idTool.setCoordinatesFileName(trcFilePath.replace('.trc','_IK.mot'))
         # ????? .... <output_gen_force_file> .....idTool.getOutputGenForceFileName() -- set ????        
         # Write changes to XML setup file
         xmlSetupFilePath = trcFilePath.replace('.trc','__Setup_ID.xml')
@@ -198,7 +198,7 @@ def createSetupXML_ID(genDir,subDir,persInfo,commandList):
         # **** Temporary fix for setting model name & output force file using XML parsing ****
         dom = parse(xmlSetupFilePath)
         for i in range(len(dom.getElementsByTagName('model_file'))):
-            dom.getElementsByTagName('model_file')[i].firstChild.nodeValue = persInfo['subID']+'__Simbody.osim'
+            dom.getElementsByTagName('model_file')[i].firstChild.nodeValue = subDir+persInfo['subID']+'__Simbody.osim'
         dom.getElementsByTagName('output_gen_force_file')[0].firstChild.nodeValue = trcFileName.replace('.trc','_ID.sto')
         xmlstring = dom.toxml('UTF-8')        
         xmlFile = open(xmlSetupFilePath,'w')
@@ -211,21 +211,23 @@ def createSetupXML_RRA(genericModelName,genDir,subDir,persInfo,commandList):
     # Create RRATool object
     rraTool = modeling.RRATool(genDir['Full']+'RRATool.xml')
     # <model_file>
-    rraTool.setModelFilename(persInfo['subID']+'__Simbody.osim')
+    rraTool.setModelFilename(subDir+persInfo['subID']+'__Simbody.osim')
     # <replace_force_set>
     rraTool.setReplaceForceSet(True)
     # <force_set_files>
     forceSetFiles = modeling.ArrayStr()
-    forceSetFiles.setitem(0,genDir['Rel']+genericModelName+'_RRA_ForceSet.xml')
+    forceSetFiles.setitem(0,genDir['Full']+genericModelName+'_RRA_ForceSet.xml')
     rraTool.setForceSetFiles(forceSetFiles)
+    # <results_directory>
+    rraTool.setResultsDir(subDir)
     # <output_precision>
     rraTool.setOutputPrecision(20)
     # <solve_for_equilibrium_for_auxiliary_states>
     rraTool.setSolveForEquilibrium(True)
     # <task_set_file>
-    rraTool.setTaskSetFileName(genDir['Rel']+genericModelName+'_RRA_CMCTaskSet.xml')
+    rraTool.setTaskSetFileName(genDir['Full']+genericModelName+'_RRA_CMCTaskSet.xml')
     # <constraints_file>
-    rraTool.setConstraintsFileName(genDir['Rel']+genericModelName+'_RRA_ControlSet.xml')  
+    rraTool.setConstraintsFileName(genDir['Full']+genericModelName+'_RRA_ControlSet.xml')  
     # <adjust_com_to_reduce_residuals>
     rraTool.setAdjustCOMToReduceResiduals(True)
     # <adjusted_com_body>
@@ -237,7 +239,7 @@ def createSetupXML_RRA(genericModelName,genDir,subDir,persInfo,commandList):
         # TRC filename
         trcFileName = os.path.basename(trcFilePath)
         # Name of tool
-        rraTool.setName(os.path.splitext(trcFileName)[0])
+        rraTool.setName(os.path.splitext(trcFileName)[0]+'_RRA')
         # Create Storage object to read starting and ending times from MOT file
         motData = modeling.Storage(trcFilePath.replace('.trc','.mot'))
         # <initial_time>
@@ -245,11 +247,11 @@ def createSetupXML_RRA(genericModelName,genDir,subDir,persInfo,commandList):
         # <final_time>
         rraTool.setFinalTime(motData.getLastTime())
         # <external_loads_file>
-        rraTool.setExternalLoadsFileName(trcFileName.replace('.trc','_ExternalLoads.xml'))
+        rraTool.setExternalLoadsFileName(trcFilePath.replace('.trc','_ExternalLoads.xml'))
         # <desired_kinematics_file>
-        rraTool.setDesiredKinematicsFileName(trcFileName.replace('.trc','_IK.mot'))
+        rraTool.setDesiredKinematicsFileName(trcFilePath.replace('.trc','_IK.mot'))
         # <output_model_file>
-        rraTool.setOutputModelFileName(persInfo['subID']+'__Simbody_AdjustedCOM.osim')
+        rraTool.setOutputModelFileName(trcFilePath.replace('.trc','_AdjustedCOM.osim'))
         # Write changes to XML file
         rraTool.print(trcFilePath.replace('.trc','__Setup_RRA.xml'))
         # Prepare command for batch processing
@@ -259,13 +261,13 @@ def createSetupXML_RRA(genericModelName,genDir,subDir,persInfo,commandList):
 """----------------------------------------------------------------"""
 def createSetupXML_CMC(genericModelName,genDir,subDir,persInfo,commandList):
     # Create CMCTool object
-    cmcTool = modeling.CMCTool(genDir['Full']+'CMCTool.xml')
-    # <model_file>
-    cmcTool.setModelFilename(persInfo['subID']+'__Simbody_AdjustedCOM.osim')
+    cmcTool = modeling.CMCTool(genDir['Full']+'CMCTool.xml')    
     # <force_set_files>
     forceSetFiles = modeling.ArrayStr()
-    forceSetFiles.setitem(0,genDir['Rel']+genericModelName+'_CMC_ForceSet.xml')
+    forceSetFiles.setitem(0,genDir['Full']+genericModelName+'_CMC_ForceSet.xml')
     cmcTool.setForceSetFiles(forceSetFiles)
+    # <results_directory>
+    cmcTool.setResultsDir(subDir)
     # <output_precision>
     cmcTool.setOutputPrecision(20)
     # <maximum_number_of_integrator_steps>
@@ -275,9 +277,9 @@ def createSetupXML_CMC(genericModelName,genDir,subDir,persInfo,commandList):
     # <integrator_error_tolerance>
     cmcTool.setErrorTolerance(1e-006)
     # <task_set_file>
-    cmcTool.setTaskSetFileName(genDir['Rel']+genericModelName+'_CMC_CMCTaskSet.xml')
+    cmcTool.setTaskSetFileName(genDir['Full']+genericModelName+'_CMC_CMCTaskSet.xml')
     # <constraints_file>
-    cmcTool.setConstraintsFileName(genDir['Rel']+genericModelName+'_CMC_ControlSet.xml')
+    cmcTool.setConstraintsFileName(genDir['Full']+genericModelName+'_CMC_ControlSet.xml')
     # Dynamic TRC filenames
     trcFilePathList = glob.glob(subDir+persInfo['subID']+'_*_*_*.trc')
     # Loop through TRC files
@@ -285,7 +287,9 @@ def createSetupXML_CMC(genericModelName,genDir,subDir,persInfo,commandList):
         # TRC filename
         trcFileName = os.path.basename(trcFilePath)
         # Name of tool
-        cmcTool.setName(os.path.splitext(trcFileName)[0])
+        cmcTool.setName(os.path.splitext(trcFileName)[0]+'_CMC')
+        # <model_file>
+        cmcTool.setModelFilename(trcFilePath.replace('.trc','_AdjustedCOMandMass.osim'))
         # Create Storage object to read starting and ending times from MOT file
         motData = modeling.Storage(trcFilePath.replace('.trc','.mot'))
         # <initial_time>
@@ -293,9 +297,9 @@ def createSetupXML_CMC(genericModelName,genDir,subDir,persInfo,commandList):
         # <final_time>
         cmcTool.setFinalTime(motData.getLastTime())
         # <external_loads_file>
-        cmcTool.setExternalLoadsFileName(trcFileName.replace('.trc','_ExternalLoads.xml'))
+        cmcTool.setExternalLoadsFileName(trcFilePath.replace('.trc','_ExternalLoads.xml'))
         # <desired_kinematics_file>
-        cmcTool.setDesiredKinematicsFileName(trcFileName.replace('.trc','_RRA_Kinematics_q.sto'))
+        cmcTool.setDesiredKinematicsFileName(trcFilePath.replace('.trc','_RRA_Kinematics_q.sto'))
         # Write changes to XML file
         cmcTool.print(trcFilePath.replace('.trc','__Setup_CMC.xml'))
         # Prepare command for batch processing
@@ -347,6 +351,7 @@ from xml.dom.minidom import parse
 nuDir = getScriptsDir()
 while os.path.basename(nuDir) != 'Northwestern-RIC':
     nuDir = os.path.dirname(nuDir)
-subDir = os.path.join(nuDir,'My Box Files','Modeling','OpenSim','Subjects',subID)+'\\'
+#subDir = os.path.join(nuDir,'My Box Files','Modeling','OpenSim','Subjects',subID)+'\\'
+subDir = os.path.join(nuDir,'Modeling','OpenSim','Subjects',subID)+'\\'
 # Call main function
 main(genericModelName,subDir)
