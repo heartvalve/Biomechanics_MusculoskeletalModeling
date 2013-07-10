@@ -1,3 +1,16 @@
+"""
+----------------------------------------------------------------------
+    simpleGeneticAlgorithm.py
+----------------------------------------------------------------------
+    Doc...
+    
+----------------------------------------------------------------------
+    Created by Megan Schroeder
+    Last Modified 2013-07-08
+----------------------------------------------------------------------
+"""
+
+
 import random
 import numpy
 import linecache
@@ -8,11 +21,13 @@ from xml.dom.minidom import parse
 
 
 class simpleGA:
+    
     def __init__(self):
         self.populationSize = 8
         self.chromosomeLength = 3
         self.pCrossover = 0.8
         self.pMutation = float(1)/float(self.populationSize*2)
+        self.maxGen = 300
         self.variableValues = ['1','5','10','20','50','100','500','1000']
         self.variableNames = ['pelvis_tz','pelvis_tx','pelvis_ty','pelvis_tilt','pelvis_list','pelvis_rotation',
                               'hip_flexion_r','hip_adduction_r','hip_rotation_r','knee_angle_r','ankle_angle_r',
@@ -342,8 +357,6 @@ class simpleGA:
         return newPopulation,newFitnesses
 
     def run(self):
-        # Maximum number of generations allowed
-        maxGen = 300
         # Initialize log report
         self.createReport()
         # Create new population
@@ -351,7 +364,7 @@ class simpleGA:
         fitnesses = self.calculateFitness(genN)
         # Initialize loop
         n = 1
-        while n <= maxGen:
+        while n <= self.maxGen:
             if max(fitnesses) < 1:
                 # Create a new generation
                 genN,fitnesses = self.generation(genN,fitnesses)
