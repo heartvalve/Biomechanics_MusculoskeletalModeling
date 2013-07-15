@@ -1,12 +1,21 @@
 """
 ----------------------------------------------------------------------
-    openSimSetupXML.py
+    writeSetupXMLfromGUI.py
 ----------------------------------------------------------------------
-    Doc...
-
+    This program can be executed from the OpenSim GUI to export all of
+    the necessary Setup (*.xml) files for a given subject.  Generic
+    model files are based on the input generic model name.  A batch 
+    file is also created to execute all of the simulation analyses.
+    
+    Input arguments:
+        subID (string)
+        genericModelName (string -- gait2392, Arnold2010)
+    Output:
+        *__Setup_*.xml files
+        *_ExternalLoads.xml files
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-09
+    Last Modified 2013-07-15
 ----------------------------------------------------------------------
 """
 
@@ -19,13 +28,23 @@
 # Generic model to use
 genericModelName = 'gait2392'
 # Subject ID
-subID = '20130401CONM'
+subID = '20130221CONF'
 # ####################################################################
 
 
-class openSimSetupXML:
+class setupXML:
+    """
+    A class containing attributes and methods associated with writing
+    setup XML files from the OpenSim API. A subject ID and generic
+    model name are required to create an instance based on this class.
+    """
 
     def __init__(self,subID,genericModelName):
+        """
+        Method to create an instance of the setupXML class. Attributes
+        include the subject ID, generic model name, subject directory, 
+        and generic file directory.
+        """
         self.subID = subID
         self.genericModelName = genericModelName
         nuDir = getScriptsDir()
@@ -36,6 +55,11 @@ class openSimSetupXML:
     
     """------------------------------------------------------------"""
     def readPersonalInfoXML(self):
+        """
+        Reads personal information xml file and adds attriubutes
+        associated with the subject's mass, height, and the marker set
+        used during the experiment.
+        """
         persInfoXML = glob.glob(self.subDir+'*__PersonalInformation.xml')[0]
         dom = parse(persInfoXML)
         self.mass = float(dom.getElementsByTagName('mass')[0].firstChild.nodeValue)
@@ -44,6 +68,10 @@ class openSimSetupXML:
         
     """------------------------------------------------------------"""
     def initializeBat(self):
+        """
+        Initializes the list of commands to be written to the batch 
+        file. This return argument is needed in most later methods.
+        """
         commandList = []
         commandList.append('echo off\n')
         commandList.append('set curdir=%cd%\n')
@@ -51,6 +79,9 @@ class openSimSetupXML:
     
     """------------------------------------------------------------"""
     def createSetupXML_Scale(self,commandList):
+        """
+        Write setup file for scale step. Append to batch file list.
+        """
         # Static TRC filename
         trcFileName = self.subID+'_0_StaticPose.trc'
         # Create MarkerData object to read starting and ending times from TRC file
@@ -95,6 +126,9 @@ class openSimSetupXML:
         
     """------------------------------------------------------------"""
     def createSetupXML_IK(self,commandList):
+        """
+        Write setup files for IK step. Append to batch file list.
+        """
         # Create InverseKinematicsTool object
         ikTool = modeling.InverseKinematicsTool(self.genDir+'InverseKinematicsTool.xml')
         # Dynamic TRC filenames
@@ -135,6 +169,9 @@ class openSimSetupXML:
             
     """------------------------------------------------------------"""
     def createExternalLoadsXML(self):
+        """
+        Write XML file specifying external loads from GRF.mot file.
+        """
         # Create ExternalLoads object
         extLoads = modeling.ExternalLoads()
         extLoads.assign(modeling.ExternalLoads().makeObjectFromFile(self.genDir+'ExternalLoads.xml'))
@@ -147,16 +184,19 @@ class openSimSetupXML:
             # Name of object
             extLoads.setName(os.path.splitext(trcFileName)[0])        
             # <datafile>
-            extLoads.setDataFileName(trcFilePath.replace('.trc','.mot'))
+            extLoads.setDataFileName(trcFilePath.replace('.trc','_GRF.mot'))
             # <external_loads_model_kinematics_file>
             extLoads.setExternalLoadsModelKinematicsFileName(trcFilePath.replace('.trc','_IK.mot'))
             # <lowpass_cutoff_frequency_for_load_kinematics>
-            extLoads.setLowpassCutoffFrequencyForLoadKinematics(-1)
+            extLoads.setLowpassCutoffFrequencyForLoadKinematics(6)
             # Write changes to XML file
             extLoads.print(trcFilePath.replace('.trc','_ExternalLoads.xml'))
             
     """------------------------------------------------------------"""
     def createSetupXML_ID(self,commandList):
+        """
+        Write setup files for ID step. Append to batch file list.
+        """
         # Create InverseDynamicsTool object
         idTool = modeling.InverseDynamicsTool(self.genDir+'InverseDynamicsTool.xml')
         # <forces_to_exclude>
@@ -174,7 +214,7 @@ class openSimSetupXML:
             # Name of tool
             idTool.setName(os.path.splitext(trcFileName)[0])
             # Create Storage object to read starting and ending times from MOT file
-            motData = modeling.Storage(trcFilePath.replace('.trc','.mot'))
+            motData = modeling.Storage(trcFilePath.replace('.trc','_GRF.mot'))
             # <time_range>
             idTool.setStartTime(motData.getFirstTime())
             idTool.setEndTime(motData.getLastTime())
@@ -202,6 +242,9 @@ class openSimSetupXML:
 
     """------------------------------------------------------------"""
     def createSetupXML_RRA(self,commandList):
+        """
+        Write setup files for RRA step. Append to batch file list.
+        """
         # Create RRATool object
         rraTool = modeling.RRATool(self.genDir+'RRATool.xml')
         # <model_file>
@@ -237,11 +280,11 @@ class openSimSetupXML:
             # Name of tool
             rraTool.setName(os.path.splitext(trcFileName)[0]+'_RRA')
             # Create Storage object to read starting and ending times from MOT file
-            motData = modeling.Storage(trcFilePath.replace('.trc','.mot'))
+            motData = modeling.Storage(trcFilePath.replace('.trc','_GRF.mot'))
             # <initial_time>
-            rraTool.setInitialTime(motData.getFirstTime())
+            rraTool.setInitialTime(math.ceil(motData.getFirstTime()*1000)/1000)
             # <final_time>
-            rraTool.setFinalTime(motData.getLastTime())
+            rraTool.setFinalTime(math.floor(motData.getLastTime()*1000)/1000)
             # <external_loads_file>
             rraTool.setExternalLoadsFileName(trcFilePath.replace('.trc','_ExternalLoads.xml'))
             # <desired_kinematics_file>
@@ -256,6 +299,9 @@ class openSimSetupXML:
         
     """------------------------------------------------------------"""
     def createSetupXML_CMC(self,commandList):
+        """
+        Write setup files for CMC step. Append to batch file list.
+        """
         # Create CMCTool object
         cmcTool = modeling.CMCTool(self.genDir+'CMCTool.xml')    
         # <force_set_files>
@@ -277,7 +323,7 @@ class openSimSetupXML:
         # <constraints_file>
         cmcTool.setConstraintsFileName(self.genDir+self.genericModelName+'_CMC_ControlSet.xml')
         # <lowpass_cutoff_frequency>
-        cmcTool.setLowpassCutoffFrequency(6)
+        cmcTool.setLowpassCutoffFrequency(-1)
         # Dynamic TRC filenames
         trcFilePathList = glob.glob(self.subDir+self.subID+'_*_*_*.trc')
         # Loop through TRC files
@@ -287,13 +333,13 @@ class openSimSetupXML:
             # Name of tool
             cmcTool.setName(os.path.splitext(trcFileName)[0]+'_CMC')
             # <model_file>
-            cmcTool.setModelFilename(trcFilePath.replace('.trc','__Adjusted.osim'))
+            cmcTool.setModelFilename(trcFilePath.replace('.trc','.osim'))
             # Create Storage object to read starting and ending times from MOT file
-            motData = modeling.Storage(trcFilePath.replace('.trc','.mot'))
+            motData = modeling.Storage(trcFilePath.replace('.trc','_GRF.mot'))
             # <initial_time>
-            cmcTool.setInitialTime(motData.getFirstTime())
+            cmcTool.setInitialTime(math.ceil(motData.getFirstTime()*1000)/1000)
             # <final_time>
-            cmcTool.setFinalTime(motData.getLastTime())
+            cmcTool.setFinalTime(math.floor(motData.getLastTime()*1000)/1000)
             # <external_loads_file>
             cmcTool.setExternalLoadsFileName(trcFilePath.replace('.trc','_ExternalLoads.xml'))
             # <desired_kinematics_file>
@@ -306,6 +352,9 @@ class openSimSetupXML:
         
     """------------------------------------------------------------"""
     def writeCommandsToBat(self,commandList):
+        """
+        Write contents of batch file list to file.
+        """
         batFile = open(self.subDir+'Run.bat','w')
         batFile.writelines(commandList)
         batFile.close()
@@ -316,12 +365,15 @@ class openSimSetupXML:
     *                                                                *
     ***************************************************************"""
     def run(self):
+        """
+        The main program invoked to call the other subfunctions.
+        """
         # Get subject specific information from file
         self.readPersonalInfoXML()
         # Initialize the batch file
         commandList = self.initializeBat()
         # Create the setup file used to run the scale step
-        commandList = self.createSetupXML_Scale()
+        commandList = self.createSetupXML_Scale(commandList)
         # Create the setup file(s) used to run the IK step
         commandList = self.createSetupXML_IK(commandList)
         # Create the external loads file(s) used for all kinetic analyses
@@ -339,9 +391,9 @@ class openSimSetupXML:
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 # Imports
-import org.opensim.utils as utils
 import os
 import glob
+import math
 from xml.dom.minidom import parse
     
 """*******************************************************************
@@ -351,7 +403,7 @@ from xml.dom.minidom import parse
 *******************************************************************"""
 if __name__ == '__main__':
     # Create instance of class
-    osim = openSimSetupXML(subID,genericModelName)
+    osim = setupXML(subID,genericModelName)
     # Run code
     osim.run()
     

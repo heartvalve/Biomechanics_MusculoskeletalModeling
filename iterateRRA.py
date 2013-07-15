@@ -6,7 +6,7 @@
 
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-09
+    Last Modified 2013-07-15
 ----------------------------------------------------------------------
 """
 
@@ -17,7 +17,7 @@
 #                                                                    #
 # ####################################################################
 # Subject ID
-subID = '20130401CONM'
+subID = '20130221CONF'
 # ####################################################################
 
 
@@ -250,6 +250,8 @@ class iterateRRA:
     def run(self):
         # Setup files
         xmlFileList = glob.glob(self.subDir+self.subID+'*__Setup_RRA.xml')
+        #xmlFileList = glob.glob(self.subDir+self.subID+'_[AU]_Walk_Rep*__Setup_RRA.xml')
+        #xmlFileList = [self.subDir+self.subID+'_A_SD2F_RepGRF__Setup_RRA.xml']
         # Loop through different files
         for xmlFilePath in xmlFileList:
             # XML filename
@@ -286,6 +288,11 @@ class iterateRRA:
                     self.updateReport(trialName,n)
                     # Remove adjusted model
                     os.remove(self.subDir+trialName+'__AdjustedCOM.osim')
+                    try:
+                        os.remove(self.subDir+'err.log')
+                        os.remove(self.subDir+'out.log')
+                    except:
+                        pass
                     break
                 
 
