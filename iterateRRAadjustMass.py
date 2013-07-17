@@ -1,12 +1,12 @@
 """
 ----------------------------------------------------------------------
-    iterateRRA.py
+    iterateRRAadjustMass.py
 ----------------------------------------------------------------------
     Doc...
 
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-15
+    Last Modified 2013-07-16
 ----------------------------------------------------------------------
 """
 
@@ -21,8 +21,20 @@ subID = '20130221CONF'
 # ####################################################################
 
 
+# Imports
+import os
+import glob
+import subprocess
+import time
+import linecache
+from xml.dom.minidom import parse
+import numpy
+
+
 class iterateRRA:
+    """
     
+    """
     def __init__(self,subID):
         self.subID = subID
         nuDir = os.getcwd()
@@ -250,8 +262,6 @@ class iterateRRA:
     def run(self):
         # Setup files
         xmlFileList = glob.glob(self.subDir+self.subID+'*__Setup_RRA.xml')
-        #xmlFileList = glob.glob(self.subDir+self.subID+'_[AU]_Walk_Rep*__Setup_RRA.xml')
-        #xmlFileList = [self.subDir+self.subID+'_A_SD2F_RepGRF__Setup_RRA.xml']
         # Loop through different files
         for xmlFilePath in xmlFileList:
             # XML filename
@@ -283,7 +293,7 @@ class iterateRRA:
                         print (trialName+' has failed -- check status manually.')
                         break
                 else:
-                    print (trialName+' is complete.')
+                    #print (trialName+' is complete.')
                     # Write results of final run to the log
                     self.updateReport(trialName,n)
                     # Remove adjusted model
@@ -295,18 +305,7 @@ class iterateRRA:
                         pass
                     break
                 
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# Imports
-import os
-import glob
-import subprocess
-import time
-import numpy
-import linecache
-from xml.dom.minidom import parse
-    
+ 
 """*******************************************************************
 *                                                                    *
 *                   Script Execution                                 *

@@ -8,14 +8,14 @@
     file is also created to execute all of the simulation analyses.
     
     Input arguments:
-        subID (string)
+        subIDs (list)
         genericModelName (string -- gait2392, Arnold2010)
     Output:
         *__Setup_*.xml files
         *_ExternalLoads.xml files
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-15
+    Last Modified 2013-07-16
 ----------------------------------------------------------------------
 """
 
@@ -28,8 +28,15 @@
 # Generic model to use
 genericModelName = 'gait2392'
 # Subject ID
-subID = '20130221CONF'
+subIDs = ['20130221CONF']
 # ####################################################################
+
+
+# Imports
+import os
+import glob
+import math
+from xml.dom.minidom import parse
 
 
 class setupXML:
@@ -204,7 +211,7 @@ class setupXML:
         excludedForces.setitem(0,'muscles')
         idTool.setExcludedForces(excludedForces) 
         # <lowpass_cutoff_frequency_for_coordinates>
-        idTool.setLowpassCutoffFrequency(-1)
+        idTool.setLowpassCutoffFrequency(6)
         # Dynamic TRC filenames
         trcFilePathList = glob.glob(self.subDir+self.subID+'_*_*_*.trc')
         # Loop through TRC files
@@ -387,14 +394,6 @@ class setupXML:
         # Write batch file
         self.writeCommandsToBat(commandList)
 
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# Imports
-import os
-import glob
-import math
-from xml.dom.minidom import parse
     
 """*******************************************************************
 *                                                                    *
@@ -402,8 +401,10 @@ from xml.dom.minidom import parse
 *                                                                    *
 *******************************************************************"""
 if __name__ == '__main__':
-    # Create instance of class
-    osim = setupXML(subID,genericModelName)
-    # Run code
-    osim.run()
+    # Loop through subject list
+    for subID in subIDs:
+        # Create instance of class
+        setXML = setupXML(subID,genericModelName)
+        # Run code
+        setXML.run()
     
