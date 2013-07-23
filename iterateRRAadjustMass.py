@@ -2,11 +2,18 @@
 ----------------------------------------------------------------------
     iterateRRAadjustMass.py
 ----------------------------------------------------------------------
-    Doc...
-
+    A class to repeatedly run the RRA tool until the suggested mass 
+    adjustment is below a predefined threshold or a maximum number of
+    iterations is reached.
+    
+    Input:
+        Subject ID
+    Output:
+        Simulation results
+        RRA iteration log
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-16
+    Last Modified 2013-07-23
 ----------------------------------------------------------------------
 """
 
@@ -33,18 +40,30 @@ import numpy
 
 class iterateRRA:
     """
-    
+    A class to repeatedly run the RRA tool in OpenSim until the 
+    suggested mass adjustment is below a preset tolerance.
     """
+    
     def __init__(self,subID):
+        """
+        Create an instance of the class from the subject ID and add
+        the subject directory and other static attributes.
+        """
+        # Subject ID
         self.subID = subID
+        # Subject directory
         nuDir = os.getcwd()
         while os.path.basename(nuDir) != 'Northwestern-RIC':
             nuDir = os.path.dirname(nuDir)
         self.subDir = os.path.join(nuDir,'Modeling','OpenSim','Subjects',subID)+'\\'
+        # Mass adjustment threshold (in kg)
         self.tolerance = 0.01
+        # Maximum number of iterations
         self.maxIter = 7
+        # Bodies in model
         self.bodies = ['pelvis','femur_r','tibia_r','talus_r','calcn_r','toes_r',
                        'femur_l','tibia_l','talus_l','calcn_l','toes_l','torso']
+        # Degrees of freedom
         self.positionNames = ['pelvis_tz','pelvis_tx','pelvis_ty','pelvis_tilt','pelvis_list','pelvis_rotation',
                               'hip_flexion_r','hip_adduction_r','hip_rotation_r','knee_angle_r','ankle_angle_r',
                               'hip_flexion_l','hip_adduction_l','hip_rotation_l','knee_angle_l','ankle_angle_l',
@@ -52,6 +71,9 @@ class iterateRRA:
 
     """------------------------------------------------------------"""
     def createReport(self,trialName):
+        """
+        Initialize the summary report file.
+        """
         # Detailed report
         logReport = []
         header1 = ('Iteration\tOriginal Mass'+'\t'*12+'Suggested Mass Change\tNew Center of Mass Location (torso)'+'\t'*3+
@@ -69,8 +91,14 @@ class iterateRRA:
     
     """------------------------------------------------------------"""
     def updateSetupXML(self,xmlFilePath,trialName):
+        """
+        Update the Setup XML file <model_file> tag.
+        """
+        # Parse XML
         dom = parse(xmlFilePath)
+        # Update element
         dom.getElementsByTagName('model_file')[0].firstChild.nodeValue = self.subDir+trialName+'.osim'
+        # Overwrite existing file
         xmlString = dom.toxml('UTF-8')
         xmlFile = open(xmlFilePath,'w')
         xmlFile.write(xmlString)
@@ -78,8 +106,14 @@ class iterateRRA:
     
     """------------------------------------------------------------"""
     def updateModelName(self,trialName):
+        """
+        Update the model name in the OSIM file.
+        """
+        # Parse XML
         dom = parse(self.subDir+trialName+'__AdjustedCOM.osim')
+        # Update element attribute
         dom.getElementsByTagName('Model')[0].attributes.item(0).value = trialName
+        # Overwrite existing file
         xmlString = dom.toxml('UTF-8')
         xmlFile = open(self.subDir+trialName+'__AdjustedCOM.osim','w')
         xmlFile.write(xmlString)
@@ -87,6 +121,9 @@ class iterateRRA:
     
     """------------------------------------------------------------"""
     def updateReport(self,trialName,nIter):
+        """
+        Update the summary report file.
+        """
         # Initialize Report
         logReport = [str(nIter-1)]        
         # Read simulation log file
@@ -144,12 +181,15 @@ class iterateRRA:
         removeIndices.reverse()
         for k in removeIndices:
             del posErrNames[k]
-        posErrors = numpy.loadtxt(self.subDir+trialName+'_RRA_pErr.sto',skiprows=7)
+        # Load position errors as an array
+        posErrors = numpy.loadtxt(self.subDir+trialName+'_RRA_pErr.sto',skiprows=7)        
+        # Remove columns
         posErrors = numpy.delete(posErrors,0,1)
         for k in removeIndices:
             posErrors = numpy.delete(posErrors,k,1)
         maxPosErr = posErrors.__abs__().max(0)
         rmsPosErr = numpy.sqrt(numpy.sum(numpy.square(posErrors),0)/numpy.size(posErrors,0))
+        # Unit conversions
         for k in range(len(posErrNames)):
             if posErrNames[k] == 'pelivs_tx' or posErrNames[k] == 'pelvis_ty' or posErrNames[k] == 'pelvis_tz':
                 # Convert from m to cm
@@ -176,7 +216,10 @@ class iterateRRA:
         logFile.close()                
             
     """------------------------------------------------------------"""
-    def adjustModelMass(self,trialName):        
+    def adjustModelMass(self,trialName):
+        """
+        Adjust the masses of the bodies in the model.
+        """
         # Read log file
         logFile = open(self.subDir+trialName+'_RRA.log','r')
         logList = logFile.readlines()
@@ -209,6 +252,9 @@ class iterateRRA:
     
     """------------------------------------------------------------"""
     def runRRA(self,trialName):
+        """
+        
+        """
         # Clean up previous trial output (if necessary)
         try:
             os.remove(self.subDir+trialName+'_RRA.log')
@@ -245,6 +291,9 @@ class iterateRRA:
                     
     """------------------------------------------------------------"""
     def getDeltaMass(self,trialName):
+        """
+        Read the total suggested change in mass from the log file.
+        """
         # Read log file
         logFile = open(self.subDir+trialName+'_RRA.log','r')
         logList = logFile.readlines()
@@ -260,6 +309,9 @@ class iterateRRA:
     
     """------------------------------------------------------------"""
     def run(self):
+        """
+        Main program to run the algorithm.
+        """
         # Setup files
         xmlFileList = glob.glob(self.subDir+self.subID+'*__Setup_RRA.xml')
         # Loop through different files
@@ -277,7 +329,9 @@ class iterateRRA:
             # Initialize loop
             n = 1
             dMass = 1
+            # Only loop for the maximum number of iterations
             while n <= self.maxIter:
+                # If the suggested mass change is greater than the threshold
                 if abs(dMass) > self.tolerance:
                     # Write results of previous run to the log
                     self.updateReport(trialName,n)
@@ -285,7 +339,7 @@ class iterateRRA:
                     self.adjustModelMass(trialName)
                     # Run the simulation
                     status = self.runRRA(trialName)
-                    # Check the outcome
+                    # Check the outcome - mass change
                     if status == 'passed':
                         dMass = self.getDeltaMass(trialName)
                         n+=1

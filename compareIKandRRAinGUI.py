@@ -8,27 +8,27 @@
     removing the offset of the second model.  Also, the two motions
     (IK and RRA) should be synced within the GUI.  If desired, the GRF
     data can also be associated with the motion.
-    
+
     Input argument:
-        subID (string)
+        None (interactive selection of trial)
     Output:
         visualization in GUI
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-17
+    Last Modified 2013-07-23
 ----------------------------------------------------------------------
 """
 
 
 # Imports
 import os
-import time 
+import time
 import org.opensim.utils as utils
 
 
 class compareInGUI:
     """
-    A class containing attributes and methods associated with 
+    A class containing attributes and methods associated with
     previewing a scaled model and an adjusted COM / mass properties
     model, and associated IK and RRA motions in the GUI.
     """
@@ -44,7 +44,7 @@ class compareInGUI:
             for model in openModels:
                 setCurrentModel(model)
                 performAction("FileClose")
-        # Wait        
+        # Wait
         time.sleep(1)
 
     """------------------------------------------------------------"""
@@ -79,7 +79,7 @@ class compareInGUI:
         bodySet = ikModel.getBodySet()
         for i in range(ikModel.getNumBodies()):
             body = bodySet.get(i)
-            setObjectColor(body,[0.0, 0.4, 1.0]) 
+            setObjectColor(body,[0.0, 0.4, 1.0])
         # Hide muscles
         for i in range(ikModel.getMuscles().getSize()):
             muscle = ikModel.getMuscles().get(i)
@@ -139,7 +139,7 @@ class compareInGUI:
         # Manually:
         #   Reset model offset to zero
         #   Associate GRF data with RRA data
-        #   Sync motions of IK and RRA data 
+        #   Sync motions of IK and RRA data
 
 
 """*******************************************************************
