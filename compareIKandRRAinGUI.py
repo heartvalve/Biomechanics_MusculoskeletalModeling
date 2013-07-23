@@ -15,19 +15,15 @@
         visualization in GUI
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-15
+    Last Modified 2013-07-17
 ----------------------------------------------------------------------
 """
 
 
-# ####################################################################
-#                                                                    #
-#                   Input                                            #
-#                                                                    #
-# ####################################################################
-# Subject ID
-subID = '20130221CONF'
-# ####################################################################
+# Imports
+import os
+import time 
+import org.opensim.utils as utils
 
 
 class compareInGUI:
@@ -37,19 +33,6 @@ class compareInGUI:
     model, and associated IK and RRA motions in the GUI.
     """
 
-    def __init__(self,subID):
-        """
-        Method to create an instance of the compareInGUI class. 
-        Attributes include the subject ID (input) and the subject
-        directory.
-        """
-        self.subID = subID
-        nuDir = getScriptsDir()
-        while os.path.basename(nuDir) != 'Northwestern-RIC':
-            nuDir = os.path.dirname(nuDir)
-        self.subDir = os.path.join(nuDir,'Modeling','OpenSim','Subjects',subID)+'\\'
-    
-    """------------------------------------------------------------"""
     def cleanUp(self):
         """
         Cleans up the current state of the GUI by closing any open
@@ -67,12 +50,15 @@ class compareInGUI:
     """------------------------------------------------------------"""
     def selectTrial(self):
         """
-        Displays a dialog box listing all of the trc files in a given
-        directory. Care should be taken to ensure that the directory
-        corresponds to the chosen subject ID.
+        Displays a dialog box listing all of the trc files in the last
+        working directory.
         """
         # Select interactively
         self.trcFilePath = utils.FileUtils.getInstance().browseForFilename('.trc','Select the file to preview',1)
+        # Determine directory of chosen file
+        self.subDir = os.path.dirname(self.trcFilePath)+'\\'
+        # Determine the subject ID
+        self.subID = os.path.basename(os.path.dirname(self.trcFilePath))
 
     """------------------------------------------------------------"""
     def loadStandardModel(self):
@@ -81,15 +67,14 @@ class compareInGUI:
         """
         # Load model in GUI
         addModel(self.subDir+self.subID+'.osim')
-        # Handle to current model
-        ikModel = getCurrentModel()
-        return ikModel
 
     """------------------------------------------------------------"""
-    def updateStandardModelVisuals(self,ikModel):
+    def updateStandardModelVisuals(self):
         """
         Updates the visualization properties of the basic model.
         """
+        # Handle to current model
+        ikModel = getCurrentModel()
         # Color all bodies light blue
         bodySet = ikModel.getBodySet()
         for i in range(ikModel.getNumBodies()):
@@ -142,9 +127,9 @@ class compareInGUI:
         # Dynamically select file to preview
         self.selectTrial()
         # Load standard (IK) model
-        ikModel = self.loadStandardModel()
+        self.loadStandardModel()
         # Update model visualizations
-        self.updateStandardModelVisuals(ikModel)
+        self.updateStandardModelVisuals()
         # Load IK motion to IK model
         self.loadIKMotion()
         # Add adjusted COM (RRA) model
@@ -157,13 +142,6 @@ class compareInGUI:
         #   Sync motions of IK and RRA data 
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# Imports
-import os
-import time 
-import org.opensim.utils as utils
-
 """*******************************************************************
 *                                                                    *
 *                   Script Execution                                 *
@@ -171,6 +149,6 @@ import org.opensim.utils as utils
 *******************************************************************"""
 if __name__ == '__main__':
     # Create instance of class
-    ikVSrra = compareInGUI(subID)
+    ikVSrra = compareInGUI()
     # Run code
     ikVSrra.run()

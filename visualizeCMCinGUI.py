@@ -11,9 +11,15 @@
         visualization in GUI
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-16
+    Last Modified 2013-07-17
 ----------------------------------------------------------------------
 """
+
+
+# Imports
+import os
+import time 
+import org.opensim.utils as utils
 
 
 class visualizeCMC:
@@ -40,9 +46,8 @@ class visualizeCMC:
     """------------------------------------------------------------"""
     def selectTrial(self):
         """
-        Displays a dialog box listing all of the trc files in a given
-        directory. Care should be taken to ensure that the directory
-        corresponds to the chosen subject ID.
+        Displays a dialog box listing all of the trc files in the last
+        working directory.
         """
         # Select interactively
         self.trcFilePath = utils.FileUtils.getInstance().browseForFilename('.trc','Select the file to preview',1)
@@ -56,6 +61,19 @@ class visualizeCMC:
         # Load model in GUI
         addModel(self.trcFilePath.replace('.trc','.osim'))
 
+    """------------------------------------------------------------"""    
+    def hideModelMarkers(self):
+        """
+        Hide the markers in the current model.
+        """
+        # Handle to current model
+        cmcModel = getCurrentModel()
+        # Hide markers
+        markerSet = cmcModel.getMarkerSet()
+        for i in range(cmcModel.getNumMarkers()):
+            marker = markerSet.get(i)
+            toggleObjectDisplay(marker,False)
+        
     """------------------------------------------------------------"""
     def loadCMCMotion(self):
         """
@@ -75,16 +93,11 @@ class visualizeCMC:
         self.selectTrial()        
         # Add adjusted COM (RRA/CMC) model
         self.loadAdjustedModel()
+        # Hide the markers from view
+        self.hideModelMarkers()
         # Load CMC motion to model
         self.loadCMCMotion()
 
-
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-# Imports
-import os
-import time 
-import org.opensim.utils as utils
 
 """*******************************************************************
 *                                                                    *

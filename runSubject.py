@@ -7,17 +7,19 @@
 #                                                                    #
 # ####################################################################
 # Subject ID
-subIDs = ['20121205CONM']
+subIDs = ['20130401AHLM','20121206CONF','20121205CONF','20121204CONF',
+          '20121204APRM','20121110AHRM','20121108AHRM','20121008AHRM',
+          '20120922AHRM','20120920APRM','20120919APLF','20120912AHRF']
 # ####################################################################
 
 
 # Imports
 import os
 import time
-from runTools import *
+#from runTools import *
 #from updateFirstLineMOT import *
 #from iterateRRAadjustMass import *
-#from rerunCMCadjustTime import *
+from rerunCMCadjustTime import *
 
 
 class runSubject:
@@ -44,10 +46,13 @@ class runSubject:
         #rraTool = rra(self.subID)
         #rraTool.run()
         #iterRRA = iterateRRA(self.subID)
-        #iterRRA.run()
+        #iterRRA.run()        
+        #cmcTool = cmc(self.subID)
+        #cmcTool.run()
         
-        cmcTool = cmc(self.subID)
-        cmcTool.run()
+        reCMC = rerunCMC(self.subID)
+        reCMC.run()
+        
         
         print (self.subID+' is finished -- elapsed time is '+str(int(float(time.time()-self.startTime)/float(60)))+' minutes.')
     
