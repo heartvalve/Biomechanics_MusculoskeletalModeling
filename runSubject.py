@@ -13,7 +13,7 @@
         Simulation results
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-23
+    Last Modified 2013-07-29
 ----------------------------------------------------------------------
 """
 
@@ -24,19 +24,20 @@
 #                                                                    #
 # ####################################################################
 # Subject ID list
-subIDs = ['20130401AHLM','20121206CONF','20121205CONF','20121204CONF',
-          '20121204APRM','20121110AHRM','20121108AHRM','20121008AHRM',
-          '20120922AHRM','20120920APRM','20120919APLF','20120912AHRF']
+subIDs = ['20130221CONF']
+#subIDs = ['20130401AHLM','20121206CONF','20121205CONF','20121204CONF',
+#          '20121204APRM','20121110AHRM','20121108AHRM','20121008AHRM',
+#          '20120922AHRM','20120920APRM','20120919APLF','20120912AHRF']
+          
 # ####################################################################
 
 
 # Imports
-import os
 import time
 from runTools import *
-from updateFirstLineMOT import *
-from iterateRRAadjustMass import *
-from rerunCMCadjustTime import *
+from updateFirstLineMOT import updateMOT
+from iterateRRAadjustMass import iterateRRA
+from rerunCMCadjustTime import rerunCMC
 
 
 class runSubject:
@@ -48,15 +49,10 @@ class runSubject:
     def __init__(self,subID):
         """
         Create an instance of the class from the subject ID and add
-        the subject directory and starting time.
+        the starting time.
         """
         # Subject ID
         self.subID = subID
-        # Subject directory
-        nuDir = os.getcwd()
-        while os.path.basename(nuDir) != 'Northwestern-RIC':
-            nuDir = os.path.dirname(nuDir)
-        self.subDir = os.path.join(nuDir,'Modeling','OpenSim','Subjects',subID)+'\\'
         # Starting time
         self.startTime = time.time()
 
@@ -67,10 +63,10 @@ class runSubject:
         """
         # Scale
         scaleTool = scale(self.subID)
-        scaleTool.run()
+        scaleTool.run()        
         # IK
         ikTool = ikin(self.subID)
-        ikTool.run()
+        ikTool.run()        
         # Update first line name in output Scale and IK files for later viewing in GUI.
         updateNames = updateMOT(self.subID)
         updateNames.run()
@@ -91,7 +87,7 @@ class runSubject:
         reCMC.run()
         # Display message to user
         print (self.subID+' is finished -- elapsed time is '+str(int(float(time.time()-self.startTime)/float(60)))+' minutes.')
-
+        
 
 """*******************************************************************
 *                                                                    *

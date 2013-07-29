@@ -4,18 +4,17 @@
 ----------------------------------------------------------------------
     This program can be executed from the OpenSim GUI to export all of
     the necessary Setup (*.xml) files for a given subject.  Generic
-    model files are based on the input generic model name.  A batch 
-    file is also created to execute all of the simulation analyses.
-    
+    model files are based on the input generic model name.
+
     Input arguments:
         subIDs (list)
         genericModelName (string -- gait2392, Arnold2010)
     Output:
-        *__Setup_*.xml files
-        *_ExternalLoads.xml files
+        Setup XML files
+        External Loads XML files
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-16
+    Last Modified 2013-07-29
 ----------------------------------------------------------------------
 """
 
@@ -49,7 +48,7 @@ class setupXML:
     def __init__(self,subID,genericModelName):
         """
         Method to create an instance of the setupXML class. Attributes
-        include the subject ID, generic model name, subject directory, 
+        include the subject ID, generic model name, subject directory,
         and generic file directory.
         """
         self.subID = subID
@@ -59,7 +58,7 @@ class setupXML:
             nuDir = os.path.dirname(nuDir)
         self.subDir = os.path.join(nuDir,'Modeling','OpenSim','Subjects',subID)+'\\'
         self.genDir = os.path.dirname(os.path.dirname(self.subDir[0:-2]))+'\\GenericFiles\\'
-    
+
     """------------------------------------------------------------"""
     def readPersonalInfoXML(self):
         """
@@ -72,22 +71,11 @@ class setupXML:
         self.mass = float(dom.getElementsByTagName('mass')[0].firstChild.nodeValue)
         self.height = float(dom.getElementsByTagName('height')[0].firstChild.nodeValue)
         self.markerSet = dom.getElementsByTagName('markerSet')[0].firstChild.nodeValue
-        
+
     """------------------------------------------------------------"""
-    def initializeBat(self):
+    def createSetupXML_Scale(self):
         """
-        Initializes the list of commands to be written to the batch 
-        file. This return argument is needed in most later methods.
-        """
-        commandList = []
-        commandList.append('echo off\n')
-        commandList.append('set curdir=%cd%\n')
-        return commandList
-    
-    """------------------------------------------------------------"""
-    def createSetupXML_Scale(self,commandList):
-        """
-        Write setup file for scale step. Append to batch file list.
+        Write setup file for scale step.
         """
         # Static TRC filename
         trcFileName = self.subID+'_0_StaticPose.trc'
@@ -127,14 +115,11 @@ class setupXML:
         scaleTool.getMarkerPlacer().setOutputMarkerFileName('')
         # Write changes to XML setup file
         scaleTool.print(self.subDir+trcFileName.replace('.trc','__Setup_Scale.xml'))
-        # Prepare command for batch processing        
-        commandList.append('scale -S '+trcFileName.replace('.trc','__Setup_Scale.xml')+' > %curdir%\\'+trcFileName.replace('.trc','_Scale.log')+'\n')
-        return commandList
-        
+
     """------------------------------------------------------------"""
-    def createSetupXML_IK(self,commandList):
+    def createSetupXML_IK(self):
         """
-        Write setup files for IK step. Append to batch file list.
+        Write setup files for IK step.
         """
         # Create InverseKinematicsTool object
         ikTool = modeling.InverseKinematicsTool(self.genDir+'InverseKinematicsTool.xml')
@@ -162,18 +147,15 @@ class setupXML:
             # Write changes to XML setup file
             xmlSetupFilePath = trcFilePath.replace('.trc','__Setup_IK.xml')
             ikTool.print(xmlSetupFilePath)
-            # Prepare command for batch processing
-            commandList.append('ik -S '+trcFileName.replace('.trc','__Setup_IK.xml')+' > %curdir%\\'+trcFileName.replace('.trc','_IK.log')+'\n')
             #
             # **** Temporary fix for setting model name using XML parsing ****
             dom = parse(xmlSetupFilePath)
             dom.getElementsByTagName('model_file')[0].firstChild.nodeValue = self.subDir+self.subID+'.osim'
-            xmlstring = dom.toxml('UTF-8')        
+            xmlstring = dom.toxml('UTF-8')
             xmlFile = open(xmlSetupFilePath,'w')
             xmlFile.write(xmlstring)
             xmlFile.close()
-        return commandList
-            
+
     """------------------------------------------------------------"""
     def createExternalLoadsXML(self):
         """
@@ -187,9 +169,9 @@ class setupXML:
         # Loop through TRC files
         for trcFilePath in trcFilePathList:
             # TRC filename
-            trcFileName = os.path.basename(trcFilePath)       
+            trcFileName = os.path.basename(trcFilePath)
             # Name of object
-            extLoads.setName(os.path.splitext(trcFileName)[0])        
+            extLoads.setName(os.path.splitext(trcFileName)[0])
             # <datafile>
             extLoads.setDataFileName(trcFilePath.replace('.trc','_GRF.mot'))
             # <external_loads_model_kinematics_file>
@@ -198,18 +180,18 @@ class setupXML:
             extLoads.setLowpassCutoffFrequencyForLoadKinematics(6)
             # Write changes to XML file
             extLoads.print(trcFilePath.replace('.trc','_ExternalLoads.xml'))
-            
+
     """------------------------------------------------------------"""
-    def createSetupXML_ID(self,commandList):
+    def createSetupXML_ID(self):
         """
-        Write setup files for ID step. Append to batch file list.
+        Write setup files for ID step.
         """
         # Create InverseDynamicsTool object
         idTool = modeling.InverseDynamicsTool(self.genDir+'InverseDynamicsTool.xml')
         # <forces_to_exclude>
         excludedForces = modeling.ArrayStr()
         excludedForces.setitem(0,'muscles')
-        idTool.setExcludedForces(excludedForces) 
+        idTool.setExcludedForces(excludedForces)
         # <lowpass_cutoff_frequency_for_coordinates>
         idTool.setLowpassCutoffFrequency(6)
         # Dynamic TRC filenames
@@ -229,28 +211,25 @@ class setupXML:
             idTool.setExternalLoadsFileName(trcFilePath.replace('.trc','_ExternalLoads.xml'))
             # <coordinates_file>
             idTool.setCoordinatesFileName(trcFilePath.replace('.trc','_IK.mot'))
-            # ????? .... <output_gen_force_file> .....idTool.getOutputGenForceFileName() -- set ????        
+            # <output_gen_force_file>
+            idTool.setOutputGenForceFileName(trcFileName.replace('.trc','_ID.sto'))
             # Write changes to XML setup file
             xmlSetupFilePath = trcFilePath.replace('.trc','__Setup_ID.xml')
             idTool.print(xmlSetupFilePath)
-            # Prepare command for batch processing
-            commandList.append('id -S '+trcFileName.replace('.trc','__Setup_ID.xml')+' > %curdir%\\'+trcFileName.replace('.trc','_ID.log')+'\n')
             #
-            # **** Temporary fix for setting model name & output force file using XML parsing ****
+            # **** Temporary fix for setting model name using XML parsing ****
             dom = parse(xmlSetupFilePath)
             for i in range(len(dom.getElementsByTagName('model_file'))):
                 dom.getElementsByTagName('model_file')[i].firstChild.nodeValue = self.subDir+self.subID+'.osim'
-            dom.getElementsByTagName('output_gen_force_file')[0].firstChild.nodeValue = trcFileName.replace('.trc','_ID.sto')
-            xmlstring = dom.toxml('UTF-8')        
+            xmlstring = dom.toxml('UTF-8')
             xmlFile = open(xmlSetupFilePath,'w')
             xmlFile.write(xmlstring)
             xmlFile.close()
-        return commandList
 
     """------------------------------------------------------------"""
-    def createSetupXML_RRA(self,commandList):
+    def createSetupXML_RRA(self):
         """
-        Write setup files for RRA step. Append to batch file list.
+        Write setup files for RRA step.
         """
         # Create RRATool object
         rraTool = modeling.RRATool(self.genDir+'RRATool.xml')
@@ -260,7 +239,7 @@ class setupXML:
         rraTool.setReplaceForceSet(True)
         # <force_set_files>
         forceSetFiles = modeling.ArrayStr()
-        forceSetFiles.setitem(0,self.genDir+self.genericModelName+'_RRA_ForceSet.xml')
+        forceSetFiles.setitem(0,self.genDir+self.genericModelName+'_ForceSet.xml')
         rraTool.setForceSetFiles(forceSetFiles)
         # <results_directory>
         rraTool.setResultsDir(self.subDir)
@@ -269,15 +248,13 @@ class setupXML:
         # <solve_for_equilibrium_for_auxiliary_states>
         rraTool.setSolveForEquilibrium(True)
         # <task_set_file>
-        rraTool.setTaskSetFileName(self.genDir+self.genericModelName+'_RRA_CMCTaskSet.xml')
-        # <constraints_file>
-        rraTool.setConstraintsFileName(self.genDir+self.genericModelName+'_RRA_ControlSet.xml')  
+        rraTool.setTaskSetFileName(self.genDir+self.genericModelName+'_CMCTaskSet.xml')
         # <lowpass_cutoff_frequency>
         rraTool.setLowpassCutoffFrequency(6)
         # <adjust_com_to_reduce_residuals>
         rraTool.setAdjustCOMToReduceResiduals(True)
         # <adjusted_com_body>
-        rraTool.setAdjustedCOMBody('torso')    
+        rraTool.setAdjustedCOMBody('torso')
         # Dynamic TRC filenames
         trcFilePathList = glob.glob(self.subDir+self.subID+'_*_*_*.trc')
         # Loop through TRC files
@@ -300,20 +277,17 @@ class setupXML:
             rraTool.setOutputModelFileName(trcFilePath.replace('.trc','__AdjustedCOM.osim'))
             # Write changes to XML file
             rraTool.print(trcFilePath.replace('.trc','__Setup_RRA.xml'))
-            # Prepare command for batch processing
-            commandList.append('rra -S '+trcFileName.replace('.trc','__Setup_RRA.xml')+' > %curdir%\\'+trcFileName.replace('.trc','_RRA.log')+'\n')
-        return commandList
-        
+
     """------------------------------------------------------------"""
-    def createSetupXML_CMC(self,commandList):
+    def createSetupXML_CMC(self):
         """
         Write setup files for CMC step. Append to batch file list.
         """
         # Create CMCTool object
-        cmcTool = modeling.CMCTool(self.genDir+'CMCTool.xml')    
+        cmcTool = modeling.CMCTool(self.genDir+'CMCTool.xml')
         # <force_set_files>
         forceSetFiles = modeling.ArrayStr()
-        forceSetFiles.setitem(0,self.genDir+self.genericModelName+'_CMC_ForceSet.xml')
+        forceSetFiles.setitem(0,self.genDir+self.genericModelName+'_ForceSet.xml')
         cmcTool.setForceSetFiles(forceSetFiles)
         # <results_directory>
         cmcTool.setResultsDir(self.subDir)
@@ -326,9 +300,7 @@ class setupXML:
         # <integrator_error_tolerance>
         cmcTool.setErrorTolerance(1e-006)
         # <task_set_file>
-        cmcTool.setTaskSetFileName(self.genDir+self.genericModelName+'_CMC_CMCTaskSet.xml')
-        # <constraints_file>
-        cmcTool.setConstraintsFileName(self.genDir+self.genericModelName+'_CMC_ControlSet.xml')
+        cmcTool.setTaskSetFileName(self.genDir+self.genericModelName+'_CMCTaskSet.xml')
         # <lowpass_cutoff_frequency>
         cmcTool.setLowpassCutoffFrequency(-1)
         # Dynamic TRC filenames
@@ -353,48 +325,28 @@ class setupXML:
             cmcTool.setDesiredKinematicsFileName(trcFilePath.replace('.trc','_RRA_Kinematics_q.sto'))
             # Write changes to XML file
             cmcTool.print(trcFilePath.replace('.trc','__Setup_CMC.xml'))
-            # Prepare command for batch processing
-            commandList.append('cmc -S '+trcFileName.replace('.trc','__Setup_CMC.xml')+' > %curdir%\\'+trcFileName.replace('.trc','_CMC.log')+'\n')
-        return commandList
-        
-    """------------------------------------------------------------"""
-    def writeCommandsToBat(self,commandList):
-        """
-        Write contents of batch file list to file.
-        """
-        batFile = open(self.subDir+'Run.bat','w')
-        batFile.writelines(commandList)
-        batFile.close()
 
-    """***************************************************************
-    *                                                                *
-    *                   Main Function Definition                     *
-    *                                                                *
-    ***************************************************************"""
+    """------------------------------------------------------------"""
     def run(self):
         """
         The main program invoked to call the other subfunctions.
         """
         # Get subject specific information from file
         self.readPersonalInfoXML()
-        # Initialize the batch file
-        commandList = self.initializeBat()
         # Create the setup file used to run the scale step
-        commandList = self.createSetupXML_Scale(commandList)
+        self.createSetupXML_Scale()
         # Create the setup file(s) used to run the IK step
-        commandList = self.createSetupXML_IK(commandList)
+        self.createSetupXML_IK()
         # Create the external loads file(s) used for all kinetic analyses
         self.createExternalLoadsXML()
         # Create the setup file(s) used to run the ID step
-        commandList = self.createSetupXML_ID(commandList)
+        self.createSetupXML_ID()
         # Create the setup file(s) used to run the RRA step
-        commandList = self.createSetupXML_RRA(commandList)
-        # Create the setup file(s) used to run the CMC step    
-        commandList = self.createSetupXML_CMC(commandList)
-        # Write batch file
-        self.writeCommandsToBat(commandList)
+        self.createSetupXML_RRA()
+        # Create the setup file(s) used to run the CMC step
+        self.createSetupXML_CMC()
 
-    
+
 """*******************************************************************
 *                                                                    *
 *                   Script Execution                                 *
@@ -407,4 +359,3 @@ if __name__ == '__main__':
         setXML = setupXML(subID,genericModelName)
         # Run code
         setXML.run()
-    

@@ -15,7 +15,7 @@
         visualization in GUI
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-23
+    Last Modified 2013-07-29
 ----------------------------------------------------------------------
 """
 
@@ -66,7 +66,7 @@ class compareInGUI:
         Loads the basic scaled model into the GUI.
         """
         # Load model in GUI
-        addModel(self.subDir+self.subID+'.osim')
+        loadModel(self.subDir+self.subID+'.osim')
 
     """------------------------------------------------------------"""
     def updateStandardModelVisuals(self):
@@ -107,7 +107,7 @@ class compareInGUI:
         GUI.
         """
         # Load model in GUI
-        addModel(self.trcFilePath.replace('.trc','.osim'))
+        loadModel(self.trcFilePath.replace('.trc','.osim'))
 
     """------------------------------------------------------------"""
     def loadRRAMotion(self):

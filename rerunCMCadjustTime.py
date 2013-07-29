@@ -8,12 +8,12 @@
     Adapted from runTools/cmc.
 
     Input:
-        Subject ID (list)
+        Subject ID
     Output:
         Simulation results
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-23
+    Last Modified 2013-07-29
 ----------------------------------------------------------------------
 """
 
@@ -24,8 +24,7 @@
 #                                                                    #
 # ####################################################################
 # Subject ID list
-subIDs = ['20121206CONF','20121205CONF','20121204CONF','20121204APRM',
-          '20121008AHRM','20120912AHRF']
+subID = '20130221CONF'
 # ####################################################################
 
 
@@ -212,9 +211,7 @@ class rerunCMC:
 *                                                                    *
 *******************************************************************"""
 if __name__ == '__main__':
-    # Loop through subject list
-    for subID in subIDs:
-        # Create instance of class
-        rCMC = rerunCMC(subID)
-        # Run code
-        rCMC.run()
+    # Create instance of class
+    rCMC = rerunCMC(subID)
+    # Run code
+    rCMC.run()

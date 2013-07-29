@@ -9,7 +9,7 @@
     Simulation steps can be executed by invoking the 'run' methods.
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-23
+    Last Modified 2013-07-29
 ----------------------------------------------------------------------
 """
 
@@ -51,8 +51,7 @@ class scale:
         Run the tool via the command prompt.
         """
         # Open subprocess in current directory
-        subprocess.Popen(('scale -S '+self.trialName+'__Setup_Scale.xml > '+self.subDir+self.trialName+'_Scale.log'),
-                         shell=True, cwd=self.subDir)
+        subprocess.Popen(('scale -S '+self.trialName+'__Setup_Scale.xml > '+self.subDir+self.trialName+'_Scale.log'), shell=True, cwd=self.subDir)
 
     """------------------------------------------------------------"""
     def checkIfDone(self):
@@ -125,8 +124,7 @@ class ikin:
         Run the tool via the command prompt.
         """
         # Open subprocess in current directory
-        subprocess.Popen(('ik -S '+trialName+'__Setup_IK.xml > '+self.subDir+trialName+'_IK.log'),
-                         shell=True, cwd=self.subDir)
+        subprocess.Popen(('ik -S '+trialName+'__Setup_IK.xml > '+self.subDir+trialName+'_IK.log'), shell=True, cwd=self.subDir)
 
     """------------------------------------------------------------"""
     def checkIfDone(self,trialName):
@@ -211,8 +209,7 @@ class idyn:
         Run the tool via the command prompt.
         """
         # Open subprocess in current directory
-        subprocess.Popen(('id -S '+trialName+'__Setup_ID.xml > '+self.subDir+trialName+'_ID.log'),
-                         shell=True, cwd=self.subDir)
+        subprocess.Popen(('id -S '+trialName+'__Setup_ID.xml > '+self.subDir+trialName+'_ID.log'), shell=True, cwd=self.subDir)
 
     """------------------------------------------------------------"""
     def checkIfDone(self,trialName):
@@ -297,8 +294,7 @@ class rra:
         Run the tool via the command prompt.
         """
         # Open subprocess in current directory
-        subprocess.Popen(('rra -S '+trialName+'__Setup_RRA.xml > '+self.subDir+trialName+'_RRA.log'),
-                         shell=True, cwd=self.subDir)
+        subprocess.Popen(('rra -S '+trialName+'__Setup_RRA.xml > '+self.subDir+trialName+'_RRA.log'), shell=True, cwd=self.subDir)
 
     """------------------------------------------------------------"""
     def checkIfDone(self,trialName):
@@ -310,11 +306,12 @@ class rra:
         while True:
             # Check for simulation result file
             if os.access(self.subDir+trialName+'_RRA_controls.xml',os.F_OK):
-                time.sleep(1)
+                time.sleep(5)
                 break
             # Timeout after 2 minutes and display a message to the user
             elif (time.time()-startTime) > 120:
                 print ('Check status of '+trialName+'_RRA.')
+                break
             # Wait
             else:
                 time.sleep(5)
@@ -382,8 +379,7 @@ class cmc:
         Run the tool via the command prompt.
         """
         # Open subprocess in current directory
-        subprocess.Popen(('cmc -S '+trialName+'__Setup_CMC.xml > '+self.subDir+trialName+'_CMC.log'),
-                         shell=True, cwd=self.subDir)
+        subprocess.Popen(('cmc -S '+trialName+'__Setup_CMC.xml > '+self.subDir+trialName+'_CMC.log'), shell=True, cwd=self.subDir)
 
     """------------------------------------------------------------"""
     def checkIfDone(self,trialName):
@@ -398,11 +394,13 @@ class cmc:
                 # Display a message to the user
                 print (trialName+'_CMC is complete.')
                 # Slight pause
-                time.sleep(1)
+                time.sleep(3)
                 # Exit the loop
                 break
             # Timeout after 20 minutes
             elif (time.time()-startTime) > 1200:
+                # Display a message to the user
+                print (trialName+'_CMC timed out.')
                 break
             # Check the log file after 10 minutes have elapsed
             elif (time.time()-startTime) > 600:
