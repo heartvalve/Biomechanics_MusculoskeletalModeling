@@ -13,7 +13,7 @@
         RRA iteration log
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-23
+    Last Modified 2013-07-30
 ----------------------------------------------------------------------
 """
 
@@ -34,6 +34,7 @@ import glob
 import subprocess
 import time
 import linecache
+import shutil
 from xml.dom.minidom import parse
 import numpy
 
@@ -92,7 +93,7 @@ class iterateRRA:
     """------------------------------------------------------------"""
     def updateSetupXML(self,xmlFilePath,trialName):
         """
-        Update the Setup XML file <model_file> tag.
+        Update the Setup XML file <model_file> tag and rename file.
         """
         # Parse XML
         dom = parse(xmlFilePath)
@@ -100,7 +101,7 @@ class iterateRRA:
         dom.getElementsByTagName('model_file')[0].firstChild.nodeValue = self.subDir+trialName+'.osim'
         # Overwrite existing file
         xmlString = dom.toxml('UTF-8')
-        xmlFile = open(xmlFilePath,'w')
+        xmlFile = open(xmlFilePath.replace('.xml','_Iterations.xml'),'w')
         xmlFile.write(xmlString)
         xmlFile.close()
     
@@ -253,7 +254,7 @@ class iterateRRA:
     """------------------------------------------------------------"""
     def runRRA(self,trialName):
         """
-        
+        Run the RRA tool and return the status of the simulation.
         """
         # Clean up previous trial output (if necessary)
         try:
@@ -272,7 +273,7 @@ class iterateRRA:
             except:
                 break        
         # Run RRA simulation via command prompt
-        subprocess.Popen(('rra -S '+trialName+'__Setup_RRA.xml > '+self.subDir+trialName+'_RRA.log'), shell=True, cwd=self.subDir)
+        subprocess.Popen(('rra -S '+trialName+'__Setup_RRA_Iterations.xml > '+self.subDir+trialName+'_RRA.log'), shell=True, cwd=self.subDir)
         startTime = time.time()
         while True:
             # Check for simulation result file

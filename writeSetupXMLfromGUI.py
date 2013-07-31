@@ -8,13 +8,15 @@
 
     Input arguments:
         subIDs (list)
-        genericModelName (string -- gait2392, Arnold2010)
+        genericModelName (string -- gait2392, Arnold2010, 
+                          Arnold2010_MillardEquilibrium, 
+                          Arnold2010_MillardAcceleration)
     Output:
         Setup XML files
         External Loads XML files
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-29
+    Last Modified 2013-07-30
 ----------------------------------------------------------------------
 """
 
@@ -25,7 +27,7 @@
 #                                                                    #
 # ####################################################################
 # Generic model to use
-genericModelName = 'gait2392'
+genericModelName = 'Arnold2010_MillardEquilibrium'
 # Subject ID
 subIDs = ['20130221CONF']
 # ####################################################################
@@ -93,13 +95,13 @@ class setupXML:
         scaleTool.setSubjectHeight(self.height)
         # Update GenericModelMaker
         scaleTool.getGenericModelMaker().setModelFileName(self.genDir+self.genericModelName+'.osim')
-        scaleTool.getGenericModelMaker().setMarkerSetFileName(self.genDir+self.genericModelName+'_'+self.markerSet+'_Scale_MarkerSet.xml')
+        scaleTool.getGenericModelMaker().setMarkerSetFileName(self.genDir+self.genericModelName.split('_')[0]+'_'+self.markerSet+'_Scale_MarkerSet.xml')
         # Update ModelScaler
         scaleTool.getModelScaler().setApply(True)
         scaleOrder = modeling.ArrayStr()
         scaleOrder.setitem(0,'measurements')
         scaleTool.getModelScaler().setScalingOrder(scaleOrder)
-        scaleTool.getModelScaler().getMeasurementSet().assign(modeling.MeasurementSet().makeObjectFromFile(self.genDir+self.genericModelName+'_'+self.markerSet+'_Scale_MeasurementSet.xml'))
+        scaleTool.getModelScaler().getMeasurementSet().assign(modeling.MeasurementSet().makeObjectFromFile(self.genDir+self.genericModelName.split('_')[0]+'_'+self.markerSet+'_Scale_MeasurementSet.xml'))
         scaleTool.getModelScaler().setMarkerFileName(self.subDir+trcFileName)
         scaleTool.getModelScaler().setTimeRange(timeRange)
         scaleTool.getModelScaler().setPreserveMassDist(True)
@@ -107,7 +109,7 @@ class setupXML:
         scaleTool.getModelScaler().setOutputScaleFileName(self.subDir+trcFileName.replace('.trc','_ScaleSet.xml'))
         # Update MarkerPlacer
         scaleTool.getMarkerPlacer().setApply(True)
-        scaleTool.getMarkerPlacer().getIKTaskSet().assign(modeling.IKTaskSet(self.genDir+self.genericModelName+'_'+self.markerSet+'_Scale_IKTaskSet.xml'))
+        scaleTool.getMarkerPlacer().getIKTaskSet().assign(modeling.IKTaskSet(self.genDir+self.genericModelName.split('_')[0]+'_'+self.markerSet+'_Scale_IKTaskSet.xml'))
         scaleTool.getMarkerPlacer().setStaticPoseFileName(self.subDir+trcFileName)
         scaleTool.getMarkerPlacer().setTimeRange(timeRange)
         scaleTool.getMarkerPlacer().setOutputMotionFileName(self.subDir+trcFileName.replace('.trc','_Scale.mot'))
@@ -132,7 +134,7 @@ class setupXML:
             # Name of tool
             ikTool.setName(os.path.splitext(trcFileName)[0])
             # <IKTaskSet>
-            ikTool.getIKTaskSet().assign(modeling.IKTaskSet(self.genDir+self.genericModelName+'_'+self.markerSet+'_IK_IKTaskSet.xml'))
+            ikTool.getIKTaskSet().assign(modeling.IKTaskSet(self.genDir+self.genericModelName.split('_')[0]+'_'+self.markerSet+'_IK_IKTaskSet.xml'))
             # <marker_file>
             ikTool.setMarkerDataFileName(trcFilePath)
             # <coordinate_file>
@@ -239,7 +241,7 @@ class setupXML:
         rraTool.setReplaceForceSet(True)
         # <force_set_files>
         forceSetFiles = modeling.ArrayStr()
-        forceSetFiles.setitem(0,self.genDir+self.genericModelName+'_ForceSet.xml')
+        forceSetFiles.setitem(0,self.genDir+self.genericModelName.split('_')[0]+'_ForceSet.xml')
         rraTool.setForceSetFiles(forceSetFiles)
         # <results_directory>
         rraTool.setResultsDir(self.subDir)
@@ -248,7 +250,7 @@ class setupXML:
         # <solve_for_equilibrium_for_auxiliary_states>
         rraTool.setSolveForEquilibrium(True)
         # <task_set_file>
-        rraTool.setTaskSetFileName(self.genDir+self.genericModelName+'_CMCTaskSet.xml')
+        rraTool.setTaskSetFileName(self.genDir+self.genericModelName.split('_')[0]+'_CMCTaskSet.xml')
         # <lowpass_cutoff_frequency>
         rraTool.setLowpassCutoffFrequency(6)
         # <adjust_com_to_reduce_residuals>
@@ -287,7 +289,7 @@ class setupXML:
         cmcTool = modeling.CMCTool(self.genDir+'CMCTool.xml')
         # <force_set_files>
         forceSetFiles = modeling.ArrayStr()
-        forceSetFiles.setitem(0,self.genDir+self.genericModelName+'_ForceSet.xml')
+        forceSetFiles.setitem(0,self.genDir+self.genericModelName.split('_')[0]+'_ForceSet.xml')
         cmcTool.setForceSetFiles(forceSetFiles)
         # <results_directory>
         cmcTool.setResultsDir(self.subDir)
@@ -300,7 +302,7 @@ class setupXML:
         # <integrator_error_tolerance>
         cmcTool.setErrorTolerance(1e-006)
         # <task_set_file>
-        cmcTool.setTaskSetFileName(self.genDir+self.genericModelName+'_CMCTaskSet.xml')
+        cmcTool.setTaskSetFileName(self.genDir+self.genericModelName.split('_')[0]+'_CMCTaskSet.xml')
         # <lowpass_cutoff_frequency>
         cmcTool.setLowpassCutoffFrequency(-1)
         # Dynamic TRC filenames
