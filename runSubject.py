@@ -13,7 +13,7 @@
         Simulation results
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-29
+    Last Modified 2013-08-12
 ----------------------------------------------------------------------
 """
 
@@ -32,7 +32,7 @@ subIDs = ['20130221CONF']
 
 
 # Imports
-import time
+from datetime import datetime
 from runTools import *
 from updateFirstLineMOT import updateMOT
 from iterateRRAadjustMass import iterateRRA
@@ -53,7 +53,7 @@ class runSubject:
         # Subject ID
         self.subID = subID
         # Starting time
-        self.startTime = time.time()
+        self.startTime = datetime.now()
 
     """------------------------------------------------------------"""
     def run(self):
@@ -85,7 +85,11 @@ class runSubject:
         reCMC = rerunCMC(self.subID)
         reCMC.run()
         # Display message to user
-        print (self.subID+' is finished -- elapsed time is '+str(int(float(time.time()-self.startTime)/float(60)))+' minutes.')
+        d = datetime(1,1,1) + (datetime.now()-self.startTime)
+        if d.hour < 1:
+            print (self.subID+' is finished -- elapsed time is %d minutes.' %(d.minute))
+        else:
+            print (self.subID+' is finished -- elapsed time is %d hour(s) and %d minute(s).' %(d.hour, d.minute))
         
 
 """*******************************************************************

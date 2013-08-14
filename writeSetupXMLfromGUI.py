@@ -16,7 +16,7 @@
         External Loads XML files
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-30
+    Last Modified 2013-08-12
 ----------------------------------------------------------------------
 """
 
@@ -283,7 +283,7 @@ class setupXML:
     """------------------------------------------------------------"""
     def createSetupXML_CMC(self):
         """
-        Write setup files for CMC step. Append to batch file list.
+        Write setup files for CMC step.
         """
         # Create CMCTool object
         cmcTool = modeling.CMCTool(self.genDir+'CMCTool.xml')
@@ -305,6 +305,11 @@ class setupXML:
         cmcTool.setTaskSetFileName(self.genDir+self.genericModelName.split('_')[0]+'_CMCTaskSet.xml')
         # <lowpass_cutoff_frequency>
         cmcTool.setLowpassCutoffFrequency(-1)
+        # <use_fast_optimization_target>
+        if self.genericModelName == 'gait2392':
+            cmcTool.setUseFastTarget(True)
+        else:
+            cmcTool.setUseFastTarget(False)
         # Dynamic TRC filenames
         trcFilePathList = glob.glob(self.subDir+self.subID+'_*_*_*.trc')
         # Loop through TRC files

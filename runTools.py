@@ -9,7 +9,7 @@
     Simulation steps can be executed by invoking the 'run' methods.
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-07-29
+    Last Modified 2013-08-12
 ----------------------------------------------------------------------
 """
 
@@ -21,6 +21,7 @@ import subprocess
 import time
 import shutil
 import sys
+from multiprocessing import Pool
 
 
 # ####################################################################
@@ -397,13 +398,14 @@ class cmc:
                 time.sleep(3)
                 # Exit the loop
                 break
-            # Timeout after 20 minutes
-            elif (time.time()-startTime) > 1200:
+            # Timeout after 2 hours
+            elif (time.time()-startTime) > 7200:
                 # Display a message to the user
                 print (trialName+'_CMC timed out.')
                 break
-            # Check the log file after 10 minutes have elapsed
-            elif (time.time()-startTime) > 600:
+            # Check the log file between 30 seconds and 2 minutes for an exception; 
+            # and after 10 minutes have elapsed for a failed simulation
+            elif ((time.time()-startTime) > 30 and (time.time()-startTime) < 120) or (time.time()-startTime) > 600:
                 # Copy the log file to a temporary file
                 shutil.copy(self.subDir+trialName+'_CMC.log',self.subDir+'temp.log')
                 # Read the log file
@@ -416,16 +418,24 @@ class cmc:
                 status = 'running'
                 # Search through the last few lines of the log file
                 for n in range(-10,0):
-                    # Failed simulation
-                    if 'FAILED' in logList[n]:
-                        print ('Check status of '+trialName+'_CMC.')
-                        status = 'failed'
-                        # Exit for loop
-                        break
-                # Exit while loop if failed
+                    if time.time()-startTime > 600:
+                        # Failed simulation
+                        if 'FAILED' in logList[n]:
+                            print ('Check status of '+trialName+'_CMC.')
+                            status = 'failed'
+                            # Exit for loop
+                            break
+                    else:
+                        # Exception thrown
+                        if 'exception' in logList[n]:
+                            print ('Exception thrown in '+trialName+'_CMC.')
+                            status = 'failed'
+                            # Exit for loop
+                            break
+                # Exit outer while loop if failed
                 if status == 'failed':
                     break
-                # Wait
+                # Otherwise, wait
                 else:
                     time.sleep(15)
             # Wait
