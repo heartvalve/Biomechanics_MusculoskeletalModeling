@@ -9,7 +9,7 @@
     Simulation steps can be executed by invoking the 'run' methods.
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-08-12
+    Last Modified 2013-08-13
 ----------------------------------------------------------------------
 """
 
@@ -21,7 +21,6 @@ import subprocess
 import time
 import shutil
 import sys
-from multiprocessing import Pool
 
 
 # ####################################################################

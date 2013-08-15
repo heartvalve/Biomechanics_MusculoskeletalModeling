@@ -16,7 +16,7 @@
         External Loads XML files
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-08-12
+    Last Modified 2013-08-15
 ----------------------------------------------------------------------
 """
 
@@ -30,6 +30,10 @@
 genericModelName = 'Arnold2010_MillardEquilibrium'
 # Subject ID
 subIDs = ['20130221CONF']
+#subIDs = ['20130401CONM','20121205CONM']
+#subIDs = ['20130401AHLM','20121206CONF','20121205CONF','20121204CONF',
+#          '20121204APRM','20121110AHRM','20121108AHRM','20121008AHRM',
+#          '20120922AHRM','20120920APRM','20120919APLF','20120912AHRF']          
 # ####################################################################
 
 
