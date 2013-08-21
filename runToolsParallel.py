@@ -16,7 +16,7 @@
     the simulation, which requires importing the NumPy module.
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-08-15
+    Last Modified 2013-08-20
 ----------------------------------------------------------------------
 """
 
@@ -34,7 +34,8 @@ import numpy as np
 
 class openSimTool:
     """
-    Superclass...
+    A superclass with attributes and methods associated with running
+    OpenSim tools.
     """
 
     def __init__(self,subID,trialName,toolName):
