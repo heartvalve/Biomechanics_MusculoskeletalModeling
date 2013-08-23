@@ -5,7 +5,7 @@
 
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified: 2013-08-21
+    Last Modified: 2013-08-23
 ----------------------------------------------------------------------
 """
 
@@ -16,10 +16,11 @@ import re
 import linecache
 import time
 from xml.dom.minidom import parse
-#from multiprocessing import Pool
+from multiprocessing import Pool
 
 import numpy as np
 #import matplotlib.pyplot as plt
+from scipy.interpolate import InterpolatedUnivariateSpline
 
 
 """*******************************************************************
@@ -179,25 +180,28 @@ class RRAsuper:
 
     def __init__(self, rraPath):
 
-        # Actuators
-        fNames, fDataList = readData(rraPath + '_Actuation_force.sto', 23)
-        self.actuationForce = np.core.records.fromarrays(fDataList, names=fNames)
-        # Controls
-        cNames, cDataList = readData(rraPath + '_controls.sto', 7)
-        self.controls = np.core.records.fromarrays(cDataList, names=cNames)
-        # Kinematics
-        qNames, qDataList = readData(rraPath + '_Kinematics_q.sto', 11)
-        self.kinematicsCoordinate = np.core.records.fromarrays(qDataList, names=qNames)
-        uNames, uDataList = readData(rraPath + '_Kinematics_u.sto', 11)
-        self.kinematicsSpeed = np.core.records.fromarrays(uDataList, names=uNames)
-        dNames, dDataList = readData(rraPath + '_Kinematics_dudt.sto', 11)
-        self.kinematicsAcceleration = np.core.records.fromarrays(dDataList, names=dNames)
-        # Position Error
-        pNames, pDataList = readData(rraPath + '_pErr.sto', 7)
-        self.positionError = np.core.records.fromarrays(pDataList, names=pNames)
-        # States
-        sNames, sDataList = readData(rraPath + '_states.sto', 7)
-        self.states = np.core.records.fromarrays(sDataList, names=sNames)
+        try:
+            # Actuators
+            fNames, fDataList = readData(rraPath + '_Actuation_force.sto', 23)
+            self.actuationForce = np.core.records.fromarrays(fDataList, names=fNames)
+            # Controls
+            cNames, cDataList = readData(rraPath + '_controls.sto', 7)
+            self.controls = np.core.records.fromarrays(cDataList, names=cNames)
+            # Kinematics
+            qNames, qDataList = readData(rraPath + '_Kinematics_q.sto', 11)
+            self.kinematicsCoordinate = np.core.records.fromarrays(qDataList, names=qNames)
+            uNames, uDataList = readData(rraPath + '_Kinematics_u.sto', 11)
+            self.kinematicsSpeed = np.core.records.fromarrays(uDataList, names=uNames)
+            dNames, dDataList = readData(rraPath + '_Kinematics_dudt.sto', 11)
+            self.kinematicsAcceleration = np.core.records.fromarrays(dDataList, names=dNames)
+            # Position Error
+            pNames, pDataList = readData(rraPath + '_pErr.sto', 7)
+            self.positionError = np.core.records.fromarrays(pDataList, names=pNames)
+            # States
+            sNames, sDataList = readData(rraPath + '_states.sto', 7)
+            self.states = np.core.records.fromarrays(sDataList, names=sNames)
+        except:
+            print 'Unable to find file(s) in ' + rraPath
 
 # ####################################################################
 
@@ -268,10 +272,47 @@ class Simulation:
         self.rra = RRA(subID, simName)
         # CMC
         self.cmc = CMC(subID, simName)
+        # Muscle forces
+        try:
+            musclesWithLeg = [muscle + '_' + self.leg for muscle in self.muscles]
+            fullTime = self.cmc.actuationForce.time
+            forceDataT = np.linspace(0., 100., 101)
+            forceNames = ['percentCycle']
+            for mLabel in musclesWithLeg:
+                mFullData = self.cmc.actuationForce[mLabel]
+                cycleTimeNorm = np.linspace(self.grf.cycleTime[0], self.grf.cycleTime[1], 101)
+                sInterp = InterpolatedUnivariateSpline(fullTime, mFullData)
+                mData = sInterp(cycleTimeNorm)
+                forceDataT = np.vstack((forceDataT,mData))
+                forceNames.append(mLabel[:-2])
+            forceData = np.transpose(forceDataT)
+            forceDataList = [forceData[:,col] for col in range(np.size(forceData, axis=1))]
+            self.muscleForces = np.core.records.fromarrays(forceDataList, names=forceNames)
+        except:
+            print 'Check CMC results for ' + self.subID + '_' + self.simName
 
 """*******************************************************************
 *                   Subject                                          *
 *******************************************************************"""
+
+def runParallel(simFullName):
+
+    # Extract subject ID
+    subID = simFullName.split('_')[0]
+    # Extract simulation descriptor
+    simName = simFullName.split('_', 1)[1]
+    # Create simulation object
+    simObj = Simulation(subID, simName)
+    # Return
+    return simObj
+
+# ####################################################################    
+ 
+def createSimList(simObj):
+    
+    simObjList.append(simObj)
+    
+# ####################################################################
 
 class Subject:
 
@@ -283,21 +324,6 @@ class Subject:
         self.subID = subID
         # Subject directory
         self.subDir = get_subjectDir(subID)
-
-# ####################################################################
-
-"""
-def runParallel(simFullName):
-
-    # Extract subject ID
-    subID = simFullName.split('_')[0]
-    # Extract simulation descriptor
-    simName = simFullName.split('_', 1)[1]
-    # Create simulation object
-    simObj = Simulation(subID, simName)
-    # Return
-    return simObj
-"""
 
 # ####################################################################
 
@@ -327,30 +353,30 @@ class SubjectWithStairs(Subject):
         # Create instance of class from superclass
         Subject.__init__(self, subID)
 
-        """
         # Simulation names
         simDescriptors = ['A_SD2F_RepGRF', 'A_SD2F_RepKIN', 'A_SD2S_RepGRF', 'A_SD2S_RepKIN',
                           'A_Walk_RepGRF', 'A_Walk_RepKIN', 'U_SD2F_RepGRF', 'U_SD2F_RepKIN',
                           'U_SD2S_RepGRF', 'U_SD2S_RepKIN', 'U_Walk_RepGRF', 'U_Walk_RepKIN']
         simNames = [subID + '_' + descriptor for descriptor in simDescriptors]
-
+        global simObjList
+        simObjList = []
         # Start worker pool
         pool = Pool(processes=12)
         # Run parallel processes
-        simObjs = pool.map(runParallel, simNames)
+        pool.map_async(runParallel, simNames, callback=createSimList)
         # Clean up spawned processes
         pool.close()
         pool.join()
-        """
+        # Add attributes
+        for simObj in simObjList[0]:
+            setattr(self, simObj.simName, simObj)        
 
         """
         self.A_SD2F_RepGRF = Simulation(subID, 'A_SD2F_RepGRF')
         self.A_SD2F_RepKIN = Simulation(subID, 'A_SD2F_RepKIN')
         self.A_SD2S_RepGRF = Simulation(subID, 'A_SD2S_RepGRF')
         self.A_SD2S_RepKIN = Simulation(subID, 'A_SD2S_RepKIN')
-        """
         self.A_Walk_RepGRF = Simulation(subID, 'A_Walk_RepGRF')
-        """
         self.A_Walk_RepKIN = Simulation(subID, 'A_Walk_RepKIN')
         self.U_SD2F_RepGRF = Simulation(subID, 'U_SD2F_RepGRF')
         self.U_SD2F_RepKIN = Simulation(subID, 'U_SD2F_RepKIN')
@@ -358,8 +384,8 @@ class SubjectWithStairs(Subject):
         self.U_SD2S_RepKIN = Simulation(subID, 'U_SD2S_RepKIN')
         self.U_Walk_RepGRF = Simulation(subID, 'U_Walk_RepGRF')
         self.U_Walk_RepKIN = Simulation(subID, 'U_Walk_RepKIN')
-        print('Time elapsed: ' + str(int(time.time()-self.startTime)) + ' seconds')
         """
+        print 'Time elapsed for processing subject ' + self.subID + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
 
 """*******************************************************************
 *                   Group                                            *
@@ -370,7 +396,7 @@ class Group:
     def __init__(self):
 
         # Group info, cycles, summary
-        self.info = 'group'
+        print 'Time elapsed for processing group ' + self.__class__.name[:-5] + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
 
 # ####################################################################
 
@@ -381,15 +407,15 @@ class ControlGroup(Group):
         # Start time
         self.startTime = time.time()
         # Add subjects
-        #self.x20110622CONM = subject_noStairs('20110622CONM')
-        #self.x20110927CONM = subject_noStairs('20110927CONM')
-        #self.x20120306CONF = subject_noStairs('20120306CONF')
-        #self.x20121204CONF = subject_withStairs('20121204CONF')
-        #self.x20121205CONF = subject_withStairs('20121205CONF')
-        #self.x20121205CONM = subject_withStairs('20121205CONM')
-        #self.x20121206CONF = subject_withStairs('20121206CONF')
-        self.x20130221CONF = subject_withStairs('20130221CONF')
-        #self.x20130401CONM = subject_withStairs('20130401CONM')
+        #self.x20110622CONM = SubjectNoStairs('20110622CONM')
+        #self.x20110927CONM = SubjectNoStairs('20110927CONM')
+        #self.x20120306CONF = SubjectNoStairs('20120306CONF')
+        self.x20121204CONF = SubjectWithStairs('20121204CONF')
+        self.x20121205CONF = SubjectWithStairs('20121205CONF')
+        self.x20121205CONM = SubjectWithStairs('20121205CONM')
+        self.x20121206CONF = SubjectWithStairs('20121206CONF')
+        self.x20130221CONF = SubjectWithStairs('20130221CONF')
+        self.x20130401CONM = SubjectWithStairs('20130401CONM')
         # Add generic group attributes
         Group.__init__(self)
 
@@ -402,16 +428,16 @@ class HamstringGroup(Group):
         # Start time
         self.startTime = time.time()
         # Add subjects
-        #self.x20111130AHLM = subject_noStairs('20111130AHLM')
-        #self.x20120306AHRF = subject_noStairs('20120306AHRF')
-        #self.x20120313AHLM = subject_noStairs('20120313AHLM')
-        #self.x20120403AHLF = subject_noStairs('20120403AHLF')
-        #self.x20120912AHRF = subject_withStairs('20120912AHRF')
-        #self.x20120922AHRM = subject_withStairs('20120922AHRM')
-        #self.x20121008AHRM = subject_withStairs('20121008AHRM')
-        #self.x20121108AHRM = subject_withStairs('20121108AHRM')
-        #self.x20121110AHRM = subject_withStairs('20121110AHRM')
-        #self.x20130401AHLM = subject_withStairs('20130401AHLM')
+        #self.x20111130AHLM = SubjectNoStairs('20111130AHLM')
+        #self.x20120306AHRF = SubjectNoStairs('20120306AHRF')
+        #self.x20120313AHLM = SubjectNoStairs('20120313AHLM')
+        #self.x20120403AHLF = SubjectNoStairs('20120403AHLF')
+        self.x20120912AHRF = SubjectWithStairs('20120912AHRF')
+        self.x20120922AHRM = SubjectWithStairs('20120922AHRM')
+        self.x20121008AHRM = SubjectWithStairs('20121008AHRM')
+        self.x20121108AHRM = SubjectWithStairs('20121108AHRM')
+        self.x20121110AHRM = SubjectWithStairs('20121110AHRM')
+        self.x20130401AHLM = SubjectWithStairs('20130401AHLM')
         # Add generic group attributes
         Group.__init__(self)
 
@@ -424,16 +450,33 @@ class PatellaGroup(Group):
         # Start time
         self.startTime = time.time()
         # Add subjects
-        #self.x20110706APRF = subject_noStairs('20110706APRF')
-        #self.x20111025APRM = subject_noStairs('20111025APRM')
-        #self.x20120919APLF = subject_withStairs('20120919APLF')
-        #self.x20120920APRM = subject_withStairs('20120920APRM')
-        #self.x20121204APRM = subject_withStairs('20121204APRM')
-        #self.x20130207APRM = subject_withStairs('20130207APRM')
+        #self.x20110706APRF = SubjectNoStairs('20110706APRF')
+        #self.x20111025APRM = SubjectNoStairs('20111025APRM')
+        self.x20120919APLF = SubjectWithStairs('20120919APLF')
+        self.x20120920APRM = SubjectWithStairs('20120920APRM')
+        self.x20121204APRM = SubjectWithStairs('20121204APRM')
+        #self.x20130207APRM = SubjectWithStairs('20130207APRM') # ****
         # Add generic group attributes
         Group.__init__(self)
 
+"""*******************************************************************
+*                   Group                                            *
+*******************************************************************"""
 
+class SummaryOpenSim:
+
+    def __init__(self):
+    
+        # Start time
+        self.startTime = time.time()
+        # Add groups
+        self.Control = ControlGroup()        
+        self.HamstringACL = HamstringGroup()
+        self.PatellaACL = PatellaGroup()
+        # Summary information
+
+
+        
 """*******************************************************************
 *                                                                    *
 *                   Script Execution                                 *
@@ -441,5 +484,8 @@ class PatellaGroup(Group):
 *******************************************************************"""
 if __name__ == '__main__':
     # Create instance of class
-    test = Simulation('20130221CONF', 'A_Walk_RepGRF')
+    #simData = Simulation('20130221CONF', 'A_Walk_RepGRF')
+    subData = SubjectWithStairs('20130221CONF')
+    #groupData = ControlGroup()
+    #data = SummaryOpenSim()
 
