@@ -5,7 +5,7 @@
 
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified: 2013-08-23
+    Last Modified: 2013-08-30
 ----------------------------------------------------------------------
 """
 
@@ -17,6 +17,7 @@ import linecache
 import time
 from xml.dom.minidom import parse
 from multiprocessing import Pool
+from collections import defaultdict
 
 import numpy as np
 #import matplotlib.pyplot as plt
@@ -236,6 +237,15 @@ class CMC(RRAsuper):
 
 class Simulation:
 
+    """
+    np.arange(101) instead of np.linspace
+    - when modifying a view, the original array is modified as well -- transpose is a 'view'
+    - 'fancy indexing' creates copies not views
+    - flattening an array: 'ravel' method
+    - masked arrays for missing data (instead of using NaN for example)
+    """
+
+
     def __init__(self, subID, simName):
 
         # Subject ID
@@ -331,8 +341,30 @@ class SubjectNoStairs(Subject):
 
     def __init__(self, subID):
 
+        """
+        UPDATE WITH COMMENTS FROM SUBJECT WITH STAIRS     
+        """
+                
         # Create instance of class from superclass
         Subject.__init__(self, subID)
+        
+        # Simulation names
+        simDescriptors = ['A_SD2F_RepGRF', 'A_SD2F_RepKIN', 'A_Walk_RepGRF', 'A_Walk_RepKIN', 
+                          'U_SD2F_RepGRF', 'U_SD2F_RepKIN', 'U_Walk_RepGRF', 'U_Walk_RepKIN']
+        simNames = [subID + '_' + descriptor for descriptor in simDescriptors]
+        global simObjList
+        simObjList = []
+        # Start worker pool
+        pool = Pool(processes=8)
+        # Run parallel processes
+        pool.map_async(runParallel, simNames, callback=createSimList)
+        # Clean up spawned processes
+        pool.close()
+        pool.join()
+        # Add attributes
+        for simObj in simObjList[0]:
+            setattr(self, simObj.simName, simObj)
+        
         """
         self.A_SD2F_RepGRF = Simulation(subID, 'A_SD2F_RepGRF')
         self.A_SD2F_RepKIN = Simulation(subID, 'A_SD2F_RepKIN')
@@ -343,6 +375,8 @@ class SubjectNoStairs(Subject):
         self.U_Walk_RepGRF = Simulation(subID, 'U_Walk_RepGRF')
         self.U_Walk_RepKIN = Simulation(subID, 'U_Walk_RepKIN')
         """
+        
+        print 'Time elapsed for processing subject ' + self.subID + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
 
 # ####################################################################
 
@@ -350,28 +384,37 @@ class SubjectWithStairs(Subject):
 
     def __init__(self, subID):
 
+        """
+        THINGS TO UNDERSTAND:
+        - why does it take a long time on the first run (seems to be serial)?
+        - when adding simulation attributes, why is the list nested (need to call simObjList[0])??
+        - need to define simObjList as global within the function definition for creating the list?? (see page 24 in Evernote manual)
+        """        
+        
         # Create instance of class from superclass
         Subject.__init__(self, subID)
-
-        # Simulation names
+        # Prepare to process in parallel
+        # Simulation descriptors
         simDescriptors = ['A_SD2F_RepGRF', 'A_SD2F_RepKIN', 'A_SD2S_RepGRF', 'A_SD2S_RepKIN',
                           'A_Walk_RepGRF', 'A_Walk_RepKIN', 'U_SD2F_RepGRF', 'U_SD2F_RepKIN',
                           'U_SD2S_RepGRF', 'U_SD2S_RepKIN', 'U_Walk_RepGRF', 'U_Walk_RepKIN']
+        # List of simulation names
         simNames = [subID + '_' + descriptor for descriptor in simDescriptors]
+        # Initialize global variable for simulation objects
         global simObjList
         simObjList = []
         # Start worker pool
         pool = Pool(processes=12)
-        # Run parallel processes
+        # Run parallel processes to process simulations and append object to global list
         pool.map_async(runParallel, simNames, callback=createSimList)
         # Clean up spawned processes
         pool.close()
         pool.join()
-        # Add attributes
+        # Add simulations as attributes to subject object
         for simObj in simObjList[0]:
-            setattr(self, simObj.simName, simObj)        
-
+            setattr(self, simObj.simName, simObj)
         """
+        # Process simulations serially
         self.A_SD2F_RepGRF = Simulation(subID, 'A_SD2F_RepGRF')
         self.A_SD2F_RepKIN = Simulation(subID, 'A_SD2F_RepKIN')
         self.A_SD2S_RepGRF = Simulation(subID, 'A_SD2S_RepGRF')
@@ -385,6 +428,7 @@ class SubjectWithStairs(Subject):
         self.U_Walk_RepGRF = Simulation(subID, 'U_Walk_RepGRF')
         self.U_Walk_RepKIN = Simulation(subID, 'U_Walk_RepKIN')
         """
+        # Display message to user
         print 'Time elapsed for processing subject ' + self.subID + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
 
 """*******************************************************************
@@ -396,7 +440,63 @@ class Group:
     def __init__(self):
 
         # Group info, cycles, summary
-        print 'Time elapsed for processing group ' + self.__class__.name[:-5] + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
+        
+        
+        # Identify the group attributes that are 'Subjects' and put in a list
+        subjectObjs = []
+        for key, value in self.__dict__.iteritems():
+            if 'Subject' in value.__class__.__name__:
+                subjectObjs.append(getattr(self, key))
+        # Sort subject list by subject ID     
+        subjectObjs = sorted(subjectObjs, key=lambda subjectObj: subjectObj.subID) 
+        # All possibilities of cycle types
+        cycleNames = ['A_SD2F','A_SD2S','A_Walk','U_SD2F','U_SD2S','U_Walk']
+        # Create a nested dictionary
+        cycleDict = defaultdict(dict)
+        
+        """
+        THINGS TO CHECK IN DOCUMENTATION
+        - method to append(?) an array to an existing array along a specific dimension
+        - include percent cycle to mean and standard deviation record arrays
+        - better way to make record array, rather than converting to list of columns??
+        - should i use record arrays at all, or switch to dictionaries?? -- speed consideration??
+        """
+        
+        # Loop through cycles
+        for cycle in cycleNames:
+            # Initialize empty 3d array        
+            allData = np.empty([101, 10, len(subjectObjs)*2])
+            # Loop through subjects
+            for (i,subjectObj) in enumerate(subjectObjs):
+                try:
+                    # Convert record array to regular array and assign
+                    allData[:,:,2*i] = getattr(subjectObj, cycle + '_RepGRF').muscleForces.view((np.float64, len(getattr(subjectObj, cycle + '_RepGRF').muscleForces.dtype.names)))[:,1:]
+                except:
+                    allData[:,:,2*i] = np.ones([101,10])
+                    print 'Problem with ' + subjectObj.subID + '_' + cycle + '_RepGRF'
+                try:
+                    allData[:,:,2*i+1] = getattr(subjectObj, cycle + '_RepKIN').muscleForces.view((np.float64, len(getattr(subjectObj, cycle + '_RepKIN').muscleForces.dtype.names)))[:,1:]
+                except:
+                    allData[:,:,2*i+1] = np.ones([101,10])
+                    print 'Problem with ' + subjectObj.subID + '_' + cycle + '_RepKIN'
+            # Calculate average along third dimension of array (axis 2) for all muscles
+            meanData = np.mean(allData, axis=2)
+            # Convert to a list of individual columns
+            meanDataList = [meanData[:,col] for col in range(np.size(meanData, axis=1))]
+            # Calculate standard deviation along third dimension of array (axis 2) for all muscles
+            stdevData = np.std(allData, axis=2)
+            # Convert to a list of individual columns
+            stdevDataList = [stdevData[:,col] for col in range(np.size(stdevData, axis=1))]     
+            #  #forceNames = ['percentCycle'] + getattr(subjectObj, cycle + '_RepGRF').muscles     
+            # Get names of muscles
+            forceNames = getattr(subjectObj, cycle + '_RepGRF').muscles
+            # Add to nested dictionary first by cycle type
+            cycleDict[cycle]['mean'] = np.core.records.fromarrays(meanDataList, names=forceNames)
+            cycleDict[cycle]['stdev'] = np.core.records.fromarrays(stdevDataList, names=forceNames)
+        # Assign summary attribute    
+        self.summary = cycleDict
+        # Display message to user
+        print 'Time elapsed for processing group ' + self.__class__.__name__[:-5] + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
 
 # ####################################################################
 
@@ -460,7 +560,7 @@ class PatellaGroup(Group):
         Group.__init__(self)
 
 """*******************************************************************
-*                   Group                                            *
+*                   Summary                                          *
 *******************************************************************"""
 
 class SummaryOpenSim:
@@ -485,7 +585,7 @@ class SummaryOpenSim:
 if __name__ == '__main__':
     # Create instance of class
     #simData = Simulation('20130221CONF', 'A_Walk_RepGRF')
-    subData = SubjectWithStairs('20130221CONF')
-    #groupData = ControlGroup()
+    #subData = SubjectWithStairs('20130221CONF')
+    groupData = ControlGroup()
     #data = SummaryOpenSim()
 
