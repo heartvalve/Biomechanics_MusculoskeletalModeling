@@ -4,13 +4,13 @@ classdef patellaGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2013-09-06
     
     
     %% Properties
     % Properties for the patellaGroup class
     
-    properties (SetAccess = private)
+    properties
 %         x20110706APRF
 %         x20111025APRM
         x20120919APLF
@@ -28,13 +28,8 @@ classdef patellaGroup < OpenSim.group
             % PATELLAGROUP - Construct instance of class
             %
             
-            % Add properties based on subject type
-%             obj.x20110706APRF = OpenSim.subjectPartial('20110706APRF');
-%             obj.x20111025APRM = OpenSim.subjectPartial('20111025APRM');
-            obj.x20120919APLF = OpenSim.subjectFull('20120919APLF');
-            obj.x20120920APRM = OpenSim.subjectFull('20120920APRM');
-            obj.x20121204APRM = OpenSim.subjectFull('20121204APRM');
-%             obj.x20130207APRM = OpenSim.subjectFull('20130207APRM');
+            % Create instance of class from superclass
+            obj = obj@OpenSim.group();
         end
     end
     

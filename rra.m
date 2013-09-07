@@ -4,7 +4,16 @@ classdef rra < OpenSim.rraSuper
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2013-09-06
+    
+    
+    %% Properties
+    % Properties for the rra class
+    
+    properties
+        residuals     % Residuals
+    end
+    
     
     
     %% Methods

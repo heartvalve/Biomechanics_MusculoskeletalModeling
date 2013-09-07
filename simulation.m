@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2013-09-06
     
     
     %% Properties
@@ -87,12 +87,27 @@ classdef simulation < handle
             obj.rra = OpenSim.rra(subID,simName);
             % CMC
             obj.cmc = OpenSim.cmc(subID,simName);
+            % Residuals (focus on cycle region)
+            [~,iStart] = min(abs(obj.rra.actuation.force.time-obj.grf.cycleTime(1)));
+            [~,iStop] = min(abs(obj.rra.actuation.force.time-obj.grf.cycleTime(2)));
+            residuals = {'FX','FY','FZ','MX','MY','MZ'};
+            meanData = zeros(1,6);
+            rmsData = zeros(1,6);            
+            maxData = zeros(1,6);
+            for i = 1:6
+                meanData(i) = mean(obj.rra.actuation.force.(residuals{i})(iStart:iStop));
+                rmsData(i) = rms(obj.rra.actuation.force.(residuals{i})(iStart:iStop));
+                maxData(i) = max(abs(obj.rra.actuation.force.(residuals{i})(iStart:iStop)));
+            end
+            obj.rra.residuals.mean = dataset({meanData,residuals{:}});
+            obj.rra.residuals.rms = dataset({rmsData,residuals{:}});
+            obj.rra.residuals.max = dataset({maxData,residuals{:}});
             % Interpolate muscle forces over normalized time window
             xi = linspace(obj.grf.cycleTime(1),obj.grf.cycleTime(2),101);
             iForces = zeros(101,length(obj.muscles));
             for i = 1:length(obj.muscles)
                 try
-                    iForces(:,i) = interp1(obj.cmc.actuation.force.time, obj.cmc.actuation.force.([obj.muscles{i},'_',obj.leg]), xi, 'spline');
+                    iForces(:,i) = interp1(obj.cmc.actuation.force.time, obj.cmc.actuation.force.([obj.muscles{i},'_',obj.leg]), xi, 'spline', NaN);
                 catch err
                     iForces = nan(101,length(obj.muscles));
                     break
@@ -104,24 +119,28 @@ classdef simulation < handle
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function plotResiduals(obj,fig_handle,axes_handles)
+        function plotResiduals(obj,varargin)
             % PLOTRESIDUALS
             %
             
-            % Defaults & error checking
-            if nargin ~= 3
-                fig_handle = figure('Name','Residuals','NumberTitle','off');
-                axes_handles = zeros(1,6);
-                for k = 1:6
-                    axes_handles(k) = subplot(3,2,k);
-                end
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.simulation');
+            defaultFigHandle = figure('Name','Residuals','NumberTitle','off');
+            defaultAxesHandles = zeros(1,6);
+            for k = 1:6
+                defaultAxesHandles(k) = subplot(3,2,k);
             end
+            p.addRequired('obj',checkObj);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
             % Residuals
             rNames = {'FX','MX','FY','MY','FZ','MZ'};
             % Plot
-            figure(fig_handle);
+            figure(p.Results.fig_handle);
             for j = 1:6
-                set(fig_handle,'CurrentAxes',axes_handles(j));
+                set(p.Results.fig_handle,'CurrentAxes',p.Results.axes_handles(j));
                 XplotResiduals(obj,rNames{j});
             end
             % -------------------------------------------------------------
@@ -131,21 +150,14 @@ classdef simulation < handle
                 % XPLOTRESIDUALS
                 %
                 
-                % Plot
-                plot(obj.rra.actuation.force.time,obj.rra.actuation.force.(residual),'Color','b','LineWidth',2); hold on;
-                % Focus on cycle region
-                temp = abs(obj.rra.actuation.force.time-obj.grf.cycleTime(1));
-                [~,iStart] = min(temp);
-                temp = abs(obj.rra.actuation.force.time-obj.grf.cycleTime(2));
-                [~,iStop] = min(temp);
+                % Plot                
+                plot(obj.rra.actuation.force.time,obj.rra.actuation.force.(residual),'Color','b','LineWidth',2);
                 % Average
-                plot([obj.rra.actuation.force.time(iStart) obj.rra.actuation.force.time(iStop)],...
-                     [mean(obj.rra.actuation.force.(residual)(iStart:iStop)) mean(obj.rra.actuation.force.(residual)(iStart:iStop))],...
-                     'Color','r','LineWidth',2);
+                plot(obj.grf.cycleTime,[obj.rra.residuals.mean.(residual) obj.rra.residuals.mean.(residual)],...
+                    'Color','r','LineWidth',1,'LineStyle',':');
                 % RMS
-% %                 plot([obj.rra.actuation.force.time(iStart) obj.rra.actuation.force.time(iStop)],...
-% %                      [rms(obj.rra.actuation.force.(residual)(iStart:iStop)) rms(obj.rra.actuation.force.(residual)(iStart:iStop))],...
-% %                      'Color','g','LineWidth',2);
+                plot(obj.grf.cycleTime,[obj.rra.residuals.rms.(residual) obj.rra.residuals.rms.(residual)],...
+                    'Color','r','LineWidth',1,'LineStyle','-');
                 % Horizontal line at zero
                 plot(obj.grf.cycleTime,[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
                 % Axes properties
@@ -169,17 +181,17 @@ classdef simulation < handle
             validMuscles = [obj.muscles,{'All','Quads','Hamstrings','Gastrocs'}];
             defaultMuscle = 'All';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
-            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultFigHandle = figure('NumberTitle','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);
             p.addOptional('muscle',defaultMuscle,checkMuscle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
-            % Shortcut references to input arguments
+            % Shortcut references to input arguments (and updates)
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)                
-                set(fig_handle,'Name',['Muscle Forces - ',p.Results.muscle],'Visible','on');
+                set(fig_handle,'Name',['Muscle Forces - ',p.Results.muscle]);
                 [axes_handles,mNames] = OpenSim.getAxesAndMuscles(obj,p.Results.muscle);
             else
                 axes_handles = p.Results.axes_handles;

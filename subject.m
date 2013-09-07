@@ -4,17 +4,18 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2013-09-06
     
     
     %% Properties
     % Properties for the subject class
     
     properties (SetAccess = private)
-        subID   % Subject ID        
+        subID           % Subject ID
+        maxIsometric    % Maximum isometric muscle force
     end
     properties (Hidden = true, SetAccess = private)
-        subDir  % Directory where files are stored
+        subDir          % Directory where files are stored
     end
     
     
@@ -32,10 +33,10 @@ classdef subject < handle
             % Subject ID
             obj.subID = subID;
             % Subject directory
-            obj.subDir = OpenSim.getSubjectDir(subID);
+            obj.subDir = OpenSim.getSubjectDir(subID);            
             % Identify subclass properties (simulation names)
             allProps = properties(obj);
-            simNames = allProps(1:end-1);
+            simNames = allProps(1:end-2);
             % Preallocate and do a parallel loop
             tempData = cell(length(simNames),1);
             parfor i = 1:length(simNames)
@@ -46,6 +47,25 @@ classdef subject < handle
             for i = 1:length(simNames)
                 obj.(simNames{i}) = tempData{i};
             end
+            % Isometric muscle forces            
+            muscles = obj.(simNames{1}).muscles;
+            muscleLegs = cell(size(muscles));
+            for i = 1:length(muscles)
+                muscleLegs{i} = [muscles{i},'_r'];
+            end
+            maxForces = cell(1,length(muscles));
+            maxForces = dataset({maxForces,muscles{:}});
+            % Parse xml
+            modelFile = [obj.subDir,filesep,obj.subID,'.osim'];
+            domNode = xmlread(modelFile);            
+            maxIsoNodeList = domNode.getElementsByTagName('max_isometric_force');
+            for i = 1:maxIsoNodeList.getLength
+                if any(strcmp(maxIsoNodeList.item(i-1).getParentNode.getAttribute('name'),muscleLegs))
+                    musc = char(maxIsoNodeList.item(i-1).getParentNode.getAttribute('name'));
+                    maxForces.(musc(1:end-2)) = str2double(char(maxIsoNodeList.item(i-1).getFirstChild.getData));
+                end
+            end
+            obj.maxIsometric = maxForces;
         end
         % *****************************************************************
         %       Plotting Methods
@@ -60,7 +80,9 @@ classdef subject < handle
             validCycles = {'Walk','SD2F','SD2S'};
             defaultCycle = 'Walk';
             checkCycle = @(x) any(validatestring(x,validCycles));
-            validMuscles = [obj.A_Walk_RepGRF.muscles,{'All','Quads','Hamstrings','Gastrocs'}];
+            subProps = properties(obj);
+            simObj = obj.(subProps{1});
+            validMuscles = [simObj.muscles,{'All','Quads','Hamstrings','Gastrocs'}];
             defaultMuscle = 'All';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
@@ -73,7 +95,6 @@ classdef subject < handle
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
-            simObj = obj.(['A_',p.Results.cycle,'_RepGRF']); % temporary variable
             if ~isempty(p.UsingDefaults)          
                 set(fig_handle,'Name',['Muscle Forces - ',p.Results.muscle],'Visible','on');
                 [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
@@ -91,39 +112,6 @@ classdef subject < handle
                 set(fig_handle,'CurrentAxes',subplot(3,4,11:12));
                 set(gca,'Visible','off');
             end
-
-            
-% % %             % Defaults & error checking
-% % %             if nargin == 1
-% % %                 allCycles = {'Walk','SD2F','SD2S'};
-% % %                 [s,~] = listdlg('PromptString','Please select a cycle to plot:', ...
-% % %                                 'SelectionMode','single', ...
-% % %                                 'ListString',allCycles, ...
-% % %                                 'ListSize',[160 160]);
-% % %                 cycle = allCycles{s};
-% % %                 muscle = 'All';
-% % %             elseif nargin == 2
-% % %                 if ~max(strcmp(cycle,{'Walk','SD2F','SD2S'}))
-% % %                     error('*** Argument must be a valid cycle name (Walk, SD2F, SD2S)');
-% % %                 end
-% % %                 muscle = 'All';
-% % %             elseif nargin == 3
-% % %                 if ~max(strcmp(cycle,{'Walk','SD2F','SD2S'}))
-% % %                     error('*** Argument must be a valid cycle name (Walk, SD2F, SD2S)');
-% % %                 end
-% % %                 simObj = obj.(['A_',cycle,'_RepGRF']);
-% % %                 if ~max(strcmp(muscle,simObj.muscles)) && ...
-% % %                    ~max(strcmp(muscle,{'All','Quads','Hamstrings','Gastrocs'}))
-% % %                     error('*** Argument must be a valid muscle name or group (All, Quads, Hamstrings, Gastrocs)');
-% % %                 end
-% % %             end
-% % %             % Set up figure and axes handles; get individual muscle names
-% % %             if nargin ~= 5
-% % %                fig_handle = figure('Name',[cycle,' - Muscle Forces - ',muscle],'NumberTitle','off');
-% % %                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(obj,muscle);
-% % %             else
-% % %                 [~,mNames] = OpenSim.getAxesAndMuscles(obj,muscle);
-% % %             end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
@@ -132,11 +120,11 @@ classdef subject < handle
                 %
                
                 % Plot uninvolved leg (or left leg for controls)
-                plot((0:100)',obj.(['U_',cycle,'_RepGRF']).muscleForces.(muscle),'Color','b','LineWidth',2,'LineStyle','-'); hold on;
-                plot((0:100)',obj.(['U_',cycle,'_RepKIN']).muscleForces.(muscle),'Color','b','LineWidth',2,'LineStyle','--');
+                plot((0:100)',obj.(['U_',cycle,'_RepGRF']).muscleForces.(muscle),'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','-'); hold on;
+                plot((0:100)',obj.(['U_',cycle,'_RepKIN']).muscleForces.(muscle),'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','--');
                 % Plot ACLR leg (or right leg for controls)
-                plot((0:100)',obj.(['A_',cycle,'_RepGRF']).muscleForces.(muscle),'Color','g','LineWidth',2,'LineStyle','-');
-                plot((0:100)',obj.(['A_',cycle,'_RepKIN']).muscleForces.(muscle),'Color','g','LineWidth',2,'LineStyle','--');
+                plot((0:100)',obj.(['A_',cycle,'_RepGRF']).muscleForces.(muscle),'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','-');
+                plot((0:100)',obj.(['A_',cycle,'_RepKIN']).muscleForces.(muscle),'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','--');
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
