@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-06
+    % Last Modified 2013-09-17
     
     
     %% Properties
@@ -66,12 +66,16 @@ classdef subject < handle
                 end
             end
             obj.maxIsometric = maxForces;
+            % Add normalized muscle forces property to individual simulations
+            
+            
+            
         end
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function plotMuscleForces(obj,varargin)
-            % PLOTMUSCLEFORCES
+        function varargout = plotMuscleForces(obj,varargin)
+            % PLOTMUSCLEFORCES - Compare involved leg vs. uninvolved leg (2 trials per leg) for a given cycle
             %
             
             % Parse inputs
@@ -96,7 +100,7 @@ classdef subject < handle
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Muscle Forces - ',p.Results.muscle],'Visible','on');
+                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.muscle,') for ',p.Results.cycle,' Cycle - Uninvovled vs. Involved'],'Visible','on');
                 [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
             else
                 axes_handles = p.Results.axes_handles;
@@ -112,19 +116,36 @@ classdef subject < handle
                 set(fig_handle,'CurrentAxes',subplot(3,4,11:12));
                 set(gca,'Visible','off');
             end
+            % Legend
+            lStruct = struct;
+            axesH = get(axes_handles(1),'Children');
+            lStruct.axesHandles = axesH;
+            if isa(obj,'OpenSim.controlGroup')
+                lStruct.names = {'Left (GRF)'; 'Left (KIN)'; 'Right (GRF)'; 'Right (KIN)'};
+            else
+                lStruct.names = {'Uninvovled (GRF)'; 'Uninvovled (KIN)'; 'ACLR (GRF)'; 'ACLR (KIN)'};
+            end
+            % Return (to GUI)
+            if nargout == 1
+                varargout{1} = lStruct;
+            end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
             function XplotMuscleForces(obj,cycle,muscle)
-                % XPLOTMUSCLEFORCES
+                % XPLOTMUSCLEFORCES - Worker function to plot muscle forces for a specific cycle and muscle
                 %
                
                 % Plot uninvolved leg (or left leg for controls)
-                plot((0:100)',obj.(['U_',cycle,'_RepGRF']).muscleForces.(muscle),'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','-'); hold on;
-                plot((0:100)',obj.(['U_',cycle,'_RepKIN']).muscleForces.(muscle),'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','--');
+                plot((0:100)',obj.(['U_',cycle,'_RepGRF']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                                    'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','-'); hold on;
+                plot((0:100)',obj.(['U_',cycle,'_RepKIN']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                                    'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','--');
                 % Plot ACLR leg (or right leg for controls)
-                plot((0:100)',obj.(['A_',cycle,'_RepGRF']).muscleForces.(muscle),'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','-');
-                plot((0:100)',obj.(['A_',cycle,'_RepKIN']).muscleForces.(muscle),'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','--');
+                plot((0:100)',obj.(['A_',cycle,'_RepGRF']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                                    'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','-');
+                plot((0:100)',obj.(['A_',cycle,'_RepKIN']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                                    'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','--');
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
@@ -134,7 +155,7 @@ classdef subject < handle
                 % Labels
                 title(upper(muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('Muscle Force (N)');
+                ylabel('% Max Isometric Force');
             end
         end
     end

@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-06
+    % Last Modified 2013-09-17
     
     
     %% Properties
@@ -56,8 +56,6 @@ classdef group < handle
             %       Cycles
             % -------------------------------------------------------------
             cstruct = struct();
-%             cstruct = struct('A_SD2F',{},'A_SD2S',{},'A_Walk',{},...
-%                              'U_SD2F',{},'U_SD2S',{},'U_Walk',{});
             cycleNames = {'A_SD2F','A_SD2S','A_Walk','U_SD2F','U_SD2S','U_Walk'};
             cycleTypes = {'RepGRF','RepKIN'};
             % Loop through subjects
@@ -71,8 +69,11 @@ classdef group < handle
                             % Check if field exists (if not, create)
                             if ~isfield(cstruct,cycleNames{k})
                                 cstruct.(cycleNames{k}) = struct();
-                                % Muscle forces
-                                cstruct.(cycleNames{k}).muscleForces = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).muscleForces;
+                                % Muscle forces (normalized)
+                                mNames = obj.(subjects{j}).maxIsometric.Properties.VarNames;
+                                for p = 1:length(mNames)
+                                    cstruct.(cycleNames{k}).muscleForces.(mNames{p}) = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).muscleForces.(mNames{p})./obj.(subjects{j}).maxIsometric.(mNames{p}).*100;
+                                end
                                 % Subject / type name
                                 cstruct.(cycleNames{k}).subjects = {[subjects{j}(2:end),'_',cycleTypes{m}]};
                             % If field exists, append new to existing
@@ -80,9 +81,9 @@ classdef group < handle
                                 % Muscle forces
                                 oldM = cstruct.(cycleNames{k}).muscleForces;
                                 newM = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).muscleForces;
-                                mProps = newM.Properties.VarNames;
-                                for p = 1:length(mProps)
-                                    newM.(mProps{p}) = [oldM.(mProps{p}) newM.(mProps{p})];
+                                mNames = newM.Properties.VarNames;
+                                for p = 1:length(mNames)
+                                    newM.(mNames{p}) = [oldM.(mNames{p}) newM.(mNames{p})./obj.(subjects{j}).maxIsometric.(mNames{p}).*100];
                                 end
                                 cstruct.(cycleNames{k}).muscleForces = newM;
                                 % Subject / type names
@@ -162,7 +163,7 @@ classdef group < handle
         %       Plotting Methods
         % *****************************************************************
         function varargout = plotMuscleForces(obj,varargin)
-            % PLOTMUSCLEFORCES
+            % PLOTMUSCLEFORCES - Compare involved leg vs. uninvolved leg (group mean +/- standard deviation) for a given cycle
             %
             
             % Parse inputs
@@ -188,7 +189,7 @@ classdef group < handle
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Muscle Forces - ',p.Results.muscle],'Visible','on');
+                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.muscle,') for ',p.Results.cycle,' Cycle - Uninvovled vs. Involved'],'Visible','on');
                 [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
             else
                 axes_handles = p.Results.axes_handles;
@@ -204,11 +205,24 @@ classdef group < handle
                 set(fig_handle,'CurrentAxes',subplot(3,4,11:12));
                 set(gca,'Visible','off');
             end
+            % Legend
+            lStruct = struct;
+            axesH = get(axes_handles(1),'Children');
+            lStruct.axesHandles = axesH(1:2);
+            if isa(obj,'OpenSim.controlGroup')
+                lStruct.names = {'Left'; 'Right'};
+            else
+                lStruct.names = {'Uninvovled'; 'ACLR'};
+            end
+            % Return (to GUI)
+            if nargout == 1
+                varargout{1} = lStruct;
+            end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
             function XplotMuscleForces(obj,cycle,muscle)
-                % XPLOTMUSCLEFORCES
+                % XPLOTMUSCLEFORCES - Worker function to plot muscle forces for a specific cycle and muscle
                 %
                
                 % Percent cycle
@@ -244,12 +258,12 @@ classdef group < handle
                 % Labels
                 title(upper(muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('Muscle Force (N)');
+                ylabel('% Max Isometric Force');
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function varargout = troubleshootMuscleForces(obj,varargin)
-            % TROUBLESHOOTMUSCLEFORCES
+            % TROUBLESHOOTMUSCLEFORCES - Compare individual subjects to the group mean for a leg-specific cycle
             %
             
             % Parse inputs
@@ -275,7 +289,7 @@ classdef group < handle
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Muscle Forces - ',p.Results.muscle],'Visible','on');
+                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.muscle,') for ',p.Results.cycle],'Visible','on');
                 [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
             else
                 axes_handles = p.Results.axes_handles;
@@ -293,9 +307,9 @@ classdef group < handle
             end
             % Legend
             lStruct = struct;
-            axesH = get(gca,'Children');
+            axesH = get(axes_handles(1),'Children');
             lStruct.axesHandles = axesH(1:end-1);
-%             lStruct.names = ['Mean'; GroupInst.Cycles{Cycle,'Subjects'}];           
+            lStruct.names = ['Mean'; obj.cycles{p.Results.cycle,'subjects'}];           
             % Return (to GUI)
             if nargout == 1
                 varargout{1} = lStruct;
@@ -304,7 +318,7 @@ classdef group < handle
             %   Subfunction
             % -------------------------------------------------------------
             function XtroubleshootMuscleForces(obj,cycle,muscle)
-                % XTROUBLESHOOTMUSCLEFORCES
+                % XTROUBLESHOOTMUSCLEFORCES - Worker function to plot muscle forces (mean and individual traces) for a leg-specific cycle and muscle
                 %
                
                 % Percent cycle
@@ -340,7 +354,7 @@ classdef group < handle
                 % Labels
                 title(upper(muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('Muscle Force (N)');
+                ylabel('% Max Isometric Force');
             end            
         end
     end

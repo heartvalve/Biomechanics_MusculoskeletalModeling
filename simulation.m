@@ -4,28 +4,31 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-06
+    % Last Modified 2013-09-17
     
     
     %% Properties
     % Properties for the simulation class
     
     properties (SetAccess = private)        
-        subID           % Subject ID
-        simName         % Simulation name
-        model           % Generic model
-        muscles         % Muscle names
-        leg             % Cycle leg
-        trc             % Marker data - input to simulation
-        grf             % Ground Reaction Force data - input to simulation
-        ik              % Inverse Kinematics solution
-        id              % Inverse Dynamics solution
-        rra             % Residual Reduction Algorithm solution
-        cmc             % Computed Muscle Control solution
-        muscleForces    % Muscle forces (summarized from CMC)
+        subID               % Subject ID
+        simName             % Simulation name
+        model               % Generic model
+        muscles             % Muscle names
+        leg                 % Cycle leg
+        trc                 % Marker data - input to simulation
+        grf                 % Ground Reaction Force data - input to simulation
+        ik                  % Inverse Kinematics solution
+        id                  % Inverse Dynamics solution
+        rra                 % Residual Reduction Algorithm solution
+        cmc                 % Computed Muscle Control solution
+        muscleForces        % Muscle forces (summarized from CMC)
     end
     properties (Hidden = true, SetAccess = private)
-        subDir          % Directory where files are stored
+        subDir              % Directory where files are stored
+    end
+    properties (Hidden = true)
+        normMuscleForces    % Normalized muscle forces
     end
     
     
@@ -119,7 +122,7 @@ classdef simulation < handle
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function plotResiduals(obj,varargin)
+        function varargout = plotResiduals(obj,varargin)
             % PLOTRESIDUALS
             %
             
@@ -171,7 +174,7 @@ classdef simulation < handle
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-        function plotMuscleForces(obj,varargin)
+        function varargout = plotMuscleForces(obj,varargin)
             % PLOTMUSCLEFORCES
             %
             
