@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-17
+    % Last Modified 2013-09-18
     
     
     %% Properties
@@ -300,10 +300,6 @@ classdef group < handle
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
                 XtroubleshootMuscleForces(obj,p.Results.cycle,mNames{j});
-            end
-            if strcmp(p.Results.muscle,'All')
-                set(fig_handle,'CurrentAxes',subplot(3,4,11:12));
-                set(gca,'Visible','off');
             end
             % Legend
             lStruct = struct;

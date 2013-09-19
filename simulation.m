@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-17
+    % Last Modified 2013-09-18
     
     
     %% Properties
@@ -122,28 +122,36 @@ classdef simulation < handle
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function varargout = plotResiduals(obj,varargin)
+        function plotResiduals(obj,varargin)
             % PLOTRESIDUALS
             %
             
             % Parse inputs
             p = inputParser;
             checkObj = @(x) isa(x,'OpenSim.simulation');
-            defaultFigHandle = figure('Name','Residuals','NumberTitle','off');
-            defaultAxesHandles = zeros(1,6);
-            for k = 1:6
-                defaultAxesHandles(k) = subplot(3,2,k);
-            end
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Residuals
             rNames = {'FX','MX','FY','MY','FZ','MZ'};
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)          
+                set(fig_handle,'Name','Residuals','Visible','on');
+                axes_handles = zeros(1,6);
+                for k = 1:6
+                    axes_handles(k) = subplot(3,2,k);
+                end
+            else
+                axes_handles = p.Results.axes_handles;
+            end
             % Plot
-            figure(p.Results.fig_handle);
+            figure(fig_handle);
             for j = 1:6
-                set(p.Results.fig_handle,'CurrentAxes',p.Results.axes_handles(j));
+                set(fig_handle,'CurrentAxes',axes_handles(j));
                 XplotResiduals(obj,rNames{j});
             end
             % -------------------------------------------------------------
@@ -154,7 +162,7 @@ classdef simulation < handle
                 %
                 
                 % Plot                
-                plot(obj.rra.actuation.force.time,obj.rra.actuation.force.(residual),'Color','b','LineWidth',2);
+                plot(obj.rra.actuation.force.time,obj.rra.actuation.force.(residual),'Color','b','LineWidth',2); hold on;
                 % Average
                 plot(obj.grf.cycleTime,[obj.rra.residuals.mean.(residual) obj.rra.residuals.mean.(residual)],...
                     'Color','r','LineWidth',1,'LineStyle',':');
@@ -174,7 +182,7 @@ classdef simulation < handle
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
-        function varargout = plotMuscleForces(obj,varargin)
+        function plotMuscleForces(obj,varargin)
             % PLOTMUSCLEFORCES
             %
             
@@ -184,7 +192,7 @@ classdef simulation < handle
             validMuscles = [obj.muscles,{'All','Quads','Hamstrings','Gastrocs'}];
             defaultMuscle = 'All';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
-            defaultFigHandle = figure('NumberTitle','off');
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);
             p.addOptional('muscle',defaultMuscle,checkMuscle);
@@ -205,10 +213,6 @@ classdef simulation < handle
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
                 XplotMuscleForces(obj,mNames{j});
-            end
-            if strcmp(p.Results.muscle,'All')
-                set(fig_handle,'CurrentAxes',subplot(3,4,11:12));
-                set(gca,'Visible','off');
             end
             % -------------------------------------------------------------
             %   Subfunction

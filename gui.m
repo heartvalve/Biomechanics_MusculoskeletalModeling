@@ -4,7 +4,7 @@ function gui(dataSummary)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-17
+    % Last Modified 2013-09-18
     
     
     %% Input
@@ -274,23 +274,10 @@ function gui(dataSummary)
                                       'Position',[0 0.675 0.75 0.1], ...
                                       'String',{''}, ...
                                       'Callback',{@hSimulationMethodList_Callback});
-    hSimulationCycleHeader = uicontrol('Parent',hSimulationMenuPanel, ...
-                                       'Style','text', ...
-                                       'Units','normalized', ...
-                                       'Position',[0 0.55 0.75 0.1], ...
-                                       'String','Cycle', ...
-                                       'FontWeight','bold', ...
-                                       'HorizontalAlignment','left', ...    
-                                       'BackgroundColor',get(hFigure,'color'));
-    hSimulationCycleList = uicontrol('Parent',hSimulationMenuPanel, ...
-                                     'Style','popupmenu', ...
-                                     'Units','normalized', ...
-                                     'Position',[0 0.475 0.75 0.1], ...
-                                     'String',{''});
     hSimulationSpecifierHeader = uicontrol('Parent',hSimulationMenuPanel, ...
                                            'Style','text', ...
                                            'Units','normalized', ...
-                                           'Position',[0 0.35 0.75 0.1], ...
+                                           'Position',[0 0.55 0.75 0.1], ...
                                            'String','Specifier', ...
                                            'FontWeight','bold', ...
                                            'HorizontalAlignment','left', ...    
@@ -298,12 +285,12 @@ function gui(dataSummary)
     hSimulationSpecifierList = uicontrol('Parent',hSimulationMenuPanel, ...
                                          'Style','popupmenu', ...
                                          'Units','normalized', ...
-                                         'Position',[0 0.275 0.75 0.1], ...
+                                         'Position',[0 0.475 0.75 0.1], ...
                                          'String',{''});                          
     hSimulationUpdateButton = uicontrol('Parent',hSimulationMenuPanel, ...
                                         'Style','pushbutton', ...
                                         'Units','normalized', ...
-                                        'Position',[0 0.1 0.75 0.1], ...
+                                        'Position',[0 0.3 0.75 0.1], ...
                                         'String','<  Plot Simulation  >', ...
                                         'FontWeight','bold', ...    
                                         'BackgroundColor',[0 0.6 0.6], ...
@@ -529,7 +516,7 @@ function gui(dataSummary)
     
     %% Callbacks
     %
-    function hSummaryMethodList_Callback(hSummaryMethodList,eventdata)
+    function hSummaryMethodList_Callback(hSummaryMethodList,~)
         deleteLegend;
         indexSummaryMethodList = get(hSummaryMethodList,'Value');
         choicesSummaryMethodList = get(hSummaryMethodList,'String');
@@ -564,11 +551,10 @@ function gui(dataSummary)
         set(hSubjectSpecifierList,'Value',1);
         set(hSimulationList,'Value',1);
         set(hSimulationMethodList,'Value',1);
-        set(hSimulationCycleList,'Value',1);
         set(hSimulationSpecifierList,'Value',1);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSummaryUpdateButton_Callback(hObject,eventdata)
+    function hSummaryUpdateButton_Callback(~,~)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
         set(hPanels_All,'Visible','off');
@@ -598,7 +584,7 @@ function gui(dataSummary)
                             set(hPanel_2x2,'Visible','on');                                                
                         case 'Gastrocs'
                             legendStruct = SummaryRef.plotMuscleForces(SummaryCycle,SummarySpecifier,hFigure,hAxes_1x2);
-                            set(hPanel_2x2,'Visible','on');
+                            set(hPanel_1x2,'Visible','on');
                         otherwise
                             legendStruct = SummaryRef.plotMuscleForces(SummaryCycle,SummarySpecifier,hFigure,hAxes_1x1);
                             set(hPanel_1x1,'Visible','on');
@@ -609,59 +595,32 @@ function gui(dataSummary)
         set(hPanel_Toolbar,'Visible','on');            
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hGroupList_Callback(hGroupList,eventdata)
+    function hGroupList_Callback(hGroupList,~)
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         indexGroupList = get(hGroupList,'Value');
         choicesGroupList = get(hGroupList,'String');
-        if indexGroupList == 1
-            set(hGroupInfoTable1,'Visible','off');
-            set(hGroupInfoTable2f,'String',{''}, ...
-                                  'Visible','off');
-            set(hGroupInfoTable2m,'String',{''}, ...
-                                  'Visible','off');
-        else
+        if indexGroupList ~= 1
             Group = choicesGroupList{indexGroupList};
-            GroupRef = dataSummary.(Group);
-            set(hGroupInfoTable1,'Visible','on');
-            if GroupRef.GroupInfo{'NumSubjects','Female'} > 0
-                set(hGroupInfoTable2f,'String',[{''},{'Female'},{''}, ...
-                                                {num2str(GroupRef.GroupInfo{'NumSubjects','Female'})},{''}, ...
-                                                {[num2str(floor(GroupRef.GroupInfo{'AvgHeight','Female'}/(2.54*12)),'%i'),'''', ...
-                                                  num2str(round(rem(GroupRef.GroupInfo{'AvgHeight','Female'}/2.54,12)),'%i'),'"']},{''}, ...
-                                                {[num2str(round(GroupRef.GroupInfo{'AvgWeight','Female'}*2.20462),'%i'),' lbs']}], ...
-                                      'Visible','on');
-            else
-                set(hGroupInfoTable2f,'String',[{''},{'Female'},{''}, ...
-                                                {num2str(GroupRef.GroupInfo{'NumSubjects','Female'})},{''}], ...
-                                      'Visible','on');
-            end
-            if GroupRef.GroupInfo{'NumSubjects','Male'} > 0
-                set(hGroupInfoTable2m,'String',[{''},{'Male'},{''}, ...
-                                                {num2str(GroupRef.GroupInfo{'NumSubjects','Male'})},{''}, ...
-                                                {[num2str(floor(GroupRef.GroupInfo{'AvgHeight','Male'}/(2.54*12)),'%i'),'''', ...
-                                                  num2str(round(rem(GroupRef.GroupInfo{'AvgHeight','Male'}/2.54,12)),'%i'),'"']},{''}, ...
-                                                {[num2str(round(GroupRef.GroupInfo{'AvgWeight','Male'}*2.20462),'%i'),' lbs']}], ...
-                                      'Visible','on');
-            else
-                set(hGroupInfoTable2m,'String',[{''},{'Male'},{''}, ...
-                                                {num2str(GroupRef.GroupInfo{'NumSubjects','Male'})},{''}], ...
-                                      'Visible','on');
-            end
+            GroupRef = dataSummary.(Group);            
             choicesGroupMethodList = methods(GroupRef);
             tempLogical = strncmp('plot',choicesGroupMethodList,4);
             choicesGroupMethodList(~tempLogical) = [];
             clear tempLogical
             choicesGroupMethodList = [{''}; choicesGroupMethodList];
             set(hGroupMethodList,'String',choicesGroupMethodList);
-            choicesGroupCycleList = [{''}; get(GroupRef.Cycles,'ObsNames')];
+            choicesGroupCycleList = get(GroupRef.cycles,'ObsNames');
+            tempLogical = strncmp('A_',choicesGroupCycleList,2);
+            choicesGroupCycleList(~tempLogical) = [];
+            clear tempLogical
+            for i = 1:length(choicesGroupCycleList)
+                choicesGroupCycleList{i} = choicesGroupCycleList{i}(3:end);
+            end            
+            choicesGroupCycleList = [{''}; choicesGroupCycleList];
             set(hGroupCycleList,'String',choicesGroupCycleList);
             choicesSubjectList = properties(GroupRef);
-            tempLogical = strcmp('GroupInfo',choicesSubjectList);
+            tempLogical = strcmp('cycles',choicesSubjectList);
             choicesSubjectList(tempLogical) = [];
-            tempLogical = strcmp('Cycles',choicesSubjectList);
-            choicesSubjectList(tempLogical) = [];
-            tempLogical = strcmp('Summary',choicesSubjectList);
+            tempLogical = strcmp('summary',choicesSubjectList);
             choicesSubjectList(tempLogical) = [];
             clear tempLogical
             choicesSubjectList = [{''}; choicesSubjectList];
@@ -674,25 +633,16 @@ function gui(dataSummary)
         set(hGroupCycleList,'Value',1);
         set(hGroupSpecifierList,'Value',1);
         set(hSubjectList,'Value',1);
-        set(hSubjectInfoTable1,'Visible','off');
-        set(hSubjectInfoTable2,'String',{''}, ...
-                               'Visible','off');
         set(hSubjectMethodList,'Value',1);
         set(hSubjectCycleList,'Value',1);
-        set(hSubjectRadioButtons,'SelectedObject',[]);
         set(hSubjectSpecifierList,'Value',1);
         set(hSimulationList,'Value',1);
-        set(hSimulationInfoTable1,'Visible','off');
-        set(hSimulationInfoTable2,'String',{''}, ...
-                             'Visible','off');
         set(hSimulationMethodList,'Value',1);
-        set(hSimulationCycleList,'Value',1);
         set(hSimulationSpecifierList,'Value',1);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hGroupMethodList_Callback(hGroupMethodList,eventdata)
+    function hGroupMethodList_Callback(hGroupMethodList,~)
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         if get(hGroupList,'Value') == 1
             set(hGroupMethodList,'Value',1);
             msgbox('Please select a Group before selecting a Method.',...
@@ -710,39 +660,24 @@ function gui(dataSummary)
             else
                 GroupMethod = choicesGroupMethodList{indexGroupMethodList};
                 switch GroupMethod
-                    case {'plotGroupEMG','plotGroupSideToSideEMG'}
-                        choicesGroupSpecifierList = [{''}; {'All'}; {'Glutes'}; {'Quads'}; ...
-                                                     {'Hamstrings'}; {'Gastrocs'}; ...
-                                                     {'IGluteMed'}; {'CGluteMed'}; ...
-                                                     {'IVastusMedialis'}; {'CVastusMedialis'}; ...
-                                                     {'IVastusLateralis'}; {'CVastusLateralis'}; ...
-                                                     {'IRectus'}; {'CRectus'}; ...
-                                                     {'IMedialHam'}; {'CMedialHam'}; ...
-                                                     {'ILateralHam'}; {'CLateralHam'}; ...
-                                                     {'IMedialGast'}; {'CMedialGast'}; ...
-                                                     {'ILateralGast'}; {'CLateralGast'}];
-                    case {'plotGroupGRF','plotGroupSideToSideGRF'}
-                        choicesGroupSpecifierList = [{''}; {'All'}; ...
-                                                     {'Forces'}; {'Moments'}; {'Coordinates'}; ...
-                                                     {'FX'}; {'FY'}; {'FZ'}; ...
-                                                     {'CX'}; {'CY'}; {'MZ'}];
-                    case {'plotGroupKinematics','plotGroupSideToSideKinematics'}
-                        choicesGroupSpecifierList = [{''}; {'Knee'}; {'Hip'}; {'Ankle'}];
+                    case 'plotMuscleForces'
+                        choicesGroupSpecifierList = {''; 'All'; 'Quads'; ...
+                                                     'Hamstrings'; 'Gastrocs'; ...
+                                                     'vasmed'; 'vaslat'; ...
+                                                     'vasint'; 'recfem'; ...
+                                                     'semimem'; 'semiten'; ...
+                                                     'bflh'; 'bfsh'; ...
+                                                     'gasmed'; 'gaslat'};
                 end
-                switch GroupMethod
-                    case {'plotGroupSideToSideEMG','plotGroupSideToSideGRF','plotGroupSideToSideKinematics'}
-                        choicesGroupCycleList = get(GroupRef.Cycles,'ObsNames');
-                        for i = 1:length(choicesGroupCycleList)
-                            choicesGroupCycleList{i} = choicesGroupCycleList{i}(3:end);
-                        end
-                        choicesGroupCycleList = [{''}; unique(choicesGroupCycleList)];
-                        set(hGroupCycleList,'String',choicesGroupCycleList);
-                        set(hGroupCycleList,'Value',1);
-                    otherwise
-                        choicesGroupCycleList = [{''}; get(GroupRef.Cycles,'ObsNames')];
-                        set(hGroupCycleList,'String',choicesGroupCycleList);
-                        set(hGroupCycleList,'Value',1);
-                end
+                choicesGroupCycleList = get(GroupRef.cycles,'ObsNames');
+                tempLogical = strncmp('A_',choicesGroupCycleList,2);
+                choicesGroupCycleList(~tempLogical) = [];
+                clear tempLogical
+                for i = 1:length(choicesGroupCycleList)
+                    choicesGroupCycleList{i} = choicesGroupCycleList{i}(3:end);
+                end            
+                choicesGroupCycleList = [{''}; choicesGroupCycleList];
+                set(hGroupCycleList,'String',choicesGroupCycleList);
                 set(hGroupCycleList,'Value',2);
                 set(hGroupSpecifierList,'String',choicesGroupSpecifierList);
                 set(hGroupSpecifierList,'Value',2);
@@ -751,27 +686,18 @@ function gui(dataSummary)
             set(hSummaryCycleList,'Value',1);
             set(hSummarySpecifierList,'Value',1);
             set(hSubjectList,'Value',1);
-            set(hSubjectInfoTable1,'Visible','off');
-            set(hSubjectInfoTable2,'String',{''}, ...
-                                   'Visible','off');
             set(hSubjectMethodList,'Value',1);
             set(hSubjectCycleList,'Value',1);
-            set(hSubjectRadioButtons,'SelectedObject',[]);
             set(hSubjectSpecifierList,'Value',1);
             set(hSimulationList,'Value',1);
-            set(hSimulationInfoTable1,'Visible','off');
-            set(hSimulationInfoTable2,'String',{''}, ...
-                                 'Visible','off');
             set(hSimulationMethodList,'Value',1);
-            set(hSimulationCycleList,'Value',1);
             set(hSimulationSpecifierList,'Value',1);
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    function hGroupUpdateButton_Callback(hObject,eventdata)
+    function hGroupUpdateButton_Callback(~,~)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         set(hPanels_All,'Visible','off');
         set(hAxes_All,'NextPlot','replace');
         indexGroupList = get(hGroupList,'Value');
@@ -791,95 +717,30 @@ function gui(dataSummary)
         else
             GroupRef = dataSummary.(Group);
             switch GroupMethod
-                case 'plotGroupEMG'
-                    set(hPanelHeader,'String',[Group,'_',GroupCycle,':  Normalized EMG - ',GroupSpecifier]);
+                case 'plotMuscleForces'
+                    set(hPanelHeader,'String',[upper(Group(1)),Group(2:end),'_',GroupCycle,': Muscle Forces - ',GroupSpecifier]);
                     switch GroupSpecifier
                         case 'All'
-                            legendStruct = GroupRef.plotGroupEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');    
-                        case 'Glutes'
-                            legendStruct = GroupRef.plotGroupEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_1x2);
-                            set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            legendStruct = GroupRef.plotGroupEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case 'Hamstrings'
-                            legendStruct = GroupRef.plotGroupEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');                            
+                            legendStruct = GroupRef.plotMuscleForces(GroupCycle,GroupSpecifier,hFigure,hAxes_3x4);
+                            set(hPanel_3x4,'Visible','on');                       
+                        case {'Quads','Hamstrings'}
+                            legendStruct = GroupRef.plotMuscleForces(GroupCycle,GroupSpecifier,hFigure,hAxes_2x2);
+                            set(hPanel_2x2,'Visible','on');                                                
                         case 'Gastrocs'
-                            legendStruct = GroupRef.plotGroupEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
-                        otherwise
-                            legendStruct = GroupRef.plotGroupEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end              
-                case 'plotGroupGRF'
-                    set(hPanelHeader,'String',[Group,'_',GroupCycle,':  Equivalent GRF - ',GroupSpecifier]);
-                    switch GroupSpecifier
-                        case 'All'
-                            legendStruct = GroupRef.plotGroupGRF(GroupCycle,GroupSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Forces','Moments','Coordinates'}
-                            legendStruct = GroupRef.plotGroupGRF(GroupCycle,GroupSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = GroupRef.plotGroupGRF(GroupCycle,GroupSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');                    
-                    end                                 
-                case 'plotGroupKinematics'
-                    set(hPanelHeader,'String',[Group,'_',GroupCycle,':  Joint Kinematics - ',GroupSpecifier]);
-                    legendStruct = GroupRef.plotGroupKinematics(GroupCycle,GroupSpecifier,hFigure,hAxes_3x2);
-                    set(hPanel_3x2,'Visible','on');
-                case 'plotGroupSideToSideEMG'
-                    set(hPanelHeader,'String',[Group,'_',GroupCycle,':  Normalized EMG - ',GroupSpecifier]);
-                    switch GroupSpecifier
-                        case 'All'
-                            legendStruct = GroupRef.plotGroupSideToSideEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');    
-                        case 'Glutes'
-                            legendStruct = GroupRef.plotGroupSideToSideEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_1x2);
+                            legendStruct = GroupRef.plotMuscleForces(GroupCycle,GroupSpecifier,hFigure,hAxes_1x2);
                             set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            legendStruct = GroupRef.plotGroupSideToSideEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case 'Hamstrings'
-                            legendStruct = GroupRef.plotGroupSideToSideEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');                            
-                        case 'Gastrocs'
-                            legendStruct = GroupRef.plotGroupSideToSideEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
                         otherwise
-                            legendStruct = GroupRef.plotGroupSideToSideEMG(GroupCycle,GroupSpecifier,hFigure,hAxes_1x1);
+                            legendStruct = GroupRef.plotMuscleForces(GroupCycle,GroupSpecifier,hFigure,hAxes_1x1);
                             set(hPanel_1x1,'Visible','on');
-                    end              
-                case 'plotGroupSideToSideGRF'
-                    set(hPanelHeader,'String',[Group,'_',GroupCycle,':  Equivalent GRF - ',GroupSpecifier]);
-                    switch GroupSpecifier
-                        case 'All'
-                            legendStruct = GroupRef.plotGroupSideToSideGRF(GroupCycle,GroupSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Forces','Moments','Coordinates'}
-                            legendStruct = GroupRef.plotGroupSideToSideGRF(GroupCycle,GroupSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = GroupRef.plotGroupSideToSideGRF(GroupCycle,GroupSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');                    
-                    end                                 
-                case 'plotGroupSideToSideKinematics'
-                    set(hPanelHeader,'String',[Group,'_',GroupCycle,':  Joint Kinematics - ',GroupSpecifier]);
-                    legendStruct = GroupRef.plotGroupSideToSideKinematics(GroupCycle,GroupSpecifier,hFigure,hAxes_3x2);
-                    set(hPanel_3x2,'Visible','on');                    
+                    end
             end
         end
         createLegend(legendStruct);
-        set(hSubjectInfoPanel,'Visible','off');
-        set(hGroupInfoPanel,'Visible','off');
         set(hPanel_Toolbar,'Visible','on');
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSubjectList_Callback(hSubjectList,eventdata)
+    function hSubjectList_Callback(hSubjectList,~)
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         if get(hGroupList,'Value') == 1
             set(hSubjectList,'Value',1);
             msgbox('Please select a Group before selecting a Subject.',...
@@ -887,41 +748,31 @@ function gui(dataSummary)
         else
             indexSubjectList = get(hSubjectList,'Value');
             choicesSubjectList = get(hSubjectList,'String');
-            if indexSubjectList == 1
-                set(hSubjectInfoTable1,'Visible','off');
-                set(hSubjectInfoTable2,'String',{''}, ...
-                                       'Visible','off');
-            else
+            if indexSubjectList ~= 1
                 Subject = choicesSubjectList{indexSubjectList};
                 indexGroupList = get(hGroupList,'Value');
                 choicesGroupList = get(hGroupList,'String');
                 Group = choicesGroupList{indexGroupList};
-                SubjectRef = dataSummary.(Group).(Subject);
-                set(hSubjectInfoTable1,'Visible','on');
-                set(hSubjectInfoTable2,'String',[{''},{SubjectRef.PersInfo.ID},{''}, ...
-                                                 {SubjectRef.PersInfo.Group},{''}, ...
-                                                 {SubjectRef.PersInfo.Side},{''}, ...
-                                                 {SubjectRef.PersInfo.Gender},{''}, ...
-                                                 {[num2str(floor(SubjectRef.PersInfo.Height/(2.54*12)),'%i'),'''', ...
-                                                   num2str(round(rem(SubjectRef.PersInfo.Height/2.54,12)),'%i'),'"']},{''}, ...
-                                                 {[num2str(round(SubjectRef.PersInfo.Weight*2.20462),'%i'),' lbs']}], ...
-                                       'Visible','on');
+                SubjectRef = dataSummary.(Group).(Subject);                
                 choicesSubjectMethodList = methods(SubjectRef);
                 tempLogical = strncmp('plot',choicesSubjectMethodList,4);
                 choicesSubjectMethodList(~tempLogical) = [];
                 clear tempLogical
                 choicesSubjectMethodList = [{''}; choicesSubjectMethodList];
-                set(hSubjectMethodList,'String',choicesSubjectMethodList);
-                choicesSubjectCycleList = [{''}; get(SubjectRef.Cycles,'ObsNames')];
+                set(hSubjectMethodList,'String',choicesSubjectMethodList);                
+                choicesSubjectCycleList = properties(SubjectRef);
+                tempLogical = strncmp('A_',choicesSubjectCycleList,2);
+                choicesSubjectCycleList(~tempLogical) = [];
+                clear tempLogical
+                for i = 1:length(choicesSubjectCycleList)
+                    choicesSubjectCycleList{i} = choicesSubjectCycleList{i}(3:6);
+                end                
+                choicesSubjectCycleList = [{''}; unique(choicesSubjectCycleList)];
                 set(hSubjectCycleList,'String',choicesSubjectCycleList);
                 choicesSimulationList = properties(SubjectRef);
-                tempLogical = strcmp('SysInfo',choicesSimulationList);
+                tempLogical = strcmp('subID',choicesSimulationList);
                 choicesSimulationList(tempLogical) = [];
-                tempLogical = strcmp('PersInfo',choicesSimulationList);
-                choicesSimulationList(tempLogical) = [];
-                tempLogical = strcmp('Cycles',choicesSimulationList);
-                choicesSimulationList(tempLogical) = [];
-                tempLogical = strcmp('Summary',choicesSimulationList);
+                tempLogical = strcmp('maxIsometric',choicesSimulationList);
                 choicesSimulationList(tempLogical) = [];
                 clear tempLogical
                 choicesSimulationList = [{''}; choicesSimulationList];            
@@ -930,11 +781,6 @@ function gui(dataSummary)
             set(hSummaryMethodList,'Value',1);
             set(hSummaryCycleList,'Value',1);
             set(hSummarySpecifierList,'Value',1);
-            set(hGroupInfoTable1,'Visible','off');
-            set(hGroupInfoTable2f,'String',{''}, ...
-                                  'Visible','off');
-            set(hGroupInfoTable2m,'String',{''}, ...
-                                  'Visible','off');
             set(hGroupMethodList,'Value',1);
             set(hGroupCycleList,'Value',1);
             set(hGroupSpecifierList,'Value',1);
@@ -942,18 +788,13 @@ function gui(dataSummary)
             set(hSubjectCycleList,'Value',1);
             set(hSubjectSpecifierList,'Value',1);
             set(hSimulationList,'Value',1);
-            set(hSimulationInfoTable1,'Visible','off');
-            set(hSimulationInfoTable2,'String',{''}, ...
-                                 'Visible','off');
             set(hSimulationMethodList,'Value',1);
-            set(hSimulationCycleList,'Value',1);
             set(hSimulationSpecifierList,'Value',1);
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSubjectMethodList_Callback(hSubjectMethodList,eventdata)
+    function hSubjectMethodList_Callback(hSubjectMethodList,~)
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         if get(hGroupList,'Value') == 1 || get(hSubjectList,'Value') == 1
             set(hSubjectMethodList,'Value',1);
             msgbox('Please select both a Group and a Subject before selecting a Method.',...
@@ -974,39 +815,24 @@ function gui(dataSummary)
             else
                 SubjectMethod = choicesSubjectMethodList{indexSubjectMethodList};
                 switch SubjectMethod
-                    case {'plotSubjectEMG','plotSubjectSideToSideEMG'}
-                        choicesSubjectSpecifierList = [{''}; {'All'}; {'Glutes'}; {'Quads'}; ...
-                                                       {'Hamstrings'}; {'Gastrocs'}; ...
-                                                       {'IGluteMed'}; {'CGluteMed'}; ...
-                                                       {'IVastusMedialis'}; {'CVastusMedialis'}; ...
-                                                       {'IVastusLateralis'}; {'CVastusLateralis'}; ...
-                                                       {'IRectus'}; {'CRectus'}; ...
-                                                       {'IMedialHam'}; {'CMedialHam'}; ...
-                                                       {'ILateralHam'}; {'CLateralHam'}; ...
-                                                       {'IMedialGast'}; {'CMedialGast'}; ...
-                                                       {'ILateralGast'}; {'CLateralGast'}];
-                    case {'plotSubjectGRF','plotSubjectSideToSideGRF'}
-                        choicesSubjectSpecifierList = [{''}; {'All'}; ...
-                                                       {'Forces'}; {'Moments'}; {'Coordinates'}; ...
-                                                       {'FX'}; {'FY'}; {'FZ'}; ...
-                                                       {'CX'}; {'CY'}; {'MZ'}];
-                    case {'plotSubjectKinematics','plotSubjectSideToSideKinematics'}
-                        choicesSubjectSpecifierList = [{''}; {'Knee'}; {'Hip'}; {'Ankle'}];
+                    case 'plotMuscleForces'
+                        choicesSubjectSpecifierList = {''; 'All'; 'Quads'; ...
+                                                       'Hamstrings'; 'Gastrocs'; ...
+                                                       'vasmed'; 'vaslat'; ...
+                                                       'vasint'; 'recfem'; ...
+                                                       'semimem'; 'semiten'; ...
+                                                       'bflh'; 'bfsh'; ...
+                                                       'gasmed'; 'gaslat'};
                 end
-                switch SubjectMethod
-                    case {'plotSubjectSideToSideEMG','plotSubjectSideToSideGRF','plotSubjectSideToSideKinematics'}
-                        choicesSubjectCycleList = get(SubjectRef.Cycles,'ObsNames');
-                        for i = 1:length(choicesSubjectCycleList)
-                            choicesSubjectCycleList{i} = choicesSubjectCycleList{i}(3:end);
-                        end
-                        choicesSubjectCycleList = [{''}; unique(choicesSubjectCycleList)];
-                        set(hSubjectCycleList,'String',choicesSubjectCycleList);
-                        set(hSubjectCycleList,'Value',1);
-                    otherwise
-                        choicesSubjectCycleList = [{''}; get(SubjectRef.Cycles,'ObsNames')];
-                        set(hSubjectCycleList,'String',choicesSubjectCycleList);
-                        set(hSubjectCycleList,'Value',1);
-                end
+                choicesSubjectCycleList = properties(SubjectRef);
+                tempLogical = strncmp('A_',choicesSubjectCycleList,2);
+                choicesSubjectCycleList(~tempLogical) = [];
+                clear tempLogical
+                for i = 1:length(choicesSubjectCycleList)
+                    choicesSubjectCycleList{i} = choicesSubjectCycleList{i}(3:6);
+                end                
+                choicesSubjectCycleList = [{''}; unique(choicesSubjectCycleList)];
+                set(hSubjectCycleList,'String',choicesSubjectCycleList);
                 set(hSubjectCycleList,'Value',2);
                 set(hSubjectSpecifierList,'String',choicesSubjectSpecifierList);
                 set(hSubjectSpecifierList,'Value',2);
@@ -1014,28 +840,18 @@ function gui(dataSummary)
             set(hSummaryMethodList,'Value',1);
             set(hSummaryCycleList,'Value',1);
             set(hSummarySpecifierList,'Value',1);
-            set(hGroupInfoTable1,'Visible','off');
-            set(hGroupInfoTable2f,'String',{''}, ...
-                                  'Visible','off');
-            set(hGroupInfoTable2m,'String',{''}, ...
-                                  'Visible','off');
             set(hGroupMethodList,'Value',1);
             set(hGroupCycleList,'Value',1);
             set(hGroupSpecifierList,'Value',1);
             set(hSimulationList,'Value',1);
-            set(hSimulationInfoTable1,'Visible','off');
-            set(hSimulationInfoTable2,'String',{''}, ...
-                                 'Visible','off');
             set(hSimulationMethodList,'Value',1);
-            set(hSimulationCycleList,'Value',1);
             set(hSimulationSpecifierList,'Value',1);
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSubjectUpdateButton_Callback(hObject,eventdata)
+    function hSubjectUpdateButton_Callback(~,~)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         set(hPanels_All,'Visible','off');
         set(hAxes_All,'NextPlot','replace');
         indexGroupList = get(hGroupList,'Value');
@@ -1044,7 +860,7 @@ function gui(dataSummary)
         indexSubjectList = get(hSubjectList,'Value');
         choicesSubjectList = get(hSubjectList,'String');
         Subject = choicesSubjectList{indexSubjectList};
-        SubjectID = dataSummary.(Group).(Subject).PersInfo.ID;
+        SubjectID = dataSummary.(Group).(Subject).subID;
         indexSubjectMethodList = get(hSubjectMethodList,'Value');        
         choicesSubjectMethodList = get(hSubjectMethodList,'String');
         SubjectMethod = choicesSubjectMethodList{indexSubjectMethodList};
@@ -1059,89 +875,30 @@ function gui(dataSummary)
         else
             SubjectRef = dataSummary.(Group).(Subject);
             switch SubjectMethod
-                case 'plotSubjectEMG'
-                    set(hPanelHeader,'String',[SubjectID,'_',SubjectCycle,':  Normalized EMG - ',SubjectSpecifier]);
+                case 'plotMuscleForces'
+                    set(hPanelHeader,'String',[SubjectID,'_',SubjectCycle,': Muscle Forces - ',SubjectSpecifier]);
                     switch SubjectSpecifier
                         case 'All'
-                            legendStruct = SubjectRef.plotSubjectEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');    
-                        case 'Glutes'
-                            legendStruct = SubjectRef.plotSubjectEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x2);
+                            legendStruct = SubjectRef.plotMuscleForces(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x4);
+                            set(hPanel_3x4,'Visible','on');                       
+                        case {'Quads','Hamstrings'}
+                            legendStruct = SubjectRef.plotMuscleForces(SubjectCycle,SubjectSpecifier,hFigure,hAxes_2x2);
+                            set(hPanel_2x2,'Visible','on');                                                
+                        case 'Gastrocs'
+                            legendStruct = SubjectRef.plotMuscleForces(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x2);
                             set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            legendStruct = SubjectRef.plotSubjectEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Hamstrings','Gastrocs'}
-                            legendStruct = SubjectRef.plotSubjectEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
                         otherwise
-                            legendStruct = SubjectRef.plotSubjectEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x1);
+                            legendStruct = SubjectRef.plotMuscleForces(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x1);
                             set(hPanel_1x1,'Visible','on');
-                    end              
-                case 'plotSubjectGRF'
-                    set(hPanelHeader,'String',[SubjectID,'_',SubjectCycle,':  Equivalent GRF - ',SubjectSpecifier]);
-                    switch SubjectSpecifier
-                        case 'All'
-                            legendStruct = SubjectRef.plotSubjectGRF(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Forces','Moments','Coordinates'}
-                            legendStruct = SubjectRef.plotSubjectGRF(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = SubjectRef.plotSubjectGRF(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');                    
-                    end                                 
-                case 'plotSubjectKinematics'
-                    set(hPanelHeader,'String',[SubjectID,'_',SubjectCycle,':  Joint Kinematics - ',SubjectSpecifier]);
-                    legendStruct = SubjectRef.plotSubjectKinematics(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x2);
-                    set(hPanel_3x2,'Visible','on');
-                case 'plotSubjectSideToSideEMG'
-                    set(hPanelHeader,'String',[SubjectID,'_',SubjectCycle,':  Normalized EMG - ',SubjectSpecifier]);                        
-                    switch SubjectSpecifier
-                        case 'All'
-                            legendStruct = SubjectRef.plotSubjectSideToSideEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');
-                        case 'Glutes'
-                            legendStruct = SubjectRef.plotSubjectSideToSideEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x2);
-                            set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            legendStruct = SubjectRef.plotSubjectSideToSideEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Hamstrings','Gastrocs'}
-                            legendStruct = SubjectRef.plotSubjectSideToSideEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
-                        otherwise
-                            legendStruct = SubjectRef.plotSubjectSideToSideEMG(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end              
-                case 'plotSubjectSideToSideGRF'
-                    set(hPanelHeader,'String',[SubjectID,'_',SubjectCycle,':  Equivalent GRF - ',SubjectSpecifier]);
-                    switch SubjectSpecifier
-                        case 'All'
-                            legendStruct = SubjectRef.plotSubjectSideToSideGRF(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Forces','Moments','Coordinates'}
-                            legendStruct = SubjectRef.plotSubjectSideToSideGRF(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = SubjectRef.plotSubjectSideToSideGRF(SubjectCycle,SubjectSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');                    
-                    end                                 
-                case 'plotSubjectSideToSideKinematics'
-                    set(hPanelHeader,'String',[SubjectID,'_',SubjectCycle,':  Joint Kinematics - ',SubjectSpecifier]);
-                    legendStruct = SubjectRef.plotSubjectSideToSideKinematics(SubjectCycle,SubjectSpecifier,hFigure,hAxes_3x2);
-                    set(hPanel_3x2,'Visible','on');
+                    end
             end
         end
         createLegend(legendStruct);
-        set(hSubjectInfoPanel,'Visible','off');
-        set(hGroupInfoPanel,'Visible','off');
         set(hPanel_Toolbar,'Visible','on');        
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSimulationList_Callback(hSimulationList,eventdata)
+    function hSimulationList_Callback(hSimulationList,~)
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         if get(hGroupList,'Value') == 1 || get(hSubjectList,'Value') == 1
             set(hSimulationList,'Value',1);
             msgbox('Please select both a Group and a Subject before selecting a Simulation.',...
@@ -1149,11 +906,7 @@ function gui(dataSummary)
         else
             indexSimulationList = get(hSimulationList,'Value');
             choicesSimulationList = get(hSimulationList,'String');
-            if indexSimulationList == 1
-                set(hSimulationInfoTable1,'Visible','off');
-                set(hSimulationInfoTable2,'String',{''}, ...
-                                     'Visible','off');
-            else
+            if indexSimulationList ~= 1
                 Simulation = choicesSimulationList{indexSimulationList};            
                 indexGroupList = get(hGroupList,'Value');
                 choicesGroupList = get(hGroupList,'String');
@@ -1161,52 +914,30 @@ function gui(dataSummary)
                 indexSubjectList = get(hSubjectList,'Value');        
                 choicesSubjectList = get(hSubjectList,'String');
                 Subject = choicesSubjectList{indexSubjectList};
-                SimulationRef = dataSummary.(Group).(Subject).(Simulation);        
-                set(hSimulationInfoTable1,'Visible','on');                
-                set(hSimulationInfoTable2,'String',[{''}, ...
-                                               {SimulationRef.SimulationType}], ...
-                                     'Visible','on');
+                SimulationRef = dataSummary.(Group).(Subject).(Simulation);
                 choicesSimulationMethodList = methods(SimulationRef);
                 tempLogical = strncmp('plot',choicesSimulationMethodList,4);
                 choicesSimulationMethodList(~tempLogical) = [];                
                 clear tempLogical
                 choicesSimulationMethodList = [{''}; choicesSimulationMethodList];
-                set(hSimulationMethodList,'String',choicesSimulationMethodList);
-                if isprop(SimulationRef,'Cycles')
-                    if max(size(get(SimulationRef.Cycles,'ObsNames')))
-                        choicesSimulationCycleList = [{''}; get(SimulationRef.Cycles,'ObsNames')];
-                    else
-                        choicesSimulationCycleList = [{''}; {''}];
-                    end
-                else
-                    choicesSimulationCycleList = [{''}; {''}];
-                end
-                set(hSimulationCycleList,'String',choicesSimulationCycleList);
+                set(hSimulationMethodList,'String',choicesSimulationMethodList);               
             end
             set(hSummaryMethodList,'Value',1);
             set(hSummaryCycleList,'Value',1);
             set(hSummarySpecifierList,'Value',1);
-            set(hGroupInfoTable1,'Visible','off');
-            set(hGroupInfoTable2f,'String',{''}, ...
-                                  'Visible','off');
-            set(hGroupInfoTable2m,'String',{''}, ...
-                                  'Visible','off');
             set(hGroupMethodList,'Value',1);
             set(hGroupCycleList,'Value',1);
             set(hGroupSpecifierList,'Value',1);
             set(hSubjectMethodList,'Value',1);
             set(hSubjectCycleList,'Value',1);
-            set(hSubjectRadioButtons,'SelectedObject',[]);
             set(hSubjectSpecifierList,'Value',1);
             set(hSimulationMethodList,'Value',1);
-            set(hSimulationCycleList,'Value',1);
             set(hSimulationSpecifierList,'Value',1);
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSimulationMethodList_Callback(hSimulationMethodList,eventdata)
+    function hSimulationMethodList_Callback(hSimulationMethodList,~)
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         if get(hGroupList,'Value') == 1 || get(hSubjectList,'Value') == 1 || get(hSimulationList,'Value') == 1
             set(hSimulationMethodList,'Value',1);
             msgbox('Please select a Group, Subject, and Simulation before selecting a Method.',...
@@ -1215,90 +946,39 @@ function gui(dataSummary)
             indexSimulationMethodList = get(hSimulationMethodList,'Value');
             choicesSimulationMethodList = get(hSimulationMethodList,'String');
             if indexSimulationMethodList == 1
-                set(hSimulationCycleList,'Value',1);
                 set(hSimulationSpecifierList,'Value',1);
             else
-                SimulationMethod = choicesSimulationMethodList{indexSimulationMethodList};
-                indexGroupList = get(hGroupList,'Value');
-                choicesGroupList = get(hGroupList,'String');
-                Group = choicesGroupList{indexGroupList};
-                indexSubjectList = get(hSubjectList,'Value');
-                choicesSubjectList = get(hSubjectList,'String');
-                Subject = choicesSubjectList{indexSubjectList};
-                indexSimulationList = get(hSimulationList,'Value');
-                choicesSimulationList = get(hSimulationList,'String');
-                Simulation = choicesSimulationList{indexSimulationList};
-                SimulationRef = dataSummary.(Group).(Subject).(Simulation);                
+                SimulationMethod = choicesSimulationMethodList{indexSimulationMethodList};            
                 switch SimulationMethod
-                    case {'plotSimulationEMG_RawFilt','plotSimulationEMG','plotMVC'}
-                        choicesSimulationSpecifierList = [{''}; {'All'}; {'Glutes'}; {'Quads'}; ...
-                                                     {'Hamstrings'}; {'Gastrocs'}; ...
-                                                     SimulationRef.EMG.Raw.Properties.VarNames'];
-                    case 'plotCycleEMG'
-                        choicesSimulationSpecifierList = [{''}; {'All'}; {'Glutes'}; {'Quads'}; ...
-                                                     {'Hamstrings'}; {'Gastrocs'}; ...
-                                                     {'IGluteMed'}; {'CGluteMed'}; ...
-                                                     {'IVastusMedialis'}; {'CVastusMedialis'}; ...
-                                                     {'IVastusLateralis'}; {'CVastusLateralis'}; ...
-                                                     {'IRectus'}; {'CRectus'}; ...
-                                                     {'IMedialHam'}; {'CMedialHam'}; ...
-                                                     {'ILateralHam'}; {'CLateralHam'}; ...
-                                                     {'IMedialGast'}; {'CMedialGast'}; ...
-                                                     {'ILateralGast'}; {'CLateralGast'}];
-                    case 'plotSimulationGRF_RawFilt'
-                        choicesSimulationSpecifierList = [{''}; {'All'}; {'Forces'}; {'Moments'}; ...
-                                                     {'FX'}; {'FY'}; {'FZ'}; ...
-                                                     {'MX'}; {'MY'}; {'MZ'}];
-                    case {'plotSimulationGRF_Plate','plotSimulationGRF'}
-                        choicesSimulationSpecifierList = [{''}; {'All'}; {'Forces'}; ...
-                                                     {'Moments'}; {'Coordinates'}; ...
-                                                     {'FX'}; {'FY'}; {'FZ'}; ...
-                                                     {'MX'}; {'MY'}; {'MZ'}; ...
-                                                     {'CX'}; {'CY'}; {'CZ'}];
-                    case 'plotCycleGRF'
-                        choicesSimulationSpecifierList = [{''}; {'All'}; {'Forces'}; ...
-                                                     {'Moments'}; {'Coordinates'}; {'COP'}; ...
-                                                     {'FX'}; {'FY'}; {'FZ'}; ...
-                                                     {'MX'}; {'MY'}; {'MZ'}; ...
-                                                     {'CX'}; {'CY'}; {'CZ'}];
-                    case {'plotSimulationKinematics','plotCycleKinematics'}
-                        choicesSimulationSpecifierList = [{''}; {'Knee'}; {'Hip'}; {'Ankle'}];
-                    case 'plotSimulationTRC'
-                        choicesSimulationSpecifierList = [{''}; SimulationRef.TRC.X.Properties.VarNames'];
-
-                end
-                if max(size(strfind(SimulationMethod,'Simulation'))) || max(size(strfind(SimulationMethod,'MVC')))
-                    set(hSimulationCycleList,'Value',1);
-                else
-                    if get(hSimulationCycleList,'Value') == 1
-                        set(hSimulationCycleList,'Value',2);
-                    end
-                end
+                    case 'plotMuscleForces'
+                        choicesSimulationSpecifierList = {''; 'All'; 'Quads'; ...
+                                                          'Hamstrings'; 'Gastrocs'; ...
+                                                          'vasmed'; 'vaslat'; ...
+                                                          'vasint'; 'recfem'; ...
+                                                          'semimem'; 'semiten'; ...
+                                                          'bflh'; 'bfsh'; ...
+                                                          'gasmed'; 'gaslat'};
+                    case 'plotResiduals'
+                        choicesSimulationSpecifierList = {''; ''};
+                end                
                 set(hSimulationSpecifierList,'String',choicesSimulationSpecifierList);
                 set(hSimulationSpecifierList,'Value',2);
             end
             set(hSummaryMethodList,'Value',1);
             set(hSummaryCycleList,'Value',1);
-            set(hSummarySpecifierList,'Value',1);            
-            set(hGroupInfoTable1,'Visible','off');
-            set(hGroupInfoTable2f,'String',{''}, ...
-                                  'Visible','off');
-            set(hGroupInfoTable2m,'String',{''}, ...
-                                  'Visible','off');
+            set(hSummarySpecifierList,'Value',1);
             set(hGroupMethodList,'Value',1);
             set(hGroupCycleList,'Value',1);
             set(hGroupSpecifierList,'Value',1);
             set(hSubjectMethodList,'Value',1);
             set(hSubjectCycleList,'Value',1);
-            set(hSubjectRadioButtons,'SelectedObject',[]);
             set(hSubjectSpecifierList,'Value',1);
         end
     end    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSimulationUpdateButton_Callback(hObject,eventdata)
+    function hSimulationUpdateButton_Callback(~,~)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
-        set(hInfoPanels_All,'Visible','on');
         set(hPanels_All,'Visible','off');
         set(hAxes_All,'NextPlot','replace');
         indexGroupList = get(hGroupList,'Value');
@@ -1307,181 +987,47 @@ function gui(dataSummary)
         indexSubjectList = get(hSubjectList,'Value');
         choicesSubjectList = get(hSubjectList,'String');
         Subject = choicesSubjectList{indexSubjectList};
-        SubjectID = dataSummary.(Group).(Subject).PersInfo.ID;
+        SubjectID = dataSummary.(Group).(Subject).subID;
         indexSimulationList = get(hSimulationList,'Value');
         choicesSimulationList = get(hSimulationList,'String');
         Simulation = choicesSimulationList{indexSimulationList};
         indexSimulationMethodList = get(hSimulationMethodList,'Value');
         choicesSimulationMethodList = get(hSimulationMethodList,'String');
         SimulationMethod = choicesSimulationMethodList{indexSimulationMethodList};
-        indexSimulationCycleList = get(hSimulationCycleList,'Value');
-        choicesSimulationCycleList = get(hSimulationCycleList,'String');
-        SimulationCycle = choicesSimulationCycleList{indexSimulationCycleList};
         indexSimulationSpecifierList = get(hSimulationSpecifierList,'Value');
         choicesSimulationSpecifierList = get(hSimulationSpecifierList,'String');
         SimulationSpecifier = choicesSimulationSpecifierList{indexSimulationSpecifierList};
-        if strcmp(Simulation,'') || strcmp(SimulationMethod,'') || strcmp(SimulationSpecifier,'')
-            msgbox('Please select a Simulation, Simulation Method, and Specifier','Update Selections','warn');
-        elseif strncmp(SimulationMethod,'plotCycle',9) && strcmp(SimulationCycle,'')
-            msgbox('Please select a Cycle in order to use that Method','Cycle Selection Missing','warn');
+        if strcmp(Simulation,'') || strcmp(SimulationMethod,'')
+            msgbox('Please select a Simulation, Simulation Method, and Specifier (if necessary)','Update Selections','warn');
         else
             SimulationRef = dataSummary.(Group).(Subject).(Simulation);
             switch SimulationMethod
-                case 'plotMVC'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Raw vs. Filtered EMG (with Max) - ',SimulationSpecifier]);
+                case 'plotMuscleForces'
+                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,': Muscle Forces - ',SimulationSpecifier]);
                     switch SimulationSpecifier
                         case 'All'
-                            SimulationRef.plotMVC(SimulationSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');                            
-                        case 'Glutes'
-                            SimulationRef.plotMVC(SimulationSpecifier,hFigure,hAxes_1x2);
+                            SimulationRef.plotMuscleForces(SimulationSpecifier,hFigure,hAxes_3x4);
+                            set(hPanel_3x4,'Visible','on');                       
+                        case {'Quads','Hamstrings'}
+                            SimulationRef.plotMuscleForces(SimulationSpecifier,hFigure,hAxes_2x2);
+                            set(hPanel_2x2,'Visible','on');                                                
+                        case 'Gastrocs'
+                            SimulationRef.plotMuscleForces(SimulationSpecifier,hFigure,hAxes_1x2);
                             set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            SimulationRef.plotMVC(SimulationSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Hamstrings','Gastrocs'}
-                            SimulationRef.plotMVC(SimulationSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
                         otherwise
-                            SimulationRef.plotMVC(SimulationSpecifier,hFigure,hAxes_1x1);
+                            SimulationRef.plotMuscleForces(SimulationSpecifier,hFigure,hAxes_1x1);
                             set(hPanel_1x1,'Visible','on');
                     end
-                case 'plotSimulationEMG_RawFilt'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Raw vs. Filtered EMG - ',SimulationSpecifier]);
-                    switch SimulationSpecifier
-                        case 'All'
-                            SimulationRef.plotSimulationEMG_RawFilt(SimulationSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');                            
-                        case 'Glutes'
-                            SimulationRef.plotSimulationEMG_RawFilt(SimulationSpecifier,hFigure,hAxes_1x2);
-                            set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            SimulationRef.plotSimulationEMG_RawFilt(SimulationSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Hamstrings','Gastrocs'}
-                            SimulationRef.plotSimulationEMG_RawFilt(SimulationSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
-                        otherwise
-                            SimulationRef.plotSimulationEMG_RawFilt(SimulationSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end
-                case 'plotSimulationEMG'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Normalized EMG - ',SimulationSpecifier]);
-                    switch SimulationSpecifier
-                        case 'All'
-                            SimulationRef.plotSimulationEMG(SimulationSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');    
-                        case 'Glutes'
-                            SimulationRef.plotSimulationEMG(SimulationSpecifier,hFigure,hAxes_1x2);
-                            set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            SimulationRef.plotSimulationEMG(SimulationSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Hamstrings','Gastrocs'}
-                            SimulationRef.plotSimulationEMG(SimulationSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
-                        otherwise
-                            SimulationRef.plotSimulationEMG(SimulationSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end
-                case 'plotSimulationGRF_RawFilt'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Raw vs. Filtered GRF - ',SimulationSpecifier]);
-                    switch SimulationSpecifier
-                        case 'All'
-                            legendStruct = SimulationRef.plotSimulationGRF_RawFilt(SimulationSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Forces','Moments'}
-                            legendStruct = SimulationRef.plotSimulationGRF_RawFilt(SimulationSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = SimulationRef.plotSimulationGRF_RawFilt(SimulationSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end
-                    createLegend(legendStruct);
-                case 'plotSimulationGRF_Plate'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Equivalent GRF - ',SimulationSpecifier]);
-                    switch SimulationSpecifier
-                        case 'All'
-                            legendStruct = SimulationRef.plotSimulationGRF_Plate(SimulationSpecifier,hFigure,hAxes_3x3);
-                            set(hPanel_3x3,'Visible','on');
-                        case {'Forces','Moments','Coordinates'}
-                            legendStruct = SimulationRef.plotSimulationGRF_Plate(SimulationSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = SimulationRef.plotSimulationGRF_Plate(SimulationSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end
-                    createLegend(legendStruct);    
-                case 'plotSimulationGRF'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Equivalent GRF - ',SimulationSpecifier]);
-                    switch SimulationSpecifier
-                        case 'All'
-                            legendStruct = SimulationRef.plotSimulationGRF(SimulationSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Forces','Moments','Coordinates'}
-                            legendStruct = SimulationRef.plotSimulationGRF(SimulationSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = SimulationRef.plotSimulationGRF(SimulationSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end
-                    createLegend(legendStruct);
-                case 'plotSimulationKinematics'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Joint Kinematics - ',SimulationSpecifier]);
-                    legendStruct = SimulationRef.plotSimulationKinematics(SimulationSpecifier,hFigure,hAxes_3x1);
-                    set(hPanel_3x1,'Visible','on');
-                    createLegend(legendStruct);
-                case 'plotSimulationTRC'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,':  Marker Coordinates - ',SimulationSpecifier]);
-                    SimulationRef.plotSimulationTRC(SimulationSpecifier,hFigure,hAxes_3x1);
-                    set(hPanel_3x1,'Visible','on');
-                case 'plotCycleEMG'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,'_',SimulationCycle,':  Normalized EMG - ',SimulationSpecifier]);
-                    switch SimulationSpecifier
-                        case 'All'
-                            SimulationRef.plotCycleEMG(SimulationCycle,SimulationSpecifier,hFigure,hAxes_4x4);
-                            set(hPanel_4x4,'Visible','on');    
-                        case 'Glutes'
-                            SimulationRef.plotCycleEMG(SimulationCycle,SimulationSpecifier,hFigure,hAxes_1x2);
-                            set(hPanel_1x2,'Visible','on');
-                        case 'Quads'
-                            SimulationRef.plotCycleEMG(SimulationCycle,SimulationSpecifier,hFigure,hAxes_3x2);
-                            set(hPanel_3x2,'Visible','on');
-                        case {'Hamstrings','Gastrocs'}
-                            SimulationRef.plotCycleEMG(SimulationCycle,SimulationSpecifier,hFigure,hAxes_2x2);
-                            set(hPanel_2x2,'Visible','on');
-                        otherwise
-                            SimulationRef.plotCycleEMG(SimulationCycle,SimulationSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end                    
-                case 'plotCycleGRF'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,'_',SimulationCycle,':  Filtered GRF - ',SimulationSpecifier]);
-                    switch SimulationSpecifier
-                        case 'All'
-                            legendStruct = SimulationRef.plotCycleGRF(SimulationCycle,SimulationSpecifier,hFigure,hAxes_3x3);
-                            set(hPanel_3x3,'Visible','on');
-                        case {'Forces','Moments','Coordinates'}
-                            legendStruct = SimulationRef.plotCycleGRF(SimulationCycle,SimulationSpecifier,hFigure,hAxes_3x1);
-                            set(hPanel_3x1,'Visible','on');
-                        otherwise
-                            legendStruct = SimulationRef.plotCycleGRF(SimulationCycle,SimulationSpecifier,hFigure,hAxes_1x1);
-                            set(hPanel_1x1,'Visible','on');
-                    end 
-                    createLegend(legendStruct);
-                case 'plotCycleKinematics'
-                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,'_',SimulationCycle,':  Joint Kinematics - ',SimulationSpecifier]);
-                    legendStruct = SimulationRef.plotCycleKinematics(SimulationCycle,SimulationSpecifier,hFigure,hAxes_3x1);
-                    set(hPanel_3x1,'Visible','on');
-                    createLegend(legendStruct);
-            end
-            if max(size(strfind(SimulationMethod,'Simulation'))) || max(size(strfind(SimulationMethod,'MVC')))
-            	set(hSimulationCycleList,'Value',1);
+                case 'plotResiduals'
+                    set(hPanelHeader,'String',[SubjectID,'_',Simulation,': Residuals']);
+                    SimulationRef.plotResiduals(hFigure,hAxes_3x2);
+                    set(hPanel_3x2,'Visible','on');
             end
         end
         set(hPanel_Toolbar,'Visible','on');
     end    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarSaveButton_Callback(hObject,eventdata)
+    function hToolbarSaveButton_Callback(~,~)
 %         deleteLegend;
         filename = get(hPanelHeader,'String');
         filename = regexprep(filename,{':','-',' vs. ','\W'},{'__','_','',''});
@@ -1596,7 +1142,7 @@ function gui(dataSummary)
         close(hNewFigure);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarZoomButton_Callback(hToolbarZoomButton,eventdata)
+    function hToolbarZoomButton_Callback(hToolbarZoomButton,~)
         state = get(hToolbarZoomButton,'Value');
         if state == get(hToolbarZoomButton,'Max')
             zoom on;
@@ -1605,7 +1151,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarPanButton_Callback(hToolbarPanButton,eventdata)
+    function hToolbarPanButton_Callback(hToolbarPanButton,~)
         state = get(hToolbarPanButton,'Value');
         if state == get(hToolbarPanButton,'Max')
             pan on;
@@ -1614,7 +1160,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarRotateButton_Callback(hToolbarRotateButton,eventdata)
+    function hToolbarRotateButton_Callback(hToolbarRotateButton,~)
         state = get(hToolbarRotateButton,'Value');
         if state == get(hToolbarRotateButton,'Max')
             rotate3d on;

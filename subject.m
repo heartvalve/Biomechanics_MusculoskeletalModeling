@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-17
+    % Last Modified 2013-09-18
     
     
     %% Properties
@@ -112,10 +112,6 @@ classdef subject < handle
                 set(fig_handle,'CurrentAxes',axes_handles(j));
                 XplotMuscleForces(obj,p.Results.cycle,mNames{j});
             end
-            if strcmp(p.Results.muscle,'All')
-                set(fig_handle,'CurrentAxes',subplot(3,4,11:12));
-                set(gca,'Visible','off');
-            end
             % Legend
             lStruct = struct;
             axesH = get(axes_handles(1),'Children');
@@ -123,7 +119,7 @@ classdef subject < handle
             if isa(obj,'OpenSim.controlGroup')
                 lStruct.names = {'Left (GRF)'; 'Left (KIN)'; 'Right (GRF)'; 'Right (KIN)'};
             else
-                lStruct.names = {'Uninvovled (GRF)'; 'Uninvovled (KIN)'; 'ACLR (GRF)'; 'ACLR (KIN)'};
+                lStruct.names = {'Uninvolved (GRF)'; 'Uninvolved (KIN)'; 'ACLR (GRF)'; 'ACLR (KIN)'};
             end
             % Return (to GUI)
             if nargout == 1
