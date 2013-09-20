@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-18
+    % Last Modified 2013-09-19
     
     
     %% Properties
@@ -67,9 +67,12 @@ classdef subject < handle
             end
             obj.maxIsometric = maxForces;
             % Add normalized muscle forces property to individual simulations
-            
-            
-            
+            for i = 1:length(simNames)
+                muscles = obj.(simNames{i}).muscles;
+                for j = 1:length(muscles)
+                    obj.(simNames{i}).normMuscleForces.(muscles{j}) = obj.(simNames{i}).muscleForces.(muscles{j})./obj.maxIsometric.(muscles{j}).*100;
+                end
+            end            
         end
         % *****************************************************************
         %       Plotting Methods
@@ -133,15 +136,17 @@ classdef subject < handle
                 %
                
                 % Plot uninvolved leg (or left leg for controls)
-                plot((0:100)',obj.(['U_',cycle,'_RepGRF']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                plot((0:100)',obj.(['U_',cycle,'_RepGRF']).normMuscleForces.(muscle),...
                                     'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','-'); hold on;
-                plot((0:100)',obj.(['U_',cycle,'_RepKIN']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                plot((0:100)',obj.(['U_',cycle,'_RepKIN']).normMuscleForces.(muscle),...
                                     'Color',[0.4 0.2 0.6],'LineWidth',2,'LineStyle','--');
                 % Plot ACLR leg (or right leg for controls)
-                plot((0:100)',obj.(['A_',cycle,'_RepGRF']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                plot((0:100)',obj.(['A_',cycle,'_RepGRF']).normMuscleForces.(muscle),...
                                     'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','-');
-                plot((0:100)',obj.(['A_',cycle,'_RepKIN']).muscleForces.(muscle)./obj.maxIsometric.(muscle).*100,...
+                plot((0:100)',obj.(['A_',cycle,'_RepKIN']).normMuscleForces.(muscle),...
                                     'Color',[0 0.65 0.3],'LineWidth',2,'LineStyle','--');
+                % Reverse children order (so mean is on top and shaded region is in back)
+                set(gca,'Children',flipud(get(gca,'Children')));
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits

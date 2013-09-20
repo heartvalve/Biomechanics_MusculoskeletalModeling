@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-18
+    % Last Modified 2013-09-19
     
     
     %% Properties
@@ -118,6 +118,9 @@ classdef simulation < handle
             end
             mForces = dataset({iForces,obj.muscles{:}});
             obj.muscleForces = mForces;
+            % Set up normalized muscle forces (to be added on subject construction)
+            nForces = zeros(101,length(obj.muscles));
+            obj.normMuscleForces = dataset({nForces,obj.muscles{:}});
         end
         % *****************************************************************
         %       Plotting Methods
@@ -181,7 +184,7 @@ classdef simulation < handle
                 ylabel('Magnitude (N)');
             end
         end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function plotMuscleForces(obj,varargin)
             % PLOTMUSCLEFORCES
             %
@@ -236,12 +239,18 @@ classdef simulation < handle
         % *****************************************************************
         %       Export for Abaqus
         % *****************************************************************
-% %         function exportAbaqus(obj)
-% %             % EXPORTABAQUS
-% %             %
-% %                        
-% %             
-% %         end
+        function exportAbaqus(obj)
+            % EXPORTABAQUS
+            %
+
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.simulation');
+            p.addRequired('obj',checkObj);
+            p.parse(obj);
+            % Export ...
+            
+        end
     end
     
 end

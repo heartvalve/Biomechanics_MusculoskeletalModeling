@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-18
+    % Last Modified 2013-09-19
     
     
     %% Properties
@@ -72,7 +72,7 @@ classdef group < handle
                                 % Muscle forces (normalized)
                                 mNames = obj.(subjects{j}).maxIsometric.Properties.VarNames;
                                 for p = 1:length(mNames)
-                                    cstruct.(cycleNames{k}).muscleForces.(mNames{p}) = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).muscleForces.(mNames{p})./obj.(subjects{j}).maxIsometric.(mNames{p}).*100;
+                                    cstruct.(cycleNames{k}).muscleForces.(mNames{p}) = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).normMuscleForces.(mNames{p});
                                 end
                                 % Subject / type name
                                 cstruct.(cycleNames{k}).subjects = {[subjects{j}(2:end),'_',cycleTypes{m}]};
@@ -80,10 +80,10 @@ classdef group < handle
                             else
                                 % Muscle forces
                                 oldM = cstruct.(cycleNames{k}).muscleForces;
-                                newM = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).muscleForces;
+                                newM = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).normMuscleForces;
                                 mNames = newM.Properties.VarNames;
                                 for p = 1:length(mNames)
-                                    newM.(mNames{p}) = [oldM.(mNames{p}) newM.(mNames{p})./obj.(subjects{j}).maxIsometric.(mNames{p}).*100];
+                                    newM.(mNames{p}) = [oldM.(mNames{p}) newM.(mNames{p})];
                                 end
                                 cstruct.(cycleNames{k}).muscleForces = newM;
                                 % Subject / type names

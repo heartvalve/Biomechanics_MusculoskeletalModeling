@@ -4,7 +4,7 @@ function gui(dataSummary)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-18
+    % Last Modified 2013-09-19
     
     
     %% Input
@@ -297,22 +297,8 @@ function gui(dataSummary)
                                         'ForegroundColor',[1 1 1], ...
                                         'Callback',{@hSimulationUpdateButton_Callback});
     
-    %% Information
-    %
-    hPanelHeader = uicontrol('Parent',hFigure, ...
-                             'Style','text', ...
-                             'Units','normalized', ...
-                             'Position',[0.025 0.955 0.75 0.0325], ...
-                             'String',{''}, ...
-                             'FontName','Times New Roman', ...
-                             'FontSize',20, ...
-                             'FontWeight','bold', ...
-                             'HorizontalAlignment','center', ...    
-                             'BackgroundColor',[0.39 0.47 0.64], ...
-                             'ForegroundColor',[1 1 1]);
-    
     %% Toolbar
-    %
+    %    
     hPanel_Toolbar = uipanel('Parent',hFigure, ...
                              'Units','normalized', ...
                              'Position',[0.00625 0.025 0.015 .925], ...
@@ -358,6 +344,18 @@ function gui(dataSummary)
 
     %% Axes
     %
+    hPanelHeader = uicontrol('Parent',hFigure, ...
+                             'Style','text', ...
+                             'Units','normalized', ...
+                             'Position',[0.025 0.955 0.75 0.0325], ...
+                             'String',{''}, ...
+                             'FontName','Times New Roman', ...
+                             'FontSize',20, ...
+                             'FontWeight','bold', ...
+                             'HorizontalAlignment','center', ...    
+                             'BackgroundColor',[0.39 0.47 0.64], ...
+                             'ForegroundColor',[1 1 1]);
+    %%%
     hPanel_1x1 = uipanel('Parent',hFigure, ...
                          'Units','normalized', ...
                          'Position',[0.025 0.025 0.75 0.925], ...
@@ -373,17 +371,7 @@ function gui(dataSummary)
                          'Position',[0.025 0.025 0.75 0.925], ...
                          'BorderType','none', ...
                          'Visible','off');
-    hPanel_3x1 = uipanel('Parent',hFigure, ...
-                         'Units','normalized', ...
-                         'Position',[0.025 0.025 0.75 0.925], ...
-                         'BorderType','none', ...
-                         'Visible','off');
     hPanel_3x2 = uipanel('Parent',hFigure, ...
-                         'Units','normalized', ...
-                         'Position',[0.025 0.025 0.75 0.925], ...
-                         'BorderType','none', ...
-                         'Visible','off');
-    hPanel_3x3 = uipanel('Parent',hFigure, ...
                          'Units','normalized', ...
                          'Position',[0.025 0.025 0.75 0.925], ...
                          'BorderType','none', ...
@@ -393,7 +381,7 @@ function gui(dataSummary)
                          'Position',[0.025 0.025 0.75 0.925], ...
                          'BorderType','none', ...
                          'Visible','off');
-    hPanels_All = [hPanel_1x1, hPanel_1x2, hPanel_2x2, hPanel_3x1, hPanel_3x2, hPanel_3x3, hPanel_3x4, hPanel_Toolbar];
+    hPanels_All = [hPanel_1x1, hPanel_1x2, hPanel_2x2, hPanel_3x2, hPanel_3x4, hPanel_Toolbar];
     %%%
     hAxes_1x1 = axes('Parent',hPanel_1x1, ...
                      'Units','normalized', ...
@@ -415,16 +403,7 @@ function gui(dataSummary)
                        'OuterPosition',[0 0 0.5 0.5]);
     hAxes_2x2_4 = axes('Parent',hPanel_2x2, ...
                        'Units','normalized', ...
-                       'OuterPosition',[0.5 0 0.5 0.5]);   
-    hAxes_3x1_1 = axes('Parent',hPanel_3x1, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0 0.67 1 0.33]);
-    hAxes_3x1_2 = axes('Parent',hPanel_3x1, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0 0.33 1 0.33]);
-    hAxes_3x1_3 = axes('Parent',hPanel_3x1, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0 0 1 0.33]);               
+                       'OuterPosition',[0.5 0 0.5 0.5]);              
     hAxes_3x2_1 = axes('Parent',hPanel_3x2, ...
                        'Units','normalized', ...
                        'OuterPosition',[0 0.67 0.5 0.33]);
@@ -443,33 +422,6 @@ function gui(dataSummary)
     hAxes_3x2_6 = axes('Parent',hPanel_3x2, ...
                        'Units','normalized', ...
                        'OuterPosition',[0.5 0 0.5 0.33]);
-    hAxes_3x3_1 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0 0.67 0.33 0.33]);
-    hAxes_3x3_2 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0.33 0.67 0.33 0.33]);
-    hAxes_3x3_3 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0.67 0.67 0.33 0.33]);
-    hAxes_3x3_4 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0 0.33 0.33 0.33]);
-    hAxes_3x3_5 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0.33 0.33 0.33 0.33]);
-    hAxes_3x3_6 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0.67 0.33 0.33 0.33]);
-    hAxes_3x3_7 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0 0 0.33 0.33]);
-    hAxes_3x3_8 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0.33 0 0.33 0.33]);
-    hAxes_3x3_9 = axes('Parent',hPanel_3x3, ...
-                       'Units','normalized', ...
-                       'OuterPosition',[0.67 0 0.33 0.33]);
     hAxes_3x4_1 = axes('Parent',hPanel_3x4, ...
                        'Units','normalized', ...
                        'OuterPosition',[0 0.67 0.25 0.33]);
@@ -502,21 +454,17 @@ function gui(dataSummary)
                         'OuterPosition',[0.25 0 0.25 0.33]);
     hAxes_1x2 = [hAxes_1x2_1, hAxes_1x2_2];
     hAxes_2x2 = [hAxes_2x2_1, hAxes_2x2_2, hAxes_2x2_3, hAxes_2x2_4];
-    hAxes_3x1 = [hAxes_3x1_1, hAxes_3x1_2, hAxes_3x1_3];
     hAxes_3x2 = [hAxes_3x2_1, hAxes_3x2_2, hAxes_3x2_3, hAxes_3x2_4, ...
                  hAxes_3x2_5, hAxes_3x2_6];
-    hAxes_3x3 = [hAxes_3x3_1, hAxes_3x3_2, hAxes_3x3_3, ...
-                 hAxes_3x3_4, hAxes_3x3_5, hAxes_3x3_6, ...
-                 hAxes_3x3_7, hAxes_3x3_8, hAxes_3x3_9];
     hAxes_3x4 = [hAxes_3x4_1, hAxes_3x4_2, hAxes_3x4_3, hAxes_3x4_4, ...
                  hAxes_3x4_5, hAxes_3x4_6, hAxes_3x4_7, hAxes_3x4_8, ...
                  hAxes_3x4_9, hAxes_3x4_10];
-    hAxes_All = [hAxes_1x1, hAxes_1x2, hAxes_2x2, hAxes_3x1, hAxes_3x2, hAxes_3x3, hAxes_3x4];
+    hAxes_All = [hAxes_1x1, hAxes_1x2, hAxes_2x2, hAxes_3x2, hAxes_3x4];
     set(hAxes_All,'NextPlot','replace');    
     
     %% Callbacks
     %
-    function hSummaryMethodList_Callback(hSummaryMethodList,~)
+    function hSummaryMethodList_Callback(hSummaryMethodList, eventdata)
         deleteLegend;
         indexSummaryMethodList = get(hSummaryMethodList,'Value');
         choicesSummaryMethodList = get(hSummaryMethodList,'String');
@@ -554,7 +502,7 @@ function gui(dataSummary)
         set(hSimulationSpecifierList,'Value',1);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSummaryUpdateButton_Callback(~,~)
+    function hSummaryUpdateButton_Callback(hObject, eventdata)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
         set(hPanels_All,'Visible','off');
@@ -595,7 +543,7 @@ function gui(dataSummary)
         set(hPanel_Toolbar,'Visible','on');            
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hGroupList_Callback(hGroupList,~)
+    function hGroupList_Callback(hGroupList, eventdata)
         deleteLegend;
         indexGroupList = get(hGroupList,'Value');
         choicesGroupList = get(hGroupList,'String');
@@ -617,12 +565,9 @@ function gui(dataSummary)
             end            
             choicesGroupCycleList = [{''}; choicesGroupCycleList];
             set(hGroupCycleList,'String',choicesGroupCycleList);
-            choicesSubjectList = properties(GroupRef);
-            tempLogical = strcmp('cycles',choicesSubjectList);
-            choicesSubjectList(tempLogical) = [];
-            tempLogical = strcmp('summary',choicesSubjectList);
-            choicesSubjectList(tempLogical) = [];
-            clear tempLogical
+            choicesSubjectList = properties(GroupRef);            
+            checkSubjects = @(x) isa(GroupRef.(x{1}),'OpenSim.subject');
+            choicesSubjectList(~arrayfun(checkSubjects,choicesSubjectList)) = [];
             choicesSubjectList = [{''}; choicesSubjectList];
             set(hSubjectList,'String',choicesSubjectList);            
         end
@@ -641,7 +586,7 @@ function gui(dataSummary)
         set(hSimulationSpecifierList,'Value',1);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hGroupMethodList_Callback(hGroupMethodList,~)
+    function hGroupMethodList_Callback(hGroupMethodList, eventdata)
         deleteLegend;
         if get(hGroupList,'Value') == 1
             set(hGroupMethodList,'Value',1);
@@ -670,13 +615,7 @@ function gui(dataSummary)
                                                      'gasmed'; 'gaslat'};
                 end
                 choicesGroupCycleList = get(GroupRef.cycles,'ObsNames');
-                tempLogical = strncmp('A_',choicesGroupCycleList,2);
-                choicesGroupCycleList(~tempLogical) = [];
-                clear tempLogical
-                for i = 1:length(choicesGroupCycleList)
-                    choicesGroupCycleList{i} = choicesGroupCycleList{i}(3:end);
-                end            
-                choicesGroupCycleList = [{''}; choicesGroupCycleList];
+                choicesGroupCycleList = [{''}; unique(cellfun(@(x) x(3:6),choicesGroupCycleList,'UniformOutput',false))];
                 set(hGroupCycleList,'String',choicesGroupCycleList);
                 set(hGroupCycleList,'Value',2);
                 set(hGroupSpecifierList,'String',choicesGroupSpecifierList);
@@ -695,7 +634,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%    
-    function hGroupUpdateButton_Callback(~,~)
+    function hGroupUpdateButton_Callback(hObject, eventdata)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
         set(hPanels_All,'Visible','off');
@@ -739,7 +678,7 @@ function gui(dataSummary)
         set(hPanel_Toolbar,'Visible','on');
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSubjectList_Callback(hSubjectList,~)
+    function hSubjectList_Callback(hSubjectList, eventdata)
         deleteLegend;
         if get(hGroupList,'Value') == 1
             set(hSubjectList,'Value',1);
@@ -761,20 +700,12 @@ function gui(dataSummary)
                 choicesSubjectMethodList = [{''}; choicesSubjectMethodList];
                 set(hSubjectMethodList,'String',choicesSubjectMethodList);                
                 choicesSubjectCycleList = properties(SubjectRef);
-                tempLogical = strncmp('A_',choicesSubjectCycleList,2);
-                choicesSubjectCycleList(~tempLogical) = [];
-                clear tempLogical
-                for i = 1:length(choicesSubjectCycleList)
-                    choicesSubjectCycleList{i} = choicesSubjectCycleList{i}(3:6);
-                end                
-                choicesSubjectCycleList = [{''}; unique(choicesSubjectCycleList)];
+                checkSimulations = @(x) isa(SubjectRef.(x{1}),'OpenSim.simulation');
+                choicesSubjectCycleList(~arrayfun(checkSimulations,choicesSubjectCycleList)) = [];
+                choicesSubjectCycleList = [{''}; unique(cellfun(@(x) x(3:6),choicesSubjectCycleList,'UniformOutput',false))];
                 set(hSubjectCycleList,'String',choicesSubjectCycleList);
                 choicesSimulationList = properties(SubjectRef);
-                tempLogical = strcmp('subID',choicesSimulationList);
-                choicesSimulationList(tempLogical) = [];
-                tempLogical = strcmp('maxIsometric',choicesSimulationList);
-                choicesSimulationList(tempLogical) = [];
-                clear tempLogical
+                choicesSimulationList(~arrayfun(checkSimulations,choicesSimulationList)) = [];
                 choicesSimulationList = [{''}; choicesSimulationList];            
                 set(hSimulationList,'String',choicesSimulationList);            
             end
@@ -793,7 +724,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSubjectMethodList_Callback(hSubjectMethodList,~)
+    function hSubjectMethodList_Callback(hSubjectMethodList, eventdata)
         deleteLegend;
         if get(hGroupList,'Value') == 1 || get(hSubjectList,'Value') == 1
             set(hSubjectMethodList,'Value',1);
@@ -825,13 +756,9 @@ function gui(dataSummary)
                                                        'gasmed'; 'gaslat'};
                 end
                 choicesSubjectCycleList = properties(SubjectRef);
-                tempLogical = strncmp('A_',choicesSubjectCycleList,2);
-                choicesSubjectCycleList(~tempLogical) = [];
-                clear tempLogical
-                for i = 1:length(choicesSubjectCycleList)
-                    choicesSubjectCycleList{i} = choicesSubjectCycleList{i}(3:6);
-                end                
-                choicesSubjectCycleList = [{''}; unique(choicesSubjectCycleList)];
+                checkSimulations = @(x) isa(SubjectRef.(x{1}),'OpenSim.simulation');
+                choicesSubjectCycleList(~arrayfun(checkSimulations,choicesSubjectCycleList)) = [];
+                choicesSubjectCycleList = [{''}; unique(cellfun(@(x) x(3:6),choicesSubjectCycleList,'UniformOutput',false))];
                 set(hSubjectCycleList,'String',choicesSubjectCycleList);
                 set(hSubjectCycleList,'Value',2);
                 set(hSubjectSpecifierList,'String',choicesSubjectSpecifierList);
@@ -849,7 +776,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSubjectUpdateButton_Callback(~,~)
+    function hSubjectUpdateButton_Callback(hObject, eventdata)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
         set(hPanels_All,'Visible','off');
@@ -897,7 +824,7 @@ function gui(dataSummary)
         set(hPanel_Toolbar,'Visible','on');        
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSimulationList_Callback(hSimulationList,~)
+    function hSimulationList_Callback(hSimulationList, eventdata)
         deleteLegend;
         if get(hGroupList,'Value') == 1 || get(hSubjectList,'Value') == 1
             set(hSimulationList,'Value',1);
@@ -936,7 +863,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSimulationMethodList_Callback(hSimulationMethodList,~)
+    function hSimulationMethodList_Callback(hSimulationMethodList, eventdata)
         deleteLegend;
         if get(hGroupList,'Value') == 1 || get(hSubjectList,'Value') == 1 || get(hSimulationList,'Value') == 1
             set(hSimulationMethodList,'Value',1);
@@ -976,7 +903,7 @@ function gui(dataSummary)
         end
     end    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hSimulationUpdateButton_Callback(~,~)
+    function hSimulationUpdateButton_Callback(hObject, eventdata)
         set(hFigure,'RendererMode','auto');
         deleteLegend;
         set(hPanels_All,'Visible','off');
@@ -1027,7 +954,7 @@ function gui(dataSummary)
         set(hPanel_Toolbar,'Visible','on');
     end    
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarSaveButton_Callback(~,~)
+    function hToolbarSaveButton_Callback(hObject, eventdata)
 %         deleteLegend;
         filename = get(hPanelHeader,'String');
         filename = regexprep(filename,{':','-',' vs. ','\W'},{'__','_','',''});
@@ -1142,7 +1069,7 @@ function gui(dataSummary)
         close(hNewFigure);
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarZoomButton_Callback(hToolbarZoomButton,~)
+    function hToolbarZoomButton_Callback(hToolbarZoomButton, eventdata)
         state = get(hToolbarZoomButton,'Value');
         if state == get(hToolbarZoomButton,'Max')
             zoom on;
@@ -1151,7 +1078,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarPanButton_Callback(hToolbarPanButton,~)
+    function hToolbarPanButton_Callback(hToolbarPanButton, eventdata)
         state = get(hToolbarPanButton,'Value');
         if state == get(hToolbarPanButton,'Max')
             pan on;
@@ -1160,7 +1087,7 @@ function gui(dataSummary)
         end
     end
     %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-    function hToolbarRotateButton_Callback(hToolbarRotateButton,~)
+    function hToolbarRotateButton_Callback(hToolbarRotateButton, eventdata)
         state = get(hToolbarRotateButton,'Value');
         if state == get(hToolbarRotateButton,'Max')
             rotate3d on;
@@ -1168,7 +1095,9 @@ function gui(dataSummary)
             rotate3d off;
         end
     end
-    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    
+    %% Utility Functions
+    %
     function createLegend(legendStruct)
         lPos = [0.9 0.025 0.085 0.425];  %[0.8875 0.025 0.1 0.425]
         hLines = legendStruct.axesHandles;
