@@ -4,7 +4,7 @@ classdef summary < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-19
+    % Last Modified 2013-11-08
     
     
     %% Properties
@@ -141,6 +141,36 @@ classdef summary < handle
             end            
         end
         % *****************************************************************
+        %       Export Muscle Forces
+        % *****************************************************************
+        function exportMuscleForces(obj)
+            % EXPORTMUSCLEFORCES
+            %
+
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.summary');
+            p.addRequired('obj',checkObj);
+            p.parse(obj);
+            % Invoke the method for all of the simulations
+            groups = properties(obj);
+            checkGroups = @(x) isa(obj.(x{1}),'OpenSim.group');
+            groups(~arrayfun(checkGroups,groups)) = [];
+            for i = 1:length(groups)
+                subjects = properties(obj.(groups{i}));
+                checkSubjects = @(x) isa(obj.(groups{i}).(x{1}),'OpenSim.subject');
+                subjects(~arrayfun(checkSubjects,subjects)) = [];
+                for j = 1:length(subjects)
+                    simulations = properties(obj.(groups{i}).(subjects{j}));
+                    checkSimulations = @(x) isa(obj.(groups{i}).(subjects{j}).(x{1}),'OpenSim.simulation');
+                    simulations(~arrayfun(checkSimulations,simulations)) = [];
+                    for k = 1:length(simulations)
+                        obj.(groups{i}).(subjects{j}).(simulations{k}).exportMuscleForces();                    
+                    end                    
+                end
+            end            
+        end        
+        % *****************************************************************
         %       Export for Abaqus
         % *****************************************************************
         function exportAbaqus(obj)
@@ -166,9 +196,9 @@ classdef summary < handle
                     simulations(~arrayfun(checkSimulations,simulations)) = [];
                     for k = 1:length(simulations)
                         obj.(groups{i}).(subjects{j}).(simulations{k}).exportOpenSim();                    
-                    end                    
+                    end
                 end
-            end            
+            end
         end
     end
     

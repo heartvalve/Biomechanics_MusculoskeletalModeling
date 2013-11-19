@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-19
+    % Last Modified 2013-11-08
     
     
     %% Properties
@@ -236,6 +236,21 @@ classdef simulation < handle
                 ylabel('Muscle Force (N)');
             end
         end
+        % *****************************************************************
+        %       Export Muscle Forces
+        % *****************************************************************
+        function exportMuscleForces(obj)
+            % EXPORTMUSCLEFORCES
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.simulation');
+            p.addRequired('obj',checkObj);
+            p.parse(obj);
+            % Export dataset object
+            export(obj.muscleForces,'file',fullfile(obj.subDir,[obj.subID,'_',obj.simName,'_MuscleForces.data']));
+        end        
         % *****************************************************************
         %       Export for Abaqus
         % *****************************************************************
