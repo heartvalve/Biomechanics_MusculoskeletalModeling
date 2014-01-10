@@ -31,7 +31,8 @@
 #subIDs = ['20130401AHLM','20121206CONF','20121205CONF','20121204CONF',
 #          '20121204APRM','20121110AHRM','20121108AHRM','20121008AHRM',
 #          '20120922AHRM','20120920APRM','20120919APLF','20120912AHRF']
-subIDs = ['20120919APLF','20120912AHRF']
+#subIDs = ['20130207APRM']
+subIDs = ['20110622CONM']
 # ####################################################################
 
 
@@ -126,7 +127,7 @@ class runSubject:
         # Trial names
         trialNames = self.getTrialNames()
         # Start worker pool
-        pool = Pool(processes=12)
+        pool = Pool(processes=8)
         # Run parallel processes
         pool.map(runParallel, trialNames)
         # Clean up spawned processes

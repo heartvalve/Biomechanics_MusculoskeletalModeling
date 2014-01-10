@@ -5,7 +5,7 @@
 
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified: 2013-08-30
+    Last Modified: 2013-09-04
 ----------------------------------------------------------------------
 """
 
@@ -61,12 +61,11 @@ def readData(filePath, hLines):
     # Names
     dataTxt = linecache.getline(filePath, hLines)
     names = dataTxt.rstrip().split('\t')
-    nameStr = (',').join(names)
     linecache.clearcache()
     # Data
     data = np.loadtxt(filePath, skiprows=hLines)
     dataList = [data[:,col] for col in range(np.size(data, axis=1))]
-    return nameStr, dataList
+    return names, dataList
 
 
 """*******************************************************************
@@ -118,7 +117,7 @@ class GRF:
         colHeads = [hStr.upper() for hStr in grfList[13].rstrip().split('\t')[1:]]
         newNames = [re.sub(r'GROUND_FORCE([LR])_V([XYZ])', r'\1F\2', hStr) for hStr in colHeads]
         newNames = [re.sub(r'GROUND_FORCE([LR])_P([XYZ])', r'\1C\2', hStr) for hStr in newNames]
-        self.names = [re.sub(r'GROUND_TORQUE([LR])_([XYZ])', r'\1M\2', hStr) for hStr in newNames]
+        names = [re.sub(r'GROUND_TORQUE([LR])_([XYZ])', r'\1M\2', hStr) for hStr in newNames]
         # Read grf data
         grfData = np.loadtxt(grfPath, skiprows=14)
         # Sample time
@@ -127,15 +126,17 @@ class GRF:
         grfData = np.delete(grfData, 0, 1)
         # Replace zeros with NaN in COP
         rCOP = ['RCX','RCY','RCZ']
-        rZeroInd = grfData[:,self.names.index('RCX')] == 0
+        rZeroInd = grfData[:,names.index('RCX')] == 0
         for cop in rCOP:
-            grfData[rZeroInd,self.names.index(cop)] = np.nan
+            grfData[rZeroInd,names.index(cop)] = np.nan
         lCOP  = ['LCX','LCY','LCZ']
-        lZeroInd = grfData[:,self.names.index('LCX')] == 0
+        lZeroInd = grfData[:,names.index('LCX')] == 0
         for cop in lCOP:
-            grfData[lZeroInd,self.names.index(cop)] = np.nan
+            grfData[lZeroInd,names.index(cop)] = np.nan
+        # Convert to list of columns
+        dataList = [grfData[:,col] for col in range(np.size(grfData, axis=1))]
         # Assign data
-        self.data = grfData
+        self.data = dict(zip(names,dataList))
 
 # ####################################################################
 
@@ -147,14 +148,15 @@ class IK:
         ikPath = get_subjectDir(subID) + subID + '_' + simName + '_IK.mot'
         # Get DOF names
         dofTxt  = linecache.getline(ikPath, 11)
-        self.names = dofTxt.rstrip().split('\t')[1:]
+        names = dofTxt.rstrip().split('\t')[1:]
         linecache.clearcache()
         # Read data
         dofData = np.loadtxt(ikPath, skiprows=11)
         # Time
         self.time = dofData[:,0]
         # Data
-        self.data = dofData[:,1:]
+        dataList = [dofData[:,col] for col in range(1,np.size(dofData, axis=1))]
+        self.data = dict(zip(names,dataList))
 
 # ####################################################################
 
@@ -166,14 +168,15 @@ class ID:
         idPath = get_subjectDir(subID) + subID + '_' + simName + '_ID.sto'
         # Get DOF names
         dofTxt  = linecache.getline(idPath, 7)
-        self.names = dofTxt.rstrip().split('\t')[1:]
+        names = dofTxt.rstrip().split('\t')[1:]
         linecache.clearcache()
         # Read data
         dofData = np.loadtxt(idPath, skiprows=7)
         # Time
         self.time = dofData[:,0]
         # Data
-        self.data = dofData[:,1:]
+        dataList = [dofData[:,col] for col in range(1,np.size(dofData, axis=1))]
+        self.data = dict(zip(names,dataList))
 
 # ####################################################################
 
@@ -184,23 +187,23 @@ class RRAsuper:
         try:
             # Actuators
             fNames, fDataList = readData(rraPath + '_Actuation_force.sto', 23)
-            self.actuationForce = np.core.records.fromarrays(fDataList, names=fNames)
+            self.actuationForce = dict(zip(fNames,fDataList))
             # Controls
             cNames, cDataList = readData(rraPath + '_controls.sto', 7)
-            self.controls = np.core.records.fromarrays(cDataList, names=cNames)
+            self.controls = dict(zip(cNames,cDataList))
             # Kinematics
             qNames, qDataList = readData(rraPath + '_Kinematics_q.sto', 11)
-            self.kinematicsCoordinate = np.core.records.fromarrays(qDataList, names=qNames)
+            self.kinematicsCoordinate = dict(zip(qNames,qDataList))
             uNames, uDataList = readData(rraPath + '_Kinematics_u.sto', 11)
-            self.kinematicsSpeed = np.core.records.fromarrays(uDataList, names=uNames)
+            self.kinematicsSpeed = dict(zip(uNames,uDataList))
             dNames, dDataList = readData(rraPath + '_Kinematics_dudt.sto', 11)
-            self.kinematicsAcceleration = np.core.records.fromarrays(dDataList, names=dNames)
+            self.kinematicsAcceleration = dict(zip(dNames,dDataList))
             # Position Error
             pNames, pDataList = readData(rraPath + '_pErr.sto', 7)
-            self.positionError = np.core.records.fromarrays(pDataList, names=pNames)
+            self.positionError = dict(zip(pNames,pDataList))
             # States
             sNames, sDataList = readData(rraPath + '_states.sto', 7)
-            self.states = np.core.records.fromarrays(sDataList, names=sNames)
+            self.states = dict(zip(sNames,sDataList))
         except:
             print 'Unable to find file(s) in ' + rraPath
 
@@ -216,9 +219,9 @@ class RRA(RRAsuper):
         RRAsuper.__init__(self, rraPath)
         # Actuators (currently not working for CMC)
         sNames, sDataList = readData(rraPath + '_Actuation_speed.sto', 23)
-        self.actuationSpeed = np.core.records.fromarrays(sDataList, names=sNames)
+        self.actuationSpeed = dict(zip(sNames,sDataList))
         pNames, pDataList = readData(rraPath + '_Actuation_power.sto', 23)
-        self.actuationPower = np.core.records.fromarrays(pDataList, names=pNames)
+        self.actuationPower = dict(zip(pNames,pDataList))
 
 # ####################################################################
 
@@ -238,7 +241,6 @@ class CMC(RRAsuper):
 class Simulation:
 
     """
-    np.arange(101) instead of np.linspace
     - when modifying a view, the original array is modified as well -- transpose is a 'view'
     - 'fancy indexing' creates copies not views
     - flattening an array: 'ravel' method
@@ -285,19 +287,19 @@ class Simulation:
         # Muscle forces
         try:
             musclesWithLeg = [muscle + '_' + self.leg for muscle in self.muscles]
-            fullTime = self.cmc.actuationForce.time
-            forceDataT = np.linspace(0., 100., 101)
+            fullTime = self.cmc.actuationForce['time']
+            forceData = np.zeros((101,len(self.muscles)+1))
+            forceData[:,0] = np.arange(101)
             forceNames = ['percentCycle']
-            for mLabel in musclesWithLeg:
+            for (i,mLabel) in enumerate(musclesWithLeg):
                 mFullData = self.cmc.actuationForce[mLabel]
                 cycleTimeNorm = np.linspace(self.grf.cycleTime[0], self.grf.cycleTime[1], 101)
                 sInterp = InterpolatedUnivariateSpline(fullTime, mFullData)
                 mData = sInterp(cycleTimeNorm)
-                forceDataT = np.vstack((forceDataT,mData))
+                forceData[:,i+1] = mData
                 forceNames.append(mLabel[:-2])
-            forceData = np.transpose(forceDataT)
             forceDataList = [forceData[:,col] for col in range(np.size(forceData, axis=1))]
-            self.muscleForces = np.core.records.fromarrays(forceDataList, names=forceNames)
+            self.muscleForces = dict(zip(forceNames,forceDataList))
         except:
             print 'Check CMC results for ' + self.subID + '_' + self.simName
 
@@ -316,10 +318,20 @@ def runParallel(simFullName):
     # Return
     return simObj
 
-# ####################################################################    
+# ####################################################################
+
+simObjList = []
  
-def createSimList(simObj):
+def initializeSimList():
     
+    global simObjList
+    simObjList = []
+    
+# ####################################################################
+ 
+def updateSimList(simObj):
+    
+    global simObjList
     simObjList.append(simObj)
     
 # ####################################################################
@@ -340,42 +352,27 @@ class Subject:
 class SubjectNoStairs(Subject):
 
     def __init__(self, subID):
-
-        """
-        UPDATE WITH COMMENTS FROM SUBJECT WITH STAIRS     
-        """
-                
+     
         # Create instance of class from superclass
-        Subject.__init__(self, subID)
-        
-        # Simulation names
+        Subject.__init__(self, subID)        
+        # Simulation descriptors
         simDescriptors = ['A_SD2F_RepGRF', 'A_SD2F_RepKIN', 'A_Walk_RepGRF', 'A_Walk_RepKIN', 
                           'U_SD2F_RepGRF', 'U_SD2F_RepKIN', 'U_Walk_RepGRF', 'U_Walk_RepKIN']
+        # List of simulation names
         simNames = [subID + '_' + descriptor for descriptor in simDescriptors]
-        global simObjList
-        simObjList = []
+        # Initialize global variable for simulation objects
+        initializeSimList()
         # Start worker pool
         pool = Pool(processes=8)
-        # Run parallel processes
-        pool.map_async(runParallel, simNames, callback=createSimList)
+        # Run parallel processes to process simulations and append object to global list
+        pool.map_async(runParallel, simNames, callback=updateSimList)
         # Clean up spawned processes
         pool.close()
         pool.join()
-        # Add attributes
+        # Add simulations as attributes to subject object
         for simObj in simObjList[0]:
             setattr(self, simObj.simName, simObj)
-        
-        """
-        self.A_SD2F_RepGRF = Simulation(subID, 'A_SD2F_RepGRF')
-        self.A_SD2F_RepKIN = Simulation(subID, 'A_SD2F_RepKIN')
-        self.A_Walk_RepGRF = Simulation(subID, 'A_Walk_RepGRF')
-        self.A_Walk_RepKIN = Simulation(subID, 'A_Walk_RepKIN')
-        self.U_SD2F_RepGRF = Simulation(subID, 'U_SD2F_RepGRF')
-        self.U_SD2F_RepKIN = Simulation(subID, 'U_SD2F_RepKIN')
-        self.U_Walk_RepGRF = Simulation(subID, 'U_Walk_RepGRF')
-        self.U_Walk_RepKIN = Simulation(subID, 'U_Walk_RepKIN')
-        """
-        
+        # Display message to user
         print 'Time elapsed for processing subject ' + self.subID + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
 
 # ####################################################################
@@ -386,9 +383,7 @@ class SubjectWithStairs(Subject):
 
         """
         THINGS TO UNDERSTAND:
-        - why does it take a long time on the first run (seems to be serial)?
         - when adding simulation attributes, why is the list nested (need to call simObjList[0])??
-        - need to define simObjList as global within the function definition for creating the list?? (see page 24 in Evernote manual)
         """        
         
         # Create instance of class from superclass
@@ -401,33 +396,17 @@ class SubjectWithStairs(Subject):
         # List of simulation names
         simNames = [subID + '_' + descriptor for descriptor in simDescriptors]
         # Initialize global variable for simulation objects
-        global simObjList
-        simObjList = []
+        initializeSimList()
         # Start worker pool
         pool = Pool(processes=12)
         # Run parallel processes to process simulations and append object to global list
-        pool.map_async(runParallel, simNames, callback=createSimList)
+        pool.map_async(runParallel, simNames, callback=updateSimList)
         # Clean up spawned processes
         pool.close()
         pool.join()
         # Add simulations as attributes to subject object
         for simObj in simObjList[0]:
             setattr(self, simObj.simName, simObj)
-        """
-        # Process simulations serially
-        self.A_SD2F_RepGRF = Simulation(subID, 'A_SD2F_RepGRF')
-        self.A_SD2F_RepKIN = Simulation(subID, 'A_SD2F_RepKIN')
-        self.A_SD2S_RepGRF = Simulation(subID, 'A_SD2S_RepGRF')
-        self.A_SD2S_RepKIN = Simulation(subID, 'A_SD2S_RepKIN')
-        self.A_Walk_RepGRF = Simulation(subID, 'A_Walk_RepGRF')
-        self.A_Walk_RepKIN = Simulation(subID, 'A_Walk_RepKIN')
-        self.U_SD2F_RepGRF = Simulation(subID, 'U_SD2F_RepGRF')
-        self.U_SD2F_RepKIN = Simulation(subID, 'U_SD2F_RepKIN')
-        self.U_SD2S_RepGRF = Simulation(subID, 'U_SD2S_RepGRF')
-        self.U_SD2S_RepKIN = Simulation(subID, 'U_SD2S_RepKIN')
-        self.U_Walk_RepGRF = Simulation(subID, 'U_Walk_RepGRF')
-        self.U_Walk_RepKIN = Simulation(subID, 'U_Walk_RepKIN')
-        """
         # Display message to user
         print 'Time elapsed for processing subject ' + self.subID + ': ' + str(int(time.time()-self.startTime)) + ' seconds'
 
@@ -465,20 +444,33 @@ class Group:
         # Loop through cycles
         for cycle in cycleNames:
             # Initialize empty 3d array        
-            allData = np.empty([101, 10, len(subjectObjs)*2])
+            allData = np.zeros((101, 10, len(subjectObjs)*2))
             # Loop through subjects
-            for (i,subjectObj) in enumerate(subjectObjs):
+            indToRemove = []            
+            for (i,subjectObj) in enumerate(subjectObjs):                
                 try:
-                    # Convert record array to regular array and assign
-                    allData[:,:,2*i] = getattr(subjectObj, cycle + '_RepGRF').muscleForces.view((np.float64, len(getattr(subjectObj, cycle + '_RepGRF').muscleForces.dtype.names)))[:,1:]
-                except:
-                    allData[:,:,2*i] = np.ones([101,10])
-                    print 'Problem with ' + subjectObj.subID + '_' + cycle + '_RepGRF'
+                    sortedMuscles = getattr(subjectObj, cycle + '_RepGRF').muscles                
+                    for (j,mLabel) in enumerate(sortedMuscles):                        
+                        allData[:,j,2*i] = getattr(subjectObj, cycle + '_RepGRF').muscleForces[mLabel]
+                except:                    
+                    allData[:,j,2*i] = np.nan
+                    #indToRemove.append(2*i)
+                    print 'Problem with ' + subjectObj.subID + '_' + cycle + '_RepGRF'                         
                 try:
-                    allData[:,:,2*i+1] = getattr(subjectObj, cycle + '_RepKIN').muscleForces.view((np.float64, len(getattr(subjectObj, cycle + '_RepKIN').muscleForces.dtype.names)))[:,1:]
+                    sortedMuscles = getattr(subjectObj, cycle + '_RepKIN').muscles                  
+                    for (j,mLabel) in enumerate(sortedMuscles):                        
+                        allData[:,j,2*i+1] = getattr(subjectObj, cycle + '_RepKIN').muscleForces[mLabel]
                 except:
-                    allData[:,:,2*i+1] = np.ones([101,10])
+                    allData[:,j,2*i+1] = np.nan
+                    #indToRemove.append(2*i+1)
                     print 'Problem with ' + subjectObj.subID + '_' + cycle + '_RepKIN'
+            """
+            # Remove bad subjects
+            if len(indToRemove) > 0:
+                indToRemove.reverse()
+                for i in indToRemove:
+                    del allData[:,:,i]
+            """
             # Calculate average along third dimension of array (axis 2) for all muscles
             meanData = np.mean(allData, axis=2)
             # Convert to a list of individual columns
@@ -486,13 +478,12 @@ class Group:
             # Calculate standard deviation along third dimension of array (axis 2) for all muscles
             stdevData = np.std(allData, axis=2)
             # Convert to a list of individual columns
-            stdevDataList = [stdevData[:,col] for col in range(np.size(stdevData, axis=1))]     
-            #  #forceNames = ['percentCycle'] + getattr(subjectObj, cycle + '_RepGRF').muscles     
+            stdevDataList = [stdevData[:,col] for col in range(np.size(stdevData, axis=1))]    
             # Get names of muscles
             forceNames = getattr(subjectObj, cycle + '_RepGRF').muscles
             # Add to nested dictionary first by cycle type
-            cycleDict[cycle]['mean'] = np.core.records.fromarrays(meanDataList, names=forceNames)
-            cycleDict[cycle]['stdev'] = np.core.records.fromarrays(stdevDataList, names=forceNames)
+            cycleDict[cycle]['mean'] = dict(zip(forceNames,meanDataList))
+            cycleDict[cycle]['stdev'] = dict(zip(forceNames,stdevDataList))
         # Assign summary attribute    
         self.summary = cycleDict
         # Display message to user
@@ -555,7 +546,7 @@ class PatellaGroup(Group):
         self.x20120919APLF = SubjectWithStairs('20120919APLF')
         self.x20120920APRM = SubjectWithStairs('20120920APRM')
         self.x20121204APRM = SubjectWithStairs('20121204APRM')
-        #self.x20130207APRM = SubjectWithStairs('20130207APRM') # ****
+        #self.x20130207APRM = SubjectWithStairs('20130207APRM')
         # Add generic group attributes
         Group.__init__(self)
 
