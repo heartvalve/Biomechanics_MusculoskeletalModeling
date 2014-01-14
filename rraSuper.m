@@ -4,18 +4,18 @@ classdef rraSuper < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the rraSuper class
     
     properties (SetAccess = private)
-        actuation       % ... force, speed, power
-        controls        % ... sto, xml (same info - more time points in sto)
-        kinematics      % ... q (Coordinates), u (Speeds), dudt (Accelerations)
-        positionError   % ... has one fewer row than all other data
-        states
+        Actuation       % ... force, speed, power
+        Controls        % ... sto, xml (same info - more time points in sto)
+        Kinematics      % ... q (Coordinates), u (Speeds), dudt (Accelerations)
+        PositionError   % ... has one fewer row than all other data
+        States
     end
     
     
@@ -32,19 +32,19 @@ classdef rraSuper < handle
             
             try
                 % Actuators
-                obj.actuation.force = readData([rraPath,'_Actuation_force.sto'],23);
-                obj.actuation.speed = readData([rraPath,'_Actuation_speed.sto'],23);
-                obj.actuation.power = readData([rraPath,'_Actuation_power.sto'],23);
+                obj.Actuation.Force = readData([rraPath,'_Actuation_force.sto'],23);
+                obj.Actuation.Speed = readData([rraPath,'_Actuation_speed.sto'],23);
+                obj.Actuation.Power = readData([rraPath,'_Actuation_power.sto'],23);
                 % Controls
-                obj.controls = readData([rraPath,'_controls.sto'],7);                
+                obj.Controls = readData([rraPath,'_controls.sto'],7);                
                 % Kinematics
-                obj.kinematics.coordinate = readData([rraPath,'_Kinematics_q.sto'],11);
-                obj.kinematics.speed = readData([rraPath,'_Kinematics_u.sto'],11);
-                obj.kinematics.acceleration = readData([rraPath,'_Kinematics_dudt.sto'],11);             
+                obj.Kinematics.Coordinate = readData([rraPath,'_Kinematics_q.sto'],11);
+                obj.Kinematics.Speed = readData([rraPath,'_Kinematics_u.sto'],11);
+                obj.Kinematics.Acceleration = readData([rraPath,'_Kinematics_dudt.sto'],11);             
                 % Position Error
-                obj.positionError = readData([rraPath,'_pErr.sto'],7);
+                obj.PositionError = readData([rraPath,'_pErr.sto'],7);
                 % States
-                obj.states = readData([rraPath,'_states.sto'],7);
+                obj.States = readData([rraPath,'_states.sto'],7);
             catch err
                 [~,name,~] = fileparts(rraPath);
                 disp(['Problem with ',name]);

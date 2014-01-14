@@ -4,15 +4,15 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-19
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the group class
     
     properties (SetAccess = private)
-        cycles      % Individual subject cycles
-        summary     % Summary of subjects
+        Cycles      % Individual subject cycles
+        Summary     % Summary of subjects
     end
     
     
@@ -27,27 +27,13 @@ classdef group < handle
             % GROUP - Construct instance of class
             %
             
-            % All subjects by type of simulation
-            sPartial = {'x20110622CONM','x20110706APRF','x20110927CONM',...
-                        'x20111025APRM','x20111130AHLM','x20120306AHRF',...
-                        'x20120306CONF','x20120313AHLM','x20120403AHLF'};
-            sFull = {'x20120912AHRF','x20120919APLF','x20120920APRM',...
-                     'x20120922AHRM','x20121008AHRM','x20121108AHRM',...
-                     'x20121110AHRM','x20121204APRM','x20121204CONF',...
-                     'x20121205CONF','x20121205CONM','x20121206CONF',...                     
-                     'x20130207APRM','x20130221CONF','x20130401AHLM',...
-                     'x20130401CONM'};
             % Properties of current group subclass
             allProps = properties(obj);
             if length(allProps) > 2
                 subjects = allProps(1:end-2);
                 % Assign subjects as properties
                 for i = 1:length(subjects)
-                    if any(strcmp(subjects{i},sPartial))
-                        obj.(subjects{i}) = OpenSim.subjectPartial(subjects{i}(2:end));
-                    elseif any(strcmp(subjects{i},sFull))
-                        obj.(subjects{i}) = OpenSim.subjectFull(subjects{i}(2:end));
-                    end
+                    obj.(subjects{i}) = OpenSim.subject(subjects{i}(2:end));
                 end
             else
                 error('*** Cannot create instance of GROUP superclass directly.')
@@ -55,83 +41,79 @@ classdef group < handle
             % -------------------------------------------------------------
             %       Cycles
             % -------------------------------------------------------------
-            cstruct = struct();
-            cycleNames = {'A_SD2F','A_SD2S','A_Walk','U_SD2F','U_SD2S','U_Walk'};
-            cycleTypes = {'RepGRF','RepKIN'};
-            % Loop through subjects
-            for j = 1:length(subjects)
-                % Loop through cycles
-                for k = 1:6
-                    % Make sure the subject has the cycle
-                    if any(strncmp(cycleNames{k},properties(obj.(subjects{j})),6))
-                        % Loop through types of that cycle
-                        for m = 1:2                        
-                            % Check if field exists (if not, create)
-                            if ~isfield(cstruct,cycleNames{k})
-                                cstruct.(cycleNames{k}) = struct();
-                                % Muscle forces (normalized)
-                                mNames = obj.(subjects{j}).maxIsometric.Properties.VarNames;
-                                for p = 1:length(mNames)
-                                    cstruct.(cycleNames{k}).muscleForces.(mNames{p}) = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).normMuscleForces.(mNames{p});
-                                end
-                                % Subject / type name
-                                cstruct.(cycleNames{k}).subjects = {[subjects{j}(2:end),'_',cycleTypes{m}]};
-                            % If field exists, append new to existing
-                            else
-                                % Muscle forces
-                                oldM = cstruct.(cycleNames{k}).muscleForces;
-                                newM = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).normMuscleForces;
-                                mNames = newM.Properties.VarNames;
-                                for p = 1:length(mNames)
-                                    newM.(mNames{p}) = [oldM.(mNames{p}) newM.(mNames{p})];
-                                end
-                                cstruct.(cycleNames{k}).muscleForces = newM;
-                                % Subject / type names
-                                oldNames = cstruct.(cycleNames{k}).subjects;
-                                newName = {[subjects{j}(2:end),'_',cycleTypes{m}]};
-                                cstruct.(cycleNames{k}).subjects = [oldNames; newName];
-                            end
-                        end
-                    end
-                end
-            end
-            % Convert structure to dataset
-            varnames = {'subjects','muscleForces'};
-            obsnames = fieldnames(cstruct);
-            cdata = cell(length(obsnames),length(varnames));
-            cdataset = dataset({cdata,varnames{:}});
-            for i = 1:length(obsnames)
-                for j = 1:length(varnames)
-                    cdataset{i,j} = cstruct.(obsnames{i}).(varnames{j});
-                end
-            end
-            cdataset = set(cdataset,'ObsNames',obsnames);
-            % Assign property
-            obj.cycles = cdataset;
-            % -------------------------------------------------------------
-            %       Summary
-            % -------------------------------------------------------------
-            % Set up struct
-            sumStruct = struct();
-            varnames = {'muscleForces'};
-            obsnames = get(cdataset,'ObsNames');
-            % Averages and standard deviations
-            adata = cell(length(obsnames),length(varnames));
-            sdata = cell(length(obsnames),length(varnames));
-            adataset = dataset({adata,varnames{:}});
-            sdataset = dataset({sdata,varnames{:}});
-            % Calculate
-            for i = 1:length(obsnames)
-                adataset{i,'muscleForces'} = XgetDatasetMean(cdataset{i,'muscleForces'});
-                sdataset{i,'muscleForces'} = XgetDatasetStdDev(cdataset{i,'muscleForces'});
-            end
-            adataset = set(adataset,'ObsNames',obsnames);
-            sdataset = set(sdataset,'ObsNames',obsnames);
-            % Add to struct
-            sumStruct.mean = adataset;
-            sumStruct.stDev = sdataset;
-            % Assign property
-            obj.summary = sumStruct;
+%             cstruct = struct();
+%             cycleNames = {'A_SD2F','A_SD2S','A_Walk','U_SD2F','U_SD2S','U_Walk'};
+%             % Loop through subjects
+%             for j = 1:length(subjects)
+%                 % Loop through cycles
+%                 for k = 1:length(cycleNames)
+%                     % Loop through simulations based on that cycle
+%                     for m = 1:5
+%                         % Check if field exists (if not, create)
+%                         if ~isfield(cstruct,cycleNames{k})
+%                             cstruct.(cycleNames{k}) = struct();
+%                             % Muscle forces (normalized)
+%                             mNames = obj.(subjects{j}).MaxIsometric.Properties.VarNames;
+%                             for p = 1:length(mNames)
+%                                 cstruct.(cycleNames{k}).MuscleForces.(mNames{p}) = obj.(subjects{j}).([cycleNames{k},'_0',num2str(m)]).NormMuscleForces.(mNames{p});
+%                             end
+%                             % Subject / type name
+%                             cstruct.(cycleNames{k}).Subjects = {[subjects{j}(2:end),'_',cycleTypes{m}]}; % %%%%%%%
+%                         % If field exists, append new to existing
+%                         else
+%                             % Muscle forces
+%                             oldM = cstruct.(cycleNames{k}).muscleForces;
+%                             newM = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).normMuscleForces;
+%                             mNames = newM.Properties.VarNames;
+%                             for p = 1:length(mNames)
+%                                 newM.(mNames{p}) = [oldM.(mNames{p}) newM.(mNames{p})];
+%                             end
+%                             cstruct.(cycleNames{k}).muscleForces = newM;
+%                             % Subject / type names
+%                             oldNames = cstruct.(cycleNames{k}).subjects;
+%                             newName = {[subjects{j}(2:end),'_',cycleTypes{m}]};
+%                             cstruct.(cycleNames{k}).subjects = [oldNames; newName];
+%                         end
+%                     end
+%                 end
+%             end
+%             % Convert structure to dataset
+%             varnames = {'subjects','muscleForces'};
+%             obsnames = fieldnames(cstruct);
+%             cdata = cell(length(obsnames),length(varnames));
+%             cdataset = dataset({cdata,varnames{:}});
+%             for i = 1:length(obsnames)
+%                 for j = 1:length(varnames)
+%                     cdataset{i,j} = cstruct.(obsnames{i}).(varnames{j});
+%                 end
+%             end
+%             cdataset = set(cdataset,'ObsNames',obsnames);
+%             % Assign property
+%             obj.Cycles = cdataset;
+%             % -------------------------------------------------------------
+%             %       Summary
+%             % -------------------------------------------------------------
+%             % Set up struct
+%             sumStruct = struct();
+%             varnames = {'muscleForces'};
+%             obsnames = get(cdataset,'ObsNames');
+%             % Averages and standard deviations
+%             adata = cell(length(obsnames),length(varnames));
+%             sdata = cell(length(obsnames),length(varnames));
+%             adataset = dataset({adata,varnames{:}});
+%             sdataset = dataset({sdata,varnames{:}});
+%             % Calculate
+%             for i = 1:length(obsnames)
+%                 adataset{i,'muscleForces'} = XgetDatasetMean(cdataset{i,'muscleForces'});
+%                 sdataset{i,'muscleForces'} = XgetDatasetStdDev(cdataset{i,'muscleForces'});
+%             end
+%             adataset = set(adataset,'ObsNames',obsnames);
+%             sdataset = set(sdataset,'ObsNames',obsnames);
+%             % Add to struct
+%             sumStruct.mean = adataset;
+%             sumStruct.stDev = sdataset;
+%             % Assign property
+%             obj.Summary = sumStruct;
             % -------------------------------------------------------------
             %       Subfunctions
             % -------------------------------------------------------------

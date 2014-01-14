@@ -4,15 +4,15 @@ classdef ik < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the ik class
     
     properties (SetAccess = private)
-        time
-        data
+        Time
+        Data
     end
     
     
@@ -31,9 +31,9 @@ classdef ik < handle
             % Column headers
             names = ikimport.colheaders(2:end);
             % Time
-            obj.time = ikimport.data(:,1);
+            obj.Time = ikimport.data(:,1);
             % Data
-            obj.data = dataset({ikimport.data(:,2:end),names{:}});
+            obj.Data = dataset({ikimport.data(:,2:end),names{:}});
         end        
     end
     

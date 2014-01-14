@@ -4,16 +4,16 @@ classdef summary < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-11-08
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the summary class
     
     properties (SetAccess = private)
-        control
-        hamstringACL
-        patellaACL
+        Control
+        HamstringACL
+        PatellaACL
     end
     
     
@@ -31,9 +31,9 @@ classdef summary < handle
             % Time
             tic;
             % Add groups as properties
-            obj.control = OpenSim.controlGroup();
-            obj.hamstringACL = OpenSim.hamstringGroup();
-            obj.patellaACL = OpenSim.patellaGroup();
+            obj.Control = OpenSim.controlGroup();
+            obj.HamstringACL = OpenSim.hamstringGroup();
+            obj.PatellaACL = OpenSim.patellaGroup();
             % Elapsed time
             eTime = toc;
             disp(['Elapsed summary processing time is ',num2str(floor(eTime/60)),' minutes and ',num2str(round(mod(eTime,60))),' seconds.']);

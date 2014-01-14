@@ -4,32 +4,32 @@ function [axes_handles,mNames] = getAxesAndMuscles(simulationObj,muscle)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-17
+    % Last Modified 2014-01-13
     
     
     %% Main
     % Main function definition
     
     if strcmp(muscle,'All')
-        mNames = simulationObj.muscles;
+        mNames = simulationObj.Muscles;
         axes_handles = zeros(1,10);
         for k = 1:10
             axes_handles(k) = subplot(3,4,k);
         end
     elseif strcmp(muscle,'Quads')
-        mNames = simulationObj.muscles(1:4);
+        mNames = simulationObj.Muscles(1:4);
         axes_handles = zeros(1,4);
         for k = 1:4
             axes_handles(k) = subplot(2,2,k);
         end
     elseif strcmp(muscle,'Hamstrings')
-        mNames = simulationObj.muscles(5:8);
+        mNames = simulationObj.Muscles(5:8);
         axes_handles = zeros(1,4);
         for k = 1:4
             axes_handles(k) = subplot(2,2,k);
         end
     elseif strcmp(muscle,'Gastrocs')
-        mNames = simulationObj.muscles(9:10);
+        mNames = simulationObj.Muscles(9:10);
         axes_handles = zeros(1,2);
         for k = 1:2
             axes_handles(k) = subplot(1,2,k);

@@ -4,18 +4,18 @@ classdef trc < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the trc class
     
     properties (SetAccess = private)
-        frameNum
-        frameTime
-        x
-        y
-        z
+        FrameNum
+        FrameTime
+        X
+        Y
+        Z
     end
     
     
@@ -40,13 +40,13 @@ classdef trc < handle
                 p = p+1;
             end
             % Frame numbers
-            obj.frameNum = trcimport.data(:,1);
+            obj.FrameNum = trcimport.data(:,1);
             % Time
-            obj.frameTime = trcimport.data(:,2);
+            obj.FrameTime = trcimport.data(:,2);
             % Position
-            obj.x = dataset({trcimport.data(:,3:3:end),markernames{:}});
-            obj.y = dataset({trcimport.data(:,4:3:end),markernames{:}});
-            obj.z = dataset({trcimport.data(:,5:3:end),markernames{:}});
+            obj.X = dataset({trcimport.data(:,3:3:end),markernames{:}});
+            obj.Y = dataset({trcimport.data(:,4:3:end),markernames{:}});
+            obj.Z = dataset({trcimport.data(:,5:3:end),markernames{:}});
         end    
     end
     

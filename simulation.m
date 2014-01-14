@@ -4,31 +4,33 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-11-08
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the simulation class
     
     properties (SetAccess = private)        
-        subID               % Subject ID
-        simName             % Simulation name
-        model               % Generic model
-        muscles             % Muscle names
-        leg                 % Cycle leg
-        trc                 % Marker data - input to simulation
-        grf                 % Ground Reaction Force data - input to simulation
-        ik                  % Inverse Kinematics solution
-        id                  % Inverse Dynamics solution
-        rra                 % Residual Reduction Algorithm solution
-        cmc                 % Computed Muscle Control solution
-        muscleForces        % Muscle forces (summarized from CMC)
+        SubID               % Subject ID
+        SimName             % Simulation name
+        Model               % Generic model
+        Muscles             % Muscle names
+        Leg                 % Cycle leg
+        EMG                 % EMG data from experiment (for comparison)
+        TRC                 % Marker data - input to simulation
+        GRF                 % Ground Reaction Force data - input to simulation
+        IK                  % Inverse Kinematics solution
+        ID                  % Inverse Dynamics solution
+        RRA                 % Residual Reduction Algorithm solution
+        CMC                 % Computed Muscle Control solution
+        MuscleForces        % Muscle forces (summarized from CMC)
+        MuscleEMG           % Muscle EMG (summarized from EMG)
     end
     properties (Hidden = true, SetAccess = private)
-        subDir              % Directory where files are stored
+        SubDir              % Directory where files are stored
     end
     properties (Hidden = true)
-        normMuscleForces    % Normalized muscle forces
+        NormMuscleForces    % Normalized muscle forces
     end
     
     
@@ -44,83 +46,108 @@ classdef simulation < handle
             %
             
             % Subject ID
-            obj.subID = subID;
+            obj.SubID = subID;
             % Simulation name (without subject ID)
-            obj.simName = simName;
+            obj.SimName = simName;
             % Subject directory
-            obj.subDir = OpenSim.getSubjectDir(subID);
+            obj.SubDir = OpenSim.getSubjectDir(subID);
             % Generic model name from Setup Scale XML
-            modelNameFile = dir(fullfile(obj.subDir,'*Setup_Scale.xml'));
-            domNode = xmlread([obj.subDir,modelNameFile.name]);
+            modelNameFile = dir(fullfile(obj.SubDir,'*Setup_Scale.xml'));
+            domNode = xmlread([obj.SubDir,modelNameFile.name]);
             modelFullPath = char(domNode.getElementsByTagName('model_file').item(0).getFirstChild.getData);
             [~,modelFile,~] = fileparts(modelFullPath);
-            obj.model = modelFile;
+            obj.Model = modelFile;
             % Muscle names
-            if strcmp(obj.model,'gait2392')
-                obj.muscles = {'vas_med','vas_lat','vas_int','rect_fem','semimem',...
+            if strcmp(obj.Model,'gait2392')
+                obj.Muscles = {'vas_med','vas_lat','vas_int','rect_fem','semimem',...
                                'semiten','bifemlh','bifemsh','med_gas','lat_gas'};
             else
-                obj.muscles = {'vasmed','vaslat','vasint','recfem','semimem',...
+                obj.Muscles = {'vasmed','vaslat','vasint','recfem','semimem',...
                                'semiten','bflh','bfsh','gasmed','gaslat'};
             end
             % Cycle leg
             simLeg = simName(1);
-            if strcmp(obj.subID(11),'N') || strcmp(obj.subID(11),'R')
+            if strcmp(obj.SubID(11),'N') || strcmp(obj.SubID(11),'R')
                 if strcmp(simLeg,'A')
-                    obj.leg = 'r';
+                    obj.Leg = 'R';
                 else
-                     obj.leg = 'l';
+                     obj.Leg = 'L';
                 end
-            elseif strcmp(obj.subID(11),'L')
+            elseif strcmp(obj.SubID(11),'L')
                 if strcmp(simLeg,'A')
-                     obj.leg = 'l';
+                     obj.Leg = 'L';
                 else
-                     obj.leg = 'r';
+                     obj.Leg = 'R';
                 end
-            end            
+            end
+            % EMG
+            obj.EMG = OpenSim.emg(subID,simName);
             % TRC
-            obj.trc = OpenSim.trc(subID,simName);
+            obj.TRC = OpenSim.trc(subID,simName);
             % GRF
-            obj.grf = OpenSim.grf(subID,simName);
+            obj.GRF = OpenSim.grf(subID,simName);
             % IK
-            obj.ik = OpenSim.ik(subID,simName);
+            obj.IK = OpenSim.ik(subID,simName);
             % ID
-            obj.id = OpenSim.id(subID,simName);
+            obj.ID = OpenSim.id(subID,simName);
             % RRA
-            obj.rra = OpenSim.rra(subID,simName);
+            obj.RRA = OpenSim.rra(subID,simName);
             % CMC
-            obj.cmc = OpenSim.cmc(subID,simName);
+            obj.CMC = OpenSim.cmc(subID,simName);
             % Residuals (focus on cycle region)
-            [~,iStart] = min(abs(obj.rra.actuation.force.time-obj.grf.cycleTime(1)));
-            [~,iStop] = min(abs(obj.rra.actuation.force.time-obj.grf.cycleTime(2)));
+            [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(1)));
+            [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(2)));
             residuals = {'FX','FY','FZ','MX','MY','MZ'};
             meanData = zeros(1,6);
             rmsData = zeros(1,6);            
             maxData = zeros(1,6);
             for i = 1:6
-                meanData(i) = mean(obj.rra.actuation.force.(residuals{i})(iStart:iStop));
-                rmsData(i) = rms(obj.rra.actuation.force.(residuals{i})(iStart:iStop));
-                maxData(i) = max(abs(obj.rra.actuation.force.(residuals{i})(iStart:iStop)));
+                meanData(i) = mean(obj.RRA.Actuation.Force.(residuals{i})(iStart:iStop));
+                rmsData(i) = rms(obj.RRA.Actuation.Force.(residuals{i})(iStart:iStop));
+                maxData(i) = max(abs(obj.RRA.Actuation.Force.(residuals{i})(iStart:iStop)));
             end
-            obj.rra.residuals.mean = dataset({meanData,residuals{:}});
-            obj.rra.residuals.rms = dataset({rmsData,residuals{:}});
-            obj.rra.residuals.max = dataset({maxData,residuals{:}});
+            obj.RRA.Residuals.Mean = dataset({meanData,residuals{:}});
+            obj.RRA.Residuals.RMS = dataset({rmsData,residuals{:}});
+            obj.RRA.Residuals.Max = dataset({maxData,residuals{:}});
             % Interpolate muscle forces over normalized time window
-            xi = linspace(obj.grf.cycleTime(1),obj.grf.cycleTime(2),101);
-            iForces = zeros(101,length(obj.muscles));
-            for i = 1:length(obj.muscles)
+            xi = (linspace(obj.GRF.CycleTime(1),obj.GRF.CycleTime(2),101))';
+            iForces = zeros(101,length(obj.Muscles));
+            for i = 1:length(obj.Muscles)
                 try
-                    iForces(:,i) = interp1(obj.cmc.actuation.force.time, obj.cmc.actuation.force.([obj.muscles{i},'_',obj.leg]), xi, 'spline', NaN);
+                    iForces(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.([obj.Muscles{i},'_',lower(obj.Leg)]),xi,'spline',NaN);
                 catch err
-                    iForces = nan(101,length(obj.muscles));
+                    iForces = NaN(101,length(obj.Muscles));
                     break
                 end
             end
-            mForces = dataset({iForces,obj.muscles{:}});
-            obj.muscleForces = mForces;
+            mForces = dataset({iForces,obj.Muscles{:}});
+            % Check muscle forces for large discontinuities prior to NaN's
+            if any(isnan(mForces.(obj.Muscles{1})))
+                if any(~isnan(mForces.(obj.Muscles{1})))
+                    firstNaN = find(isnan(mForces.(obj.Muscles{1})),1,'first');
+                    if abs(mForces.(obj.Muscles{1})(firstNaN-1)) > abs(10*mForces.(obj.Muscles{1})(firstNaN-2))
+                        mForces((firstNaN-1),:) = dataset({NaN(1,length(obj.Muscles)),obj.Muscles{:}});
+                    end
+                end
+            end            
+            obj.MuscleForces = mForces;
+            % Interpolate EMG over normalized time window
+            emgMuscles = obj.EMG.Data.Properties.VarNames;
+            emgLegMuscles = cell(1,length(emgMuscles)/2);
+            iEMG = zeros(101,length(emgMuscles)/2);
+            j = 1;
+            for i = 1:length(emgMuscles)
+                if strncmp(emgMuscles{i},obj.Leg,1)
+                    emgLegMuscles{j} = emgMuscles{i}(2:end);
+                    iEMG(:,j) = interp1(obj.EMG.SampleTime,obj.EMG.Data.(emgMuscles{i}),xi,'spline');
+                    j = j+1;
+                end
+            end
+            mEMG = dataset({iEMG,emgLegMuscles{:}});
+            obj.MuscleEMG = mEMG;
             % Set up normalized muscle forces (to be added on subject construction)
-            nForces = zeros(101,length(obj.muscles));
-            obj.normMuscleForces = dataset({nForces,obj.muscles{:}});
+            nForces = zeros(101,length(obj.Muscles));
+            obj.NormMuscleForces = dataset({nForces,obj.Muscles{:}});
         end
         % *****************************************************************
         %       Plotting Methods
@@ -192,24 +219,24 @@ classdef simulation < handle
             % Parse inputs
             p = inputParser;
             checkObj = @(x) isa(x,'OpenSim.simulation');            
-            validMuscles = [obj.muscles,{'All','Quads','Hamstrings','Gastrocs'}];
+            validMuscles = [obj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
             defaultMuscle = 'All';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);
-            p.addOptional('muscle',defaultMuscle,checkMuscle);
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments (and updates)
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)                
-                set(fig_handle,'Name',['Muscle Forces - ',p.Results.muscle]);
-                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(obj,p.Results.muscle);
+                set(fig_handle,'Name',['Muscle Forces - ',p.Results.Muscle]);
+                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(obj,p.Results.Muscle);
             else
                 axes_handles = p.Results.axes_handles;
-                [~,mNames] = OpenSim.getAxesAndMuscles(obj,p.Results.muscle);
+                [~,mNames] = OpenSim.getAxesAndMuscles(obj,p.Results.Muscle);
             end
             % Plot
             figure(fig_handle);
@@ -220,18 +247,18 @@ classdef simulation < handle
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XplotMuscleForces(obj,muscle)
+            function XplotMuscleForces(obj,Muscle)
                 % XPLOTMUSCLEFORCES
                 %
                
                 % Plot
-                plot((0:100)',obj.muscleForces.(muscle),'Color',[0.75 0 0.25],'LineWidth',2); hold on;
+                plot((0:100)',obj.MuscleForces.(Muscle),'Color',[0.75 0 0.25],'LineWidth',2); hold on;
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
                 xlim([0 100]);
                 % Labels
-                title(upper(muscle),'FontWeight','bold');
+                title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
                 ylabel('Muscle Force (N)');
             end
@@ -249,7 +276,7 @@ classdef simulation < handle
             p.addRequired('obj',checkObj);
             p.parse(obj);
             % Export dataset object
-            export(obj.muscleForces,'file',fullfile(obj.subDir,[obj.subID,'_',obj.simName,'_MuscleForces.data']));
+            export(obj.MuscleForces,'file',fullfile(obj.SubDir,[obj.SubID,'_',obj.SimName,'_MuscleForces.data']));
         end        
         % *****************************************************************
         %       Export for Abaqus

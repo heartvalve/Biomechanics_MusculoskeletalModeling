@@ -4,15 +4,15 @@ classdef id < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the id class
     
     properties (SetAccess = private)
-        time
-        data
+        Time
+        Data
     end
     
     
@@ -31,9 +31,9 @@ classdef id < handle
             % Column headers
             names = idimport.colheaders(2:end);
             % Time
-            obj.time = idimport.data(:,1);
+            obj.Time = idimport.data(:,1);
             % Data
-            obj.data = dataset({idimport.data(:,2:end),names{:}});
+            obj.Data = dataset({idimport.data(:,2:end),names{:}});
         end        
     end
     

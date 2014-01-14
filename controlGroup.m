@@ -4,16 +4,13 @@ classdef controlGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-06
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the controlGroup class
     
     properties
-%         x20110622CONM 
-%         x20110927CONM
-%         x20120306CONF
         x20121204CONF
         x20121205CONF
         x20121205CONM

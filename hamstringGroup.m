@@ -4,19 +4,15 @@ classdef hamstringGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-06
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the hamstringGroup class
     
     properties
-%         x20111130AHLM
-%         x20120306AHRF
-%         x20120313AHLM
-%         x20120403AHLF
         x20120912AHRF
-%         x20120922AHRM
+        x20120922AHRM
         x20121008AHRM
         x20121108AHRM
         x20121110AHRM

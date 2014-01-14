@@ -4,19 +4,17 @@ classdef patellaGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-06
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the patellaGroup class
     
     properties
-%         x20110706APRF
-%         x20111025APRM
         x20120919APLF
         x20120920APRM
-        x20121204APRM 
-%         x20130207APRM       
+        x20121204APRM
+        x20130207APRM     
     end
     
     

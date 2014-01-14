@@ -4,18 +4,18 @@ classdef grf < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2014-01-13
     
     
     %% Properties
     % Properties for the grf class
     
     properties (SetAccess = private)
-        cycleFrames
-        cycleSamples
-        cycleTime
-        sampleTime
-        data
+        CycleFrames
+        CycleSamples
+        CycleTime
+        SampleTime
+        Data
     end
     
     
@@ -33,19 +33,19 @@ classdef grf < handle
             motimport = importdata(grfPath,'\t',14);
             % Cycle frames
             cycleFrameLine = regexp(motimport.textdata{9,1},'\t','split');
-            obj.cycleFrames = [str2double(cycleFrameLine{2}) str2double(cycleFrameLine{3})];
+            obj.CycleFrames = [str2double(cycleFrameLine{2}) str2double(cycleFrameLine{3})];
             % Cycle samples
             cycleSampleLine = regexp(motimport.textdata{10,1},'\t','split');
-            obj.cycleSamples = [str2double(cycleSampleLine{2}) str2double(cycleSampleLine{3})];
+            obj.CycleSamples = [str2double(cycleSampleLine{2}) str2double(cycleSampleLine{3})];
             % Cycle time
             cycleTimeLine = regexp(motimport.textdata{11,1},'\t','split');
-            obj.cycleTime = [str2double(cycleTimeLine{2}) str2double(cycleTimeLine{3})];
+            obj.CycleTime = [str2double(cycleTimeLine{2}) str2double(cycleTimeLine{3})];
             % Column headers
             grfnames = upper(motimport.colheaders(2:end));
             grfnames = regexprep(grfnames,{'GROUND_FORCE([LR])_V([XYZ])','GROUND_FORCE([LR])_P([XYZ])','GROUND_TORQUE([LR])_([XYZ])'},{'$1F$2','$1C$2','$1M$2'});                
             % Time
             timedata = motimport.data(:,1);
-            obj.sampleTime = timedata;
+            obj.SampleTime = timedata;
             % Data
             grfdataset = dataset({motimport.data(:,2:end),grfnames{:}});                
             % Replace zeros with NaN in COP (X and Z)
@@ -59,7 +59,7 @@ classdef grf < handle
             for i = 1:length(cols)
                 grfdataset.(cols{i})(zeroind) = NaN;
             end
-            obj.data = grfdataset;            
+            obj.Data = grfdataset;            
         end        
     end
     
