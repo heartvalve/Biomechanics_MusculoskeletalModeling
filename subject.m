@@ -4,50 +4,22 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-01-15
     
     
     %% Properties
     % Properties for the subject class
     
-    properties (SetAccess = private)
-        SubID           % Subject ID
-        A_Walk_01       % Walking simulations
-        A_Walk_02
-        A_Walk_03
-        A_Walk_04
-        A_Walk_05
-        U_Walk_01
-        U_Walk_02
-        U_Walk_03
-        U_Walk_04
-        U_Walk_05
-        A_SD2F_01       % Stair descent to floor simulations
-        A_SD2F_02
-        A_SD2F_03
-        A_SD2F_04
-        A_SD2F_05
-        U_SD2F_01
-        U_SD2F_02
-        U_SD2F_03
-        U_SD2F_04
-        U_SD2F_05
-        A_SD2S_01       % Stair descent to step simulations
-        A_SD2S_02
-        A_SD2S_03
-        A_SD2S_04
-        A_SD2S_05
-        U_SD2S_01
-        U_SD2S_02
-        U_SD2S_03
-        U_SD2S_04
-        U_SD2S_05
+    properties (SetAccess = protected)
         Cycles          % Cycles (individual trials)
         Summary         % Subject summary (mean, standard deviation)
     end
-    properties (Hidden = true, SetAccess = private)
+    properties (Hidden = true, SetAccess = protected)
+        SubID           % Subject ID
         SubDir          % Directory where files are stored
         MaxIsometric    % Maximum isometric muscle force
+        MaxWalkingLR    % Maximum muscle force during walking (separately)
+        MaxWalking      % Maximum muscle force during walking (both legs)
     end
     
     
@@ -68,7 +40,7 @@ classdef subject < handle
             obj.SubDir = OpenSim.getSubjectDir(subID);            
             % Identify simulation names
             allProps = properties(obj);
-            simNames = allProps(2:end-2);
+            simNames = allProps(1:end-2);
             % Preallocate and do a parallel loop
             tempData = cell(length(simNames),1);
             parfor i = 1:length(simNames)
@@ -79,6 +51,7 @@ classdef subject < handle
             for i = 1:length(simNames)
                 obj.(simNames{i}) = tempData{i};
             end
+            % ---------------
             % Isometric muscle forces            
             muscles = obj.(simNames{1}).Muscles;
             muscleLegs = cell(size(muscles));
@@ -97,21 +70,66 @@ classdef subject < handle
                     maxForces.(musc(1:end-2)) = str2double(char(maxIsoNodeList.item(i-1).getFirstChild.getData));
                 end
             end
-            obj.MaxIsometric = maxForces;
-            % Add normalized muscle forces property to individual simulations
-            for i = 1:length(simNames)
-                muscles = obj.(simNames{i}).Muscles;
-                for j = 1:length(muscles)
-                    obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxIsometric.(muscles{j}).*100;
-                end
-            end
-            % -------------------------------------------------------------
-            %       Cycles
-            % -------------------------------------------------------------
-            cstruct = struct();
+            obj.MaxIsometric = maxForces;            
+            % ---------------
+            % Maximum force during walking (separately for each leg)
             sims = properties(obj);
             checkSim = @(x) isa(obj.(x{1}),'OpenSim.simulation');
             sims(~arrayfun(checkSim,sims)) = [];
+            maxA = zeros(5,length(muscles));
+            maxU = zeros(5,length(muscles));
+            a = 1; u = 1;
+            for i = 1:length(sims)
+                if strcmp(sims{i}(1:end-3),'A_Walk')
+                    maxA(a,:) = nanmax(double(obj.(sims{i}).MuscleForces));
+                    a = a+1;                    
+                elseif strcmp(sims{i}(1:end-3),'U_Walk')
+                    maxU(u,:) = nanmax(double(obj.(sims{i}).MuscleForces));
+                    u = u+1;                    
+                end   
+            end
+            maxNames = [strcat(repmat({'r_'},1,length(muscles)),muscles) ...
+                        strcat(repmat({'l_'},1,length(muscles)),muscles)];
+            if strcmp(obj.SubID(9:11),'CON') || strcmp(obj.SubID(11),'R')
+                maxData = [nanmax(maxA) nanmax(maxU)];
+            elseif strcmp(obj.SubID(11),'L')
+                maxData = [nanmax(maxU) nanmax(maxA)];
+            end
+            maxDS = dataset({maxData,maxNames{:}});
+            obj.MaxWalkingLR = maxDS;
+            % ----------------
+            % Maximum force during walking (both legs combined)
+            maxData = nanmax([maxA; maxU]);
+            maxDS = dataset({maxData,muscles{:}});
+            obj.MaxWalking = maxDS;
+            % ----------------------
+            % Add normalized muscle forces property to individual simulations
+            % Based on maximum during walking (over both legs)
+            for i = 1:length(simNames)
+                muscles = obj.(simNames{i}).Muscles;
+                for j = 1:length(muscles)
+                    obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxWalking.(muscles{j}).*100;
+                end                
+            end
+%             % Based on maximum during walking (each leg separately)
+%             for i = 1:length(simNames)
+%                 muscles = obj.(simNames{i}).Muscles;
+%                 leg = lower(obj.(simNames{i}).Leg);
+%                 for j = 1:length(muscles)
+%                     obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxWalkingLR.([leg,'_',muscles{j}]).*100;
+%                 end
+%             end
+%             % Based on maximum isometric force
+%             for i = 1:length(simNames)
+%                 muscles = obj.(simNames{i}).Muscles;
+%                 for j = 1:length(muscles)
+%                     obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxIsometric.(muscles{j}).*100;
+%                 end
+%             end
+            % -------------------------------------------------------------
+            %       Cycles
+            % -------------------------------------------------------------
+            cstruct = struct();            
             % Loop through all simulations
             for i = 1:length(sims)
                 cycleName = sims{i}(1:end-3);
@@ -193,18 +211,18 @@ classdef subject < handle
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function varargout = plotMuscleForces(obj,varargin)
+        function plotMuscleForces(obj,varargin)
             % PLOTMUSCLEFORCES - Compare involved leg vs. uninvolved leg for a given cycle
             %
             
             % Parse inputs
             p = inputParser;
-            checkObj = @(x) isa(x,'OpenSim.subject');            
+            checkObj = @(x) isa(x,'OpenSim.subject');
             validCycles = {'Walk','SD2F','SD2S'};
             defaultCycle = 'Walk';
             checkCycle = @(x) any(validatestring(x,validCycles));
             subProps = properties(obj);
-            simObj = obj.(subProps{2});
+            simObj = obj.(subProps{1});
             validMuscles = [simObj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
             defaultMuscle = 'All';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
@@ -232,17 +250,8 @@ classdef subject < handle
                 XplotMuscleForces(obj,p.Results.Cycle,mNames{j});
             end
             % Legend
-            lStruct = struct;
-            axesH = get(axes_handles(1),'Children');
-            lStruct.axesHandles = axesH;
-            if isa(obj,'OpenSim.controlGroup')
-                lStruct.names = {'Left'; 'Right'};
-            else
-                lStruct.names = {'Uninvolved'; 'ACLR'};
-            end
-            % Return (to GUI)
-            if nargout == 1
-                varargout{1} = lStruct;
+            if strcmp(p.Results.Muscle,'All')
+                OpenSim.createLegend(fig_handle,axes_handles(1));
             end
             % -------------------------------------------------------------
             %   Subfunction
@@ -257,8 +266,18 @@ classdef subject < handle
                 % X vector
                 x = (0:100)';
                 % Mean
-                plot(x,obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorU,'LineWidth',3); hold on;
-                plot(x,obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorA,'LineWidth',3);
+                h = plot(x,obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorU,'LineWidth',3); hold on;
+                if strcmp(obj.SubID(9:11),'CON')
+                    set(h,'DisplayName','Left');
+                else
+                    set(h,'DisplayName','Uninvolved');
+                end
+                h = plot(x,obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorA,'LineWidth',3);
+                if strcmp(obj.SubID(9:11),'CON')
+                    set(h,'DisplayName','Right');
+                else
+                    set(h,'DisplayName','ACLR');
+                end
                 % Standard Deviation
                 plusSDU = obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle)+obj.Summary.StdDev{['U_',Cycle],'Forces'}.(Muscle);
                 minusSDU = obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle)-obj.Summary.StdDev{['U_',Cycle],'Forces'}.(Muscle);
@@ -285,7 +304,176 @@ classdef subject < handle
                 % Labels
                 title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('% Max Isometric Force');
+                ylabel('% Max');
+            end
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotMuscleForcesEMG(obj,varargin)
+            % PLOTMUSCLEFORCESEMG
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.subject');            
+            validCycles = {'A_Walk','A_SD2F','A_SD2S','U_Walk','U_SD2F','U_SD2S'};
+            defaultCycle = 'A_Walk';
+            checkCycle = @(x) any(validatestring(x,validCycles));
+            subProps = properties(obj);
+            simObj = obj.(subProps{1});
+            validMuscles = [simObj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
+            defaultMuscle = 'All';
+            checkMuscle = @(x) any(validatestring(x,validMuscles));
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);            
+            p.addOptional('Cycle',defaultCycle,checkCycle)            
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)          
+                set(fig_handle,'Name',['Muscle Forces and EMG (',p.Results.Muscle,') for ',p.Results.Cycle],'Visible','on');
+                [axes_handles,mNames,emgNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
+            else
+                axes_handles = p.Results.axes_handles;
+                [~,mNames,emgNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
+            end
+            % Plot
+            figure(fig_handle);
+            for j = 1:length(mNames)
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                XplotMuscleForcesEMG(obj,p.Results.Cycle,mNames{j},emgNames{j});
+            end
+            % Legend
+            if strcmp(p.Results.Muscle,'All')
+                OpenSim.createLegend(fig_handle,axes_handles(1));
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function XplotMuscleForcesEMG(obj,Cycle,Muscle,EMG)
+                % XPLOTMUSCLEFORCESEMG - Worker function to plot muscle forces and EMG for a specific cycle and muscle
+                %
+               
+                ColorEMG = [0.5 0.5 0.5];
+                ColorForce = [0 0 0];
+                % Plot
+                % X vector
+                x = (0:100)';
+                % Mean EMG
+                if ~strcmp(EMG,'')
+                    h = plot(x,obj.Summary.Mean{Cycle,'EMG'}.(EMG),'Color',ColorEMG,'LineWidth',3,'LineStyle','--'); hold on;
+                    set(h,'DisplayName','EMG');
+                end                
+                % Mean Force
+                h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorForce,'LineWidth',3); hold on;
+                set(h,'DisplayName','Force');
+                % Standard Deviation EMG
+                if ~strcmp(EMG,'')
+                    plusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)+obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
+                    minusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)-obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
+                    xx = [x' fliplr(x')];
+                    yy = [plusSD' fliplr(minusSD')];
+                    hFill = fill(xx,yy,ColorEMG);
+                    set(hFill,'EdgeColor','none');
+                    alpha(0.25);                    
+                end
+                % Standard Deviation Force
+                plusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+                minusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+                xx = [x' fliplr(x')];
+                yy = [plusSD' fliplr(minusSD')];
+                hFill = fill(xx,yy,ColorForce);
+                set(hFill,'EdgeColor','none');
+                alpha(0.25);                
+                % Reverse children order (so mean is on top and shaded region is in back)
+                set(gca,'Children',flipud(get(gca,'Children')));
+                % Axes properties
+                set(gca,'box','off');
+                % Set axes limits
+                xlim([0 100]);
+                ydefault = get(gca,'YLim');
+                ylim([0 ydefault(2)]);
+                % Labels
+                title(upper(Muscle),'FontWeight','bold');
+                xlabel({'% Cycle',''});
+                ylabel('% Max');
+            end
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function troubleshoot(obj,varargin)
+            % TROUBLESHOOT - Plot mean and individual simulations for a given cycle
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.subject');            
+            validCycles = {'A_Walk','A_SD2F','A_SD2S','U_Walk','U_SD2F','U_SD2S'};
+            defaultCycle = 'A_Walk';
+            checkCycle = @(x) any(validatestring(x,validCycles));
+            subProps = properties(obj);
+            simObj = obj.(subProps{1});
+            validMuscles = [simObj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
+            defaultMuscle = 'All';
+            checkMuscle = @(x) any(validatestring(x,validMuscles));
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);            
+            p.addOptional('Cycle',defaultCycle,checkCycle)            
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)          
+                set(fig_handle,'Name',['Muscle Forces (',p.Results.Muscle,') for ',p.Results.Cycle],'Visible','on');
+                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
+            else
+                axes_handles = p.Results.axes_handles;
+                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
+            end
+            % Plot
+            figure(fig_handle);
+            for j = 1:length(mNames)
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                Xtroubleshoot(obj,p.Results.Cycle,mNames{j});
+            end
+            % Legend
+            if strcmp(p.Results.Muscle,'All')
+                OpenSim.createLegend(fig_handle,axes_handles(1));
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function Xtroubleshoot(obj,Cycle,Muscle)
+                % XTROUBLESHOOT
+                %
+
+                % X vector
+                x = (0:100)';                
+                % Mean
+                h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',[0.15,0.15,0.15],'LineWidth',3); hold on;
+                set(h,'DisplayName','Mean');
+                % Colors
+                colors = colormap(hsv(5));
+                % Individual Simulations
+                for i = 1:length(obj.Cycles{Cycle,'Simulations'})
+                    h = plot(x,obj.Cycles{Cycle,'Forces'}.(Muscle)(:,i),'Color',colors(i,:),'LineWidth',1);
+                    set(h,'DisplayName',regexprep(obj.Cycles{Cycle,'Simulations'}{i},'_','-'));
+                end                
+                % Axes properties
+                set(gca,'box','off');
+                % Set axes limits
+                xlim([0 100]);
+                ydefault = get(gca,'YLim');
+                ylim([0 ydefault(2)]);
+                % Labels
+                title(upper(Muscle),'FontWeight','bold');
+                xlabel({'% Cycle',''});
+                ylabel('% Max');
             end
         end
     end

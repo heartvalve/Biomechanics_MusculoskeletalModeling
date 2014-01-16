@@ -125,11 +125,17 @@ classdef simulation < handle
             if any(isnan(mForces.(obj.Muscles{1})))
                 if any(~isnan(mForces.(obj.Muscles{1})))
                     firstNaN = find(isnan(mForces.(obj.Muscles{1})),1,'first');
-                    if abs(mForces.(obj.Muscles{1})(firstNaN-1)) > abs(10*mForces.(obj.Muscles{1})(firstNaN-2))
-                        mForces((firstNaN-1),:) = dataset({NaN(1,length(obj.Muscles)),obj.Muscles{:}});
+                    if firstNaN ~= 1
+                        for i = 1:length(obj.Muscles)
+                            if abs(mForces.(obj.Muscles{i})(firstNaN-1)-mForces.(obj.Muscles{i})(firstNaN-2)) > ...
+                               20*abs(mForces.(obj.Muscles{i})(firstNaN-2)-mForces.(obj.Muscles{i})(firstNaN-3))
+                                mForces((firstNaN-1),:) = dataset({NaN(1,length(obj.Muscles)),obj.Muscles{:}});
+                                break
+                            end
+                        end
                     end
                 end
-            end            
+            end
             obj.MuscleForces = mForces;
             % Interpolate EMG over normalized time window
             emgMuscles = obj.EMG.Data.Properties.VarNames;
