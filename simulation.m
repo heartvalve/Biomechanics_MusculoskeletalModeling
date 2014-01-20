@@ -24,6 +24,7 @@ classdef simulation < handle
         RRA                 % Residual Reduction Algorithm solution
         CMC                 % Computed Muscle Control solution
         MuscleForces        % Muscle forces (summarized from CMC)
+        Residuals           % Residuals
         MuscleEMG           % Muscle EMG (summarized from EMG)
     end
     properties (Hidden = true, SetAccess = private)
@@ -94,21 +95,7 @@ classdef simulation < handle
             obj.RRA = OpenSim.rra(subID,simName);
             % CMC
             obj.CMC = OpenSim.cmc(subID,simName);
-            % Residuals (focus on cycle region)
-            [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(1)));
-            [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(2)));
-            residuals = {'FX','FY','FZ','MX','MY','MZ'};
-            meanData = zeros(1,6);
-            rmsData = zeros(1,6);            
-            maxData = zeros(1,6);
-            for i = 1:6
-                meanData(i) = mean(obj.RRA.Actuation.Force.(residuals{i})(iStart:iStop));
-                rmsData(i) = rms(obj.RRA.Actuation.Force.(residuals{i})(iStart:iStop));
-                maxData(i) = max(abs(obj.RRA.Actuation.Force.(residuals{i})(iStart:iStop)));
-            end
-            obj.RRA.Residuals.Mean = dataset({meanData,residuals{:}});
-            obj.RRA.Residuals.RMS = dataset({rmsData,residuals{:}});
-            obj.RRA.Residuals.Max = dataset({maxData,residuals{:}});
+            % -------------------------------------------------------------
             % Interpolate muscle forces over normalized time window
             xi = (linspace(obj.GRF.CycleTime(1),obj.GRF.CycleTime(2),101))';
             iForces = zeros(101,length(obj.Muscles));
@@ -136,7 +123,7 @@ classdef simulation < handle
                     end
                 end
             end
-            obj.MuscleForces = mForces;
+            obj.MuscleForces = mForces;            
             % Interpolate EMG over normalized time window
             emgMuscles = obj.EMG.Data.Properties.VarNames;
             emgLegMuscles = cell(1,length(emgMuscles)/2);
@@ -151,6 +138,28 @@ classdef simulation < handle
             end
             mEMG = dataset({iEMG,emgLegMuscles{:}});
             obj.MuscleEMG = mEMG;
+            % RRA Residuals (focus on cycle region)
+            [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(1)));
+            [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(2)));
+            residualNames = {'FX','FY','FZ','MX','MY','MZ'};
+            meanRMSmaxData = zeros(6,6);
+            for i = 1:6
+                meanRMSmaxData(1,i) = mean(obj.RRA.Actuation.Force.(residualNames{i})(iStart:iStop));
+                meanRMSmaxData(3,i) = rms(obj.RRA.Actuation.Force.(residualNames{i})(iStart:iStop));
+                meanRMSmaxData(5,i) = max(abs(obj.RRA.Actuation.Force.(residualNames{i})(iStart:iStop)));
+            end            
+            % CMC Residuals
+            [~,iStart] = min(abs(obj.CMC.Actuation.Force.time-obj.GRF.CycleTime(1)));
+            [~,iStop] = min(abs(obj.CMC.Actuation.Force.time-obj.GRF.CycleTime(2)));
+            for i = 1:6
+                meanRMSmaxData(2,i) = mean(obj.CMC.Actuation.Force.(residualNames{i})(iStart:iStop));
+                meanRMSmaxData(4,i) = rms(obj.CMC.Actuation.Force.(residualNames{i})(iStart:iStop));
+                meanRMSmaxData(6,i) = max(abs(obj.CMC.Actuation.Force.(residualNames{i})(iStart:iStop)));
+            end
+            rDataset = dataset({meanRMSmaxData,residualNames{:}});
+            rDataset = set(rDataset,'ObsNames',{'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'});
+            obj.Residuals = rDataset;
+            % ---------------------------
             % Set up normalized muscle forces (to be added on subject construction)
             nForces = zeros(101,length(obj.Muscles));
             obj.NormMuscleForces = dataset({nForces,obj.Muscles{:}});

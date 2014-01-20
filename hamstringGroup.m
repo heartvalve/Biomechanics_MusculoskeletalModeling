@@ -4,7 +4,7 @@ classdef hamstringGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-01-17
     
     
     %% Properties
@@ -12,7 +12,7 @@ classdef hamstringGroup < OpenSim.group
     
     properties
         x20120912AHRF
-        x20120922AHRM
+%         x20120922AHRM
         x20121008AHRM
         x20121108AHRM
         x20121110AHRM
@@ -30,6 +30,8 @@ classdef hamstringGroup < OpenSim.group
             
             % Create instance of class from superclass
             obj = obj@OpenSim.group();
+            % Add group ID
+            obj.GroupID = 'HamstringACL';
         end
     end
     

@@ -15,7 +15,7 @@ classdef x20121205CONM < OpenSim.subject
         A_Walk_02
         A_Walk_03
         A_Walk_04
-        A_Walk_05
+%         A_Walk_05       % CMC
         U_Walk_01
         U_Walk_02
         U_Walk_03
@@ -25,7 +25,7 @@ classdef x20121205CONM < OpenSim.subject
         A_SD2F_02
         A_SD2F_03
         A_SD2F_04
-        A_SD2F_05
+%         A_SD2F_05       % CMC
         U_SD2F_01
         U_SD2F_02
         U_SD2F_03

@@ -41,7 +41,7 @@ classdef summary < handle
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function varargout = plotMuscleForces(obj,varargin)
+        function plotMuscleForces(obj,varargin)
             % PLOTMUSCLEFORCES - Compare between groups for a leg-specific cycle
             %
             
@@ -61,39 +61,30 @@ classdef summary < handle
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);            
-            p.addOptional('cycle',defaultCycle,checkCycle)            
-            p.addOptional('muscle',defaultMuscle,checkMuscle);
+            p.addOptional('Cycle',defaultCycle,checkCycle)            
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Summary Muscle Forces (',p.Results.muscle,') for ',p.Results.cycle],'Visible','on');
-                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
+                set(fig_handle,'Name',['Summary Muscle Forces (',p.Results.Muscle,') for ',p.Results.Cycle],'Visible','on');
+                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
             else
                 axes_handles = p.Results.axes_handles;
-                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
+                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
             end
             % Plot
             figure(fig_handle);
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
-                XplotMuscleForces(obj,p.Results.cycle,mNames{j});
-            end
-            % Legend
-            lStruct = struct;
-            axesH = get(axes_handles(1),'Children');
-            lStruct.axesHandles = axesH(1:3);
-            lStruct.names = {'Control'; 'Hamstring'; 'Patella'};
-            % Return (to GUI)
-            if nargout == 1
-                varargout{1} = lStruct;
+                XplotMuscleForces(obj,p.Results.Cycle,mNames{j});
             end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XplotMuscleForces(obj,cycle,muscle)
+            function XplotMuscleForces(obj,Cycle,Muscle)
                 % XPLOTMUSCLEFORCES - Worker function to plot muscle forces for a specific cycle and muscle
                 %
                
@@ -101,26 +92,26 @@ classdef summary < handle
                 x = (0:100)';
                 % Mean
                 % Plot all groups
-                plot(x,obj.control.summary.mean{cycle,'muscleForces'}.(muscle),'Color','k','LineWidth',3); hold on;
-                plot(x,obj.hamstringACL.summary.mean{cycle,'muscleForces'}.(muscle),'Color','c','LineWidth',3);
-                plot(x,obj.patellaACL.summary.mean{cycle,'muscleForces'}.(muscle),'Color','m','LineWidth',3);
+                plot(x,obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','k','LineWidth',3); hold on;
+                plot(x,obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','c','LineWidth',3);
+                plot(x,obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','m','LineWidth',3);
                 % Standard Deviation
-                plusSDC = obj.control.summary.mean{cycle,'muscleForces'}.(muscle)+obj.control.summary.stDev{cycle,'muscleForces'}.(muscle);
-                minusSDC = obj.control.summary.mean{cycle,'muscleForces'}.(muscle)-obj.control.summary.stDev{cycle,'muscleForces'}.(muscle);
+                plusSDC = obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Control.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+                minusSDC = obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Control.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDC' fliplr(minusSDC')];
                 hFill = fill(xx,yy,[0 0 0]); 
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);
-                plusSDH = obj.hamstringACL.summary.mean{cycle,'muscleForces'}.(muscle)+obj.hamstringACL.summary.stDev{cycle,'muscleForces'}.(muscle);
-                minusSDH = obj.hamstringACL.summary.mean{cycle,'muscleForces'}.(muscle)-obj.hamstringACL.summary.stDev{cycle,'muscleForces'}.(muscle);
+                plusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.HamstringACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+                minusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.HamstringACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDH' fliplr(minusSDH')];
                 hFill = fill(xx,yy,[0 1 1]);
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);
-                plusSDP = obj.patellaACL.summary.mean{cycle,'muscleForces'}.(muscle)+obj.patellaACL.summary.stDev{cycle,'muscleForces'}.(muscle);
-                minusSDP = obj.patellaACL.summary.mean{cycle,'muscleForces'}.(muscle)-obj.patellaACL.summary.stDev{cycle,'muscleForces'}.(muscle);
+                plusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.PatellaACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+                minusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.PatellaACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDP' fliplr(minusSDP')];
                 hFill = fill(xx,yy,[1 0 1]);
@@ -135,7 +126,7 @@ classdef summary < handle
                 ydefault = get(gca,'YLim');
                 ylim([0 ydefault(2)]);
                 % Labels
-                title(upper(muscle),'FontWeight','bold');
+                title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
                 ylabel('% Max Isometric Force');
             end            

@@ -4,7 +4,7 @@ classdef controlGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-01-17
     
     
     %% Properties
@@ -30,6 +30,8 @@ classdef controlGroup < OpenSim.group
             
             % Create instance of class from superclass
             obj = obj@OpenSim.group();
+            % Add group ID
+            obj.GroupID = 'Control';
         end
     end
     

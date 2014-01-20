@@ -1,10 +1,10 @@
 classdef group < handle
-    % GROUP - A class to store all subjects (and simulations) for a specific population group.
+    % GROUP - A class to store all subjects (and simulations) for a specific population group
     %
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-01-17
     
     
     %% Properties
@@ -13,6 +13,9 @@ classdef group < handle
     properties (SetAccess = private)
         Cycles      % Individual subject cycles
         Summary     % Summary of subjects
+    end
+    properties (Hidden = true, SetAccess = protected)
+        GroupID     % Group type
     end
     
     
@@ -26,14 +29,22 @@ classdef group < handle
         function obj = group()
             % GROUP - Construct instance of class
             %
-            
+                                   
             % Properties of current group subclass
             allProps = properties(obj);
             if length(allProps) > 2
                 subjects = allProps(1:end-2);
+                % Preallocate and do a parallel loop
+                tempData = cell(length(subjects),1);
+                parfor i = 1:length(subjects)
+                    % Subject class
+                    subjectClass = str2func(['OpenSim.',subjects{i}]);
+                    % Create subject object
+                    tempData{i} = subjectClass();                    
+                end
                 % Assign subjects as properties
                 for i = 1:length(subjects)
-                    obj.(subjects{i}) = OpenSim.subject(subjects{i}(2:end));
+                    obj.(subjects{i}) = tempData{i};
                 end
             else
                 error('*** Cannot create instance of GROUP superclass directly.')
@@ -41,110 +52,79 @@ classdef group < handle
             % -------------------------------------------------------------
             %       Cycles
             % -------------------------------------------------------------
-%             cstruct = struct();
-%             cycleNames = {'A_SD2F','A_SD2S','A_Walk','U_SD2F','U_SD2S','U_Walk'};
-%             % Loop through subjects
-%             for j = 1:length(subjects)
-%                 % Loop through cycles
-%                 for k = 1:length(cycleNames)
-%                     % Loop through simulations based on that cycle
-%                     for m = 1:5
-%                         % Check if field exists (if not, create)
-%                         if ~isfield(cstruct,cycleNames{k})
-%                             cstruct.(cycleNames{k}) = struct();
-%                             % Muscle forces (normalized)
-%                             mNames = obj.(subjects{j}).MaxIsometric.Properties.VarNames;
-%                             for p = 1:length(mNames)
-%                                 cstruct.(cycleNames{k}).MuscleForces.(mNames{p}) = obj.(subjects{j}).([cycleNames{k},'_0',num2str(m)]).NormMuscleForces.(mNames{p});
-%                             end
-%                             % Subject / type name
-%                             cstruct.(cycleNames{k}).Subjects = {[subjects{j}(2:end),'_',cycleTypes{m}]}; % %%%%%%%
-%                         % If field exists, append new to existing
-%                         else
-%                             % Muscle forces
-%                             oldM = cstruct.(cycleNames{k}).muscleForces;
-%                             newM = obj.(subjects{j}).([cycleNames{k},'_',cycleTypes{m}]).normMuscleForces;
-%                             mNames = newM.Properties.VarNames;
-%                             for p = 1:length(mNames)
-%                                 newM.(mNames{p}) = [oldM.(mNames{p}) newM.(mNames{p})];
-%                             end
-%                             cstruct.(cycleNames{k}).muscleForces = newM;
-%                             % Subject / type names
-%                             oldNames = cstruct.(cycleNames{k}).subjects;
-%                             newName = {[subjects{j}(2:end),'_',cycleTypes{m}]};
-%                             cstruct.(cycleNames{k}).subjects = [oldNames; newName];
-%                         end
-%                     end
-%                 end
-%             end
-%             % Convert structure to dataset
-%             varnames = {'subjects','muscleForces'};
-%             obsnames = fieldnames(cstruct);
-%             cdata = cell(length(obsnames),length(varnames));
-%             cdataset = dataset({cdata,varnames{:}});
-%             for i = 1:length(obsnames)
-%                 for j = 1:length(varnames)
-%                     cdataset{i,j} = cstruct.(obsnames{i}).(varnames{j});
-%                 end
-%             end
-%             cdataset = set(cdataset,'ObsNames',obsnames);
-%             % Assign property
-%             obj.Cycles = cdataset;
-%             % -------------------------------------------------------------
-%             %       Summary
-%             % -------------------------------------------------------------
-%             % Set up struct
-%             sumStruct = struct();
-%             varnames = {'muscleForces'};
-%             obsnames = get(cdataset,'ObsNames');
-%             % Averages and standard deviations
-%             adata = cell(length(obsnames),length(varnames));
-%             sdata = cell(length(obsnames),length(varnames));
-%             adataset = dataset({adata,varnames{:}});
-%             sdataset = dataset({sdata,varnames{:}});
-%             % Calculate
-%             for i = 1:length(obsnames)
-%                 adataset{i,'muscleForces'} = XgetDatasetMean(cdataset{i,'muscleForces'});
-%                 sdataset{i,'muscleForces'} = XgetDatasetStdDev(cdataset{i,'muscleForces'});
-%             end
-%             adataset = set(adataset,'ObsNames',obsnames);
-%             sdataset = set(sdataset,'ObsNames',obsnames);
-%             % Add to struct
-%             sumStruct.mean = adataset;
-%             sumStruct.stDev = sdataset;
-%             % Assign property
-%             obj.Summary = sumStruct;
-            % -------------------------------------------------------------
-            %       Subfunctions
-            % -------------------------------------------------------------
-            function dsMean = XgetDatasetMean(dSet)
-            % XGETDATASETMEAN
-            %
+            cstruct = struct();
+            % Loop through subjects
+            for j = 1:length(subjects)
+                cycleNames = get(obj.(subjects{i}).Cycles,'ObsNames');
+                % Loop through cycles
+                for k = 1:length(cycleNames)
+                    % Check if field exists (if not, create)
+                    if ~isfield(cstruct,cycleNames{k})
+                        cstruct.(cycleNames{k}) = struct();
+                        % Muscle forces
+                        cstruct.(cycleNames{k}).Forces = obj.(subjects{j}).Summary.Mean.Forces{k};
+                        % Subject / type name
+                        cstruct.(cycleNames{k}).Subjects = subjects(j);
+                    % If field exists, append new to existing
+                    else
+                        % Muscle forces
+                        oldM = cstruct.(cycleNames{k}).Forces;
+                        newM = obj.(subjects{j}).Summary.Mean.Forces{k};
+                        mNames = newM.Properties.VarNames;
+                        for m = 1:length(mNames)
+                            newM.(mNames{m}) = [oldM.(mNames{m}) newM.(mNames{m})];
+                        end
+                        cstruct.(cycleNames{k}).muscleForces = newM;
+                        % Subject / type names
+                        oldNames = cstruct.(cycleNames{k}).Subjects;
+                        newName = subjects(j);
+                        cstruct.(cycleNames{k}).Subjects = [oldNames; newName];
+                    end
 
-            dsnames = dSet.Properties.VarNames;
-            newdata = zeros(size(dSet));
-            for n = 1:length(dsnames)    
-                newdata(:,n) = nanmean(dSet.(dsnames{n}),2);
-            end
-            dsMean = dataset({newdata,dsnames{:}});
-            end
-            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-            function dsStdDev = XgetDatasetStdDev(dSet)
-                % XGETDATASETSTDEV
-                %
-
-                dsnames = dSet.Properties.VarNames;
-                newdata = zeros(size(dSet));
-                for n = 1:length(dsnames)    
-                    newdata(:,n) = nanstd(dSet.(dsnames{n}),0,2);        
                 end
-                dsStdDev = dataset({newdata,dsnames{:}});
-            end            
+            end
+            % Convert structure to dataset
+            varnames = {'Subjects','Forces'};
+            obsnames = fieldnames(cstruct);
+            cdata = cell(length(obsnames),length(varnames));
+            cdataset = dataset({cdata,varnames{:}});
+            for i = 1:length(obsnames)
+                for j = 1:length(varnames)
+                    cdataset{i,j} = cstruct.(obsnames{i}).(varnames{j});
+                end
+            end
+            cdataset = set(cdataset,'ObsNames',obsnames);
+            % Assign property
+            obj.Cycles = cdataset;
+            % -------------------------------------------------------------
+            %       Summary
+            % -------------------------------------------------------------
+            % Set up struct
+            sumStruct = struct();
+            varnames = {'Forces'};
+            obsnames = get(cdataset,'ObsNames');
+            % Averages and standard deviations
+            adata = cell(length(obsnames),length(varnames));
+            sdata = cell(length(obsnames),length(varnames));
+            adataset = dataset({adata,varnames{:}});
+            sdataset = dataset({sdata,varnames{:}});
+            % Calculate
+            for i = 1:length(obsnames)
+                adataset{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Forces'},2);
+                sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Forces'});
+            end
+            adataset = set(adataset,'ObsNames',obsnames);
+            sdataset = set(sdataset,'ObsNames',obsnames);
+            % Add to struct
+            sumStruct.Mean = adataset;
+            sumStruct.StdDev = sdataset;
+            % Assign property
+            obj.Summary = sumStruct;
         end
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function varargout = plotMuscleForces(obj,varargin)
+        function plotMuscleForces(obj,varargin)
             % PLOTMUSCLEFORCES - Compare involved leg vs. uninvolved leg (group mean +/- standard deviation) for a given cycle
             %
             
@@ -157,53 +137,36 @@ classdef group < handle
             groupProps = properties(obj);
             subProps = properties(obj.(groupProps{1}));
             simObj = obj.(groupProps{1}).(subProps{1});
-            validMuscles = [simObj.muscles,{'All','Quads','Hamstrings','Gastrocs'}];
+            validMuscles = [simObj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
             defaultMuscle = 'All';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);            
-            p.addOptional('cycle',defaultCycle,checkCycle)            
-            p.addOptional('muscle',defaultMuscle,checkMuscle);
+            p.addOptional('Cycle',defaultCycle,checkCycle)            
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.muscle,') for ',p.Results.cycle,' Cycle - Uninvovled vs. Involved'],'Visible','on');
-                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
+                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.Muscle,') for ',p.Results.Cycle,' Cycle - Uninvovled vs. Involved'],'Visible','on');
+                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
             else
                 axes_handles = p.Results.axes_handles;
-                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
+                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
             end
             % Plot
             figure(fig_handle);
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
-                XplotMuscleForces(obj,p.Results.cycle,mNames{j});
-            end
-            if strcmp(p.Results.muscle,'All')
-                set(fig_handle,'CurrentAxes',subplot(3,4,11:12));
-                set(gca,'Visible','off');
-            end
-            % Legend
-            lStruct = struct;
-            axesH = get(axes_handles(1),'Children');
-            lStruct.axesHandles = axesH(1:2);
-            if isa(obj,'OpenSim.controlGroup')
-                lStruct.names = {'Left'; 'Right'};
-            else
-                lStruct.names = {'Uninvovled'; 'ACLR'};
-            end
-            % Return (to GUI)
-            if nargout == 1
-                varargout{1} = lStruct;
-            end
+                XplotMuscleForces(obj,p.Results.Cycle,mNames{j});
+            end           
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XplotMuscleForces(obj,cycle,muscle)
+            function XplotMuscleForces(obj,Cycle,Muscle)
                 % XPLOTMUSCLEFORCES - Worker function to plot muscle forces for a specific cycle and muscle
                 %
                
@@ -211,19 +174,19 @@ classdef group < handle
                 x = (0:100)';
                 % Mean
                 % Plot uninvolved leg (or left leg for controls)
-                plot(x,obj.summary.mean{['U_',cycle],'muscleForces'}.(muscle),'Color',[0.4 0.2 0.6],'LineWidth',3); hold on;                
+                plot(x,obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',[0.4 0.2 0.6],'LineWidth',3); hold on;                
                 % Plot ACLR leg (or right leg for controls)
-                plot(x,obj.summary.mean{['A_',cycle],'muscleForces'}.(muscle),'Color',[0 0.65 0.3],'LineWidth',3);
+                plot(x,obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',[0 0.65 0.3],'LineWidth',3);
                 % Standard Deviation
-                plusSDU = obj.summary.mean{['U_',cycle],'muscleForces'}.(muscle)+obj.summary.stDev{['U_',cycle],'muscleForces'}.(muscle);
-                minusSDU = obj.summary.mean{['U_',cycle],'muscleForces'}.(muscle)-obj.summary.stDev{['U_',cycle],'muscleForces'}.(muscle);
+                plusSDU = obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle)+obj.Summary.StdDev{['U_',Cycle],'Forces'}.(Muscle);
+                minusSDU = obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle)-obj.Summary.StdDev{['U_',Cycle],'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDU' fliplr(minusSDU')];
                 hFill = fill(xx,yy,[0.4 0.2 0.6]); 
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);
-                plusSDA = obj.summary.mean{['A_',cycle],'muscleForces'}.(muscle)+obj.summary.stDev{['A_',cycle],'muscleForces'}.(muscle);
-                minusSDA = obj.summary.mean{['A_',cycle],'muscleForces'}.(muscle)-obj.summary.stDev{['A_',cycle],'muscleForces'}.(muscle);
+                plusSDA = obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle)+obj.Summary.StdDev{['A_',Cycle],'Forces'}.(Muscle);
+                minusSDA = obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle)-obj.Summary.StdDev{['A_',Cycle],'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDA' fliplr(minusSDA')];
                 hFill = fill(xx,yy,[0 0.65 0.3]);
@@ -238,14 +201,14 @@ classdef group < handle
                 ydefault = get(gca,'YLim');
                 ylim([0 ydefault(2)]);
                 % Labels
-                title(upper(muscle),'FontWeight','bold');
+                title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
                 ylabel('% Max Isometric Force');
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function varargout = troubleshootMuscleForces(obj,varargin)
-            % TROUBLESHOOTMUSCLEFORCES - Compare individual subjects to the group mean for a leg-specific cycle
+        function troubleshoot(obj,varargin)
+            % TROUBLESHOOT - Compare individual subjects to the group mean for a leg-specific cycle
             %
             
             % Parse inputs
@@ -281,28 +244,19 @@ classdef group < handle
             figure(fig_handle);
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
-                XtroubleshootMuscleForces(obj,p.Results.cycle,mNames{j});
-            end
-            % Legend
-            lStruct = struct;
-            axesH = get(axes_handles(1),'Children');
-            lStruct.axesHandles = axesH(1:end-1);
-            lStruct.names = ['Mean'; obj.cycles{p.Results.cycle,'subjects'}];           
-            % Return (to GUI)
-            if nargout == 1
-                varargout{1} = lStruct;
-            end
+                Xtroubleshoot(obj,p.Results.cycle,mNames{j});
+            end                   
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XtroubleshootMuscleForces(obj,cycle,muscle)
+            function Xtroubleshoot(obj,cycle,muscle)
                 % XTROUBLESHOOTMUSCLEFORCES - Worker function to plot muscle forces (mean and individual traces) for a leg-specific cycle and muscle
                 %
                
                 % Percent cycle
                 x = (0:100)';
                 % Mean
-                plot(x,obj.summary.mean{cycle,'muscleForces'}.(muscle),'Color','k','LineWidth',3); hold on;                
+                plot(x,obj.Summary.Mean{cycle,'muscleForces'}.(muscle),'Color','k','LineWidth',3); hold on;                
                 % Individual subjects
                 numSubjects = length(obj.cycles{cycle,'subjects'});
                 if numSubjects >= 8
@@ -313,8 +267,8 @@ classdef group < handle
                 set(gca,'LineStyleOrder',{'-','--',':'});
                 plot(x,obj.cycles{cycle,'muscleForces'}.(muscle),'LineWidth',1);
                 % Standard Deviation
-                plusSD = obj.summary.mean{cycle,'muscleForces'}.(muscle)+obj.summary.stDev{cycle,'muscleForces'}.(muscle);
-                minusSD = obj.summary.mean{cycle,'muscleForces'}.(muscle)-obj.summary.stDev{cycle,'muscleForces'}.(muscle);
+                plusSD = obj.Summary.Mean{cycle,'muscleForces'}.(muscle)+obj.Summary.StdDev{cycle,'muscleForces'}.(muscle);
+                minusSD = obj.Summary.Mean{cycle,'muscleForces'}.(muscle)-obj.Summary.StdDev{cycle,'muscleForces'}.(muscle);
                 % Plot as transparent shaded area
                 xx = [x' fliplr(x')];
                 yy = [plusSD' fliplr(minusSD')];

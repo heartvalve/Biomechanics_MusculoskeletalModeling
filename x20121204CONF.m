@@ -22,7 +22,7 @@ classdef x20121204CONF < OpenSim.subject
         U_Walk_04
         U_Walk_05
         A_SD2F_01
-        A_SD2F_02
+%         A_SD2F_02       % CMC
         A_SD2F_03
         A_SD2F_04
         A_SD2F_05

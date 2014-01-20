@@ -17,7 +17,7 @@ classdef x20121204APRM < OpenSim.subject
         A_Walk_04
         A_Walk_05
         U_Walk_01
-        U_Walk_02
+%         U_Walk_02       % CMC
         U_Walk_03
         U_Walk_04
         U_Walk_05

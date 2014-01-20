@@ -32,7 +32,7 @@ classdef x20121008AHRM < OpenSim.subject
         U_SD2F_04
         U_SD2F_05
         A_SD2S_01
-        A_SD2S_02
+%         A_SD2S_02       % CMC
         A_SD2S_03
         A_SD2S_04
         A_SD2S_05

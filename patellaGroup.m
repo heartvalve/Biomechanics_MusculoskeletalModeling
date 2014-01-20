@@ -4,7 +4,7 @@ classdef patellaGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-01-17
     
     
     %% Properties
@@ -28,6 +28,8 @@ classdef patellaGroup < OpenSim.group
             
             % Create instance of class from superclass
             obj = obj@OpenSim.group();
+            % Add group ID
+            obj.GroupID = 'PatellaACL';
         end
     end
     
