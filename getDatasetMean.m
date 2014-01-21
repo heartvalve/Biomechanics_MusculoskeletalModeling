@@ -4,7 +4,7 @@ function dsMean = getDatasetMean(cycleName,dSet,dim)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-14
+    % Last Modified 2014-01-20
     
     
     %% Main
@@ -22,7 +22,7 @@ function dsMean = getDatasetMean(cycleName,dSet,dim)
             newdata(:,i) = nanmean(dSet.(dsnames{i}),2);
         end
         % Interpolate around data endpoint (Stair Descent to Floor - only for muscle forces)
-        if ~isempty(regexp(cycleName,'ToFloor','ONCE')) && size(dSet,2) == 10
+        if ~isempty(regexp(cycleName,'2F','ONCE')) && size(dSet,2) == 10
             % First column only
             newdataWithNaNs = mean(dSet.(dsnames{1}),2);
             % First NaN index

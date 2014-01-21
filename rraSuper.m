@@ -4,7 +4,7 @@ classdef rraSuper < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-01-17
     
     
     %% Properties
@@ -12,10 +12,10 @@ classdef rraSuper < handle
     
     properties (SetAccess = private)
         Actuation       % ... force, speed, power
-        Controls        % ... sto, xml (same info - more time points in sto)
+%         Controls        % ... sto, xml (same info - more time points in sto)
         Kinematics      % ... q (Coordinates), u (Speeds), dudt (Accelerations)
-        PositionError   % ... has one fewer row than all other data
-        States
+%         PositionError   % ... has one fewer row than all other data
+%         States
     end
     
     
@@ -33,18 +33,18 @@ classdef rraSuper < handle
             try
                 % Actuators
                 obj.Actuation.Force = readData([rraPath,'_Actuation_force.sto'],23);
-                obj.Actuation.Speed = readData([rraPath,'_Actuation_speed.sto'],23);
-                obj.Actuation.Power = readData([rraPath,'_Actuation_power.sto'],23);
+%                 obj.Actuation.Speed = readData([rraPath,'_Actuation_speed.sto'],23);
+%                 obj.Actuation.Power = readData([rraPath,'_Actuation_power.sto'],23);
                 % Controls
-                obj.Controls = readData([rraPath,'_controls.sto'],7);                
+%                 obj.Controls = readData([rraPath,'_controls.sto'],7);                
                 % Kinematics
                 obj.Kinematics.Coordinate = readData([rraPath,'_Kinematics_q.sto'],11);
-                obj.Kinematics.Speed = readData([rraPath,'_Kinematics_u.sto'],11);
-                obj.Kinematics.Acceleration = readData([rraPath,'_Kinematics_dudt.sto'],11);             
+%                 obj.Kinematics.Speed = readData([rraPath,'_Kinematics_u.sto'],11);
+%                 obj.Kinematics.Acceleration = readData([rraPath,'_Kinematics_dudt.sto'],11);             
                 % Position Error
-                obj.PositionError = readData([rraPath,'_pErr.sto'],7);
+%                 obj.PositionError = readData([rraPath,'_pErr.sto'],7);
                 % States
-                obj.States = readData([rraPath,'_states.sto'],7);
+%                 obj.States = readData([rraPath,'_states.sto'],7);
             catch err
                 [~,name,~] = fileparts(rraPath);
                 disp(['Problem with ',name]);

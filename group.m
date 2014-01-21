@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-17
+    % Last Modified 2014-01-20
     
     
     %% Properties
@@ -13,6 +13,7 @@ classdef group < handle
     properties (SetAccess = private)
         Cycles      % Individual subject cycles
         Summary     % Summary of subjects
+        Statistics  % Paired t-test statistics results (involved vs. uninvolved leg)
     end
     properties (Hidden = true, SetAccess = protected)
         GroupID     % Group type
@@ -32,22 +33,19 @@ classdef group < handle
                                    
             % Properties of current group subclass
             allProps = properties(obj);
-            if length(allProps) > 2
-                subjects = allProps(1:end-2);
-                % Preallocate and do a parallel loop
-                tempData = cell(length(subjects),1);
-                parfor i = 1:length(subjects)
-                    % Subject class
-                    subjectClass = str2func(['OpenSim.',subjects{i}]);
-                    % Create subject object
-                    tempData{i} = subjectClass();                    
-                end
-                % Assign subjects as properties
-                for i = 1:length(subjects)
-                    obj.(subjects{i}) = tempData{i};
-                end
-            else
-                error('*** Cannot create instance of GROUP superclass directly.')
+            % Subject properties
+            subjects = allProps(strncmp(allProps,'x',1));
+            % Preallocate and do a parallel loop
+            tempData = cell(length(subjects),1);
+            parfor j = 1:length(subjects)
+                % Subject class
+                subjectClass = str2func(['OpenSim.',subjects{j}]);
+                % Create subject object
+                tempData{j} = subjectClass();                    
+            end
+            % Assign subjects as properties
+            for i = 1:length(subjects)
+                obj.(subjects{i}) = tempData{i};
             end
             % -------------------------------------------------------------
             %       Cycles
@@ -74,7 +72,7 @@ classdef group < handle
                         for m = 1:length(mNames)
                             newM.(mNames{m}) = [oldM.(mNames{m}) newM.(mNames{m})];
                         end
-                        cstruct.(cycleNames{k}).muscleForces = newM;
+                        cstruct.(cycleNames{k}).Forces = newM;
                         % Subject / type names
                         oldNames = cstruct.(cycleNames{k}).Subjects;
                         newName = subjects(j);
@@ -120,6 +118,21 @@ classdef group < handle
             sumStruct.StdDev = sdataset;
             % Assign property
             obj.Summary = sumStruct;
+            % -------------------------------------------------------------
+            %       Statistics
+            % -------------------------------------------------------------
+            allCycles = get(obj.Cycles,'ObsNames');
+            cycleTypes =  unique(cellfun(@(x) x(3:end),allCycles,'UniformOutput',false));            
+            hdata = cell(length(cycleTypes),length(varnames));
+            hdataset = dataset({hdata,varnames{:}});
+            for i = 1:length(cycleTypes)
+                % Forces
+                hdataset{i,'Forces'} = XrunPairedTTest(cdataset{['A_',cycleTypes{i}],'Forces'},cdataset{['U_',cycleTypes{i}],'Forces'},'Forces');                               
+            end
+            % Add to struct
+            hdataset = set(hdataset,'ObsNames',cycleTypes);
+            % Assign Property
+            obj.Statistics = hdataset;
         end
         % *****************************************************************
         %       Plotting Methods
@@ -162,7 +175,11 @@ classdef group < handle
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
                 XplotMuscleForces(obj,p.Results.Cycle,mNames{j});
-            end           
+            end
+            % Legend
+            if strcmp(p.Results.Muscle,'All')
+                OpenSim.createLegend(fig_handle,axes_handles(1));
+            end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
@@ -170,26 +187,39 @@ classdef group < handle
                 % XPLOTMUSCLEFORCES - Worker function to plot muscle forces for a specific cycle and muscle
                 %
                
-                % Percent cycle
+                ColorA = [1 0 0.6];
+                ColorU = [0 0.5 1];
+                % Plot
+                % X vector
                 x = (0:100)';
                 % Mean
                 % Plot uninvolved leg (or left leg for controls)
-                plot(x,obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',[0.4 0.2 0.6],'LineWidth',3); hold on;                
+                h = plot(x,obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorU,'LineWidth',3); hold on;
+                if strcmp(obj.GroupID,'Control')
+                    set(h,'DisplayName','Left');
+                else
+                    set(h,'DisplayName','Uninvolved');
+                end
                 % Plot ACLR leg (or right leg for controls)
-                plot(x,obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',[0 0.65 0.3],'LineWidth',3);
+                h = plot(x,obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorA,'LineWidth',3);
+                if strcmp(obj.GroupID,'Control')
+                    set(h,'DisplayName','Right');
+                else
+                    set(h,'DisplayName','ACLR');
+                end
                 % Standard Deviation
                 plusSDU = obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle)+obj.Summary.StdDev{['U_',Cycle],'Forces'}.(Muscle);
                 minusSDU = obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle)-obj.Summary.StdDev{['U_',Cycle],'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDU' fliplr(minusSDU')];
-                hFill = fill(xx,yy,[0.4 0.2 0.6]); 
+                hFill = fill(xx,yy,ColorU); 
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);
                 plusSDA = obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle)+obj.Summary.StdDev{['A_',Cycle],'Forces'}.(Muscle);
                 minusSDA = obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle)-obj.Summary.StdDev{['A_',Cycle],'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDA' fliplr(minusSDA')];
-                hFill = fill(xx,yy,[0 0.65 0.3]);
+                hFill = fill(xx,yy,ColorA);
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);                
                 % Reverse children order (so mean is on top and shaded region is in back)
@@ -203,7 +233,7 @@ classdef group < handle
                 % Labels
                 title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('% Max Isometric Force');
+                ylabel('Force (% BW)');
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -220,63 +250,56 @@ classdef group < handle
             groupProps = properties(obj);
             subProps = properties(obj.(groupProps{1}));
             simObj = obj.(groupProps{1}).(subProps{1});
-            validMuscles = [simObj.muscles,{'All','Quads','Hamstrings','Gastrocs'}];
+            validMuscles = [simObj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
             defaultMuscle = 'All';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);            
-            p.addOptional('cycle',defaultCycle,checkCycle)            
-            p.addOptional('muscle',defaultMuscle,checkMuscle);
+            p.addOptional('Cycle',defaultCycle,checkCycle)            
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.muscle,') for ',p.Results.cycle],'Visible','on');
-                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
+                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.Muscle,') for ',p.Results.Cycle],'Visible','on');
+                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
             else
                 axes_handles = p.Results.axes_handles;
-                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.muscle);
+                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
             end
             % Plot
             figure(fig_handle);
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
-                Xtroubleshoot(obj,p.Results.cycle,mNames{j});
-            end                   
+                Xtroubleshoot(obj,p.Results.Cycle,mNames{j});
+            end
+            % Legend
+            if strcmp(p.Results.Muscle,'All')
+                OpenSim.createLegend(fig_handle,axes_handles(1));
+            end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function Xtroubleshoot(obj,cycle,muscle)
+            function Xtroubleshoot(obj,Cycle,Muscle)
                 % XTROUBLESHOOTMUSCLEFORCES - Worker function to plot muscle forces (mean and individual traces) for a leg-specific cycle and muscle
                 %
                
                 % Percent cycle
                 x = (0:100)';
                 % Mean
-                plot(x,obj.Summary.Mean{cycle,'muscleForces'}.(muscle),'Color','k','LineWidth',3); hold on;                
+                 h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',[0.15,0.15,0.15],'LineWidth',3); hold on;
+                set(h,'DisplayName','Mean');
                 % Individual subjects
-                numSubjects = length(obj.cycles{cycle,'subjects'});
-                if numSubjects >= 8
-                    set(gca,'ColorOrder',colormap(hsv(8)));
-                else                        
-                    set(gca,'ColorOrder',colormap(hsv(numSubjects)));
-                end
-                set(gca,'LineStyleOrder',{'-','--',':'});
-                plot(x,obj.cycles{cycle,'muscleForces'}.(muscle),'LineWidth',1);
-                % Standard Deviation
-                plusSD = obj.Summary.Mean{cycle,'muscleForces'}.(muscle)+obj.Summary.StdDev{cycle,'muscleForces'}.(muscle);
-                minusSD = obj.Summary.Mean{cycle,'muscleForces'}.(muscle)-obj.Summary.StdDev{cycle,'muscleForces'}.(muscle);
-                % Plot as transparent shaded area
-                xx = [x' fliplr(x')];
-                yy = [plusSD' fliplr(minusSD')];
-                hFill = fill(xx,yy,[0 0 0]); 
-                set(hFill,'EdgeColor','none');
-                alpha(0.125);
-                % Reverse children order (so mean is on top and individual cycles are in back)
-                set(gca,'Children',flipud(get(gca,'Children')));
+                % Colors
+                colors = colormap(hsv(length(obj.Cycles{Cycle,'Subjects'})));
+                % Individual Subjects
+                for i = 1:length(obj.Cycles{Cycle,'Subjects'})
+                    h = plot(x,obj.Cycles{Cycle,'Forces'}.(Muscle)(:,i),'Color',colors(i,:),'LineWidth',1);
+                    set(h,'DisplayName',obj.Cycles{Cycle,'Subjects'}{i});
+                end                
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
@@ -284,11 +307,33 @@ classdef group < handle
                 ydefault = get(gca,'YLim');
                 ylim([0 ydefault(2)]);
                 % Labels
-                title(upper(muscle),'FontWeight','bold');
+                title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('% Max Isometric Force');
+                ylabel('Force (% BW)');
             end            
         end
     end
     
+end
+
+
+%% Subfunctions
+% Subfunctions called from the main class definition
+
+function dsH = XrunPairedTTest(dSet1,dSet2,varType)
+    % XRUNPAIREDTTEST
+    %
+    
+    dsnames = dSet1.Properties.VarNames;
+    newdata = NaN(size(dSet1));
+    for j = 1:length(dsnames)
+        newdata(:,j) = (ttest(dSet1.(dsnames{j})',dSet2.(dsnames{j})'))';
+        % Eliminate areas where forces are small
+        if strcmp(varType,'Forces')
+            newdata((((nanmean(dSet1.(dsnames{j}),2) < 5) & (nanmean(dSet2.(dsnames{j}),2) < 5)) | ...
+                      (abs(nanmean(dSet1.(dsnames{j}),2)-nanmean(dSet2.(dsnames{j}),2)) < 2)),j) = 0;
+        end
+    end
+    % Return
+    dsH = dataset({newdata,dsnames{:}});
 end

@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-15
+    % Last Modified 2014-01-20
     
     
     %% Properties
@@ -17,6 +17,7 @@ classdef subject < handle
     properties (Hidden = true, SetAccess = protected)
         SubID           % Subject ID
         SubDir          % Directory where files are stored
+        WeightN         % Body weight in Newtons
         MaxIsometric    % Maximum isometric muscle force
         MaxWalkingLR    % Maximum muscle force during walking (separately)
         MaxWalking      % Maximum muscle force during walking (both legs)
@@ -51,6 +52,11 @@ classdef subject < handle
             for i = 1:length(simNames)
                 obj.(simNames{i}) = tempData{i};
             end
+            persInfo = [obj.SubDir,filesep,obj.SubID,'__PersonalInformation.xml'];
+            domNode = xmlread(persInfo);
+            massNode = domNode.getElementsByTagName('mass');
+            weightKG = str2double(char(massNode.item(0).getFirstChild.getData));
+            obj.WeightN = weightKG*9.81;
             % ---------------
             % Isometric muscle forces            
             muscles = obj.(simNames{1}).Muscles;
@@ -104,6 +110,19 @@ classdef subject < handle
             obj.MaxWalking = maxDS;
             % ----------------------
             % Add normalized muscle forces property to individual simulations
+            % Based on body weight
+            for i = 1:length(simNames)
+                for j = 1:length(muscles)
+                    obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.WeightN.*100;
+                end
+            end
+%             % Based on maximum isometric force
+%             for i = 1:length(simNames)
+%                 muscles = obj.(simNames{i}).Muscles;
+%                 for j = 1:length(muscles)
+%                     obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxIsometric.(muscles{j}).*100;
+%                 end
+%             end
 %             % Based on maximum during walking (over both legs)
 %             for i = 1:length(simNames)
 %                 muscles = obj.(simNames{i}).Muscles;
@@ -119,13 +138,6 @@ classdef subject < handle
 %                     obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxWalkingLR.([leg,'_',muscles{j}]).*100;
 %                 end
 %             end
-            % Based on maximum isometric force
-            for i = 1:length(simNames)
-                muscles = obj.(simNames{i}).Muscles;
-                for j = 1:length(muscles)
-                    obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxIsometric.(muscles{j}).*100;
-                end
-            end
             % -------------------------------------------------------------
             %       Cycles
             % -------------------------------------------------------------
@@ -249,7 +261,7 @@ classdef subject < handle
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Group Muscle Forces (',p.Results.Muscle,') for ',p.Results.Cycle,' Cycle - Uninvovled vs. Involved'],'Visible','on');
+                set(fig_handle,'Name',['Subject Muscle Forces (',p.Results.Muscle,') for ',p.Results.Cycle,' Cycle - Uninvovled vs. Involved'],'Visible','on');
                 [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
             else
                 axes_handles = p.Results.axes_handles;
@@ -273,7 +285,7 @@ classdef subject < handle
                 %
                
                 ColorA = [1 0 0.6];
-                ColorU = [0 0.5 1];                
+                ColorU = [0 0.5 1];
                 % Plot
                 % X vector
                 x = (0:100)';
@@ -316,7 +328,7 @@ classdef subject < handle
                 % Labels
                 title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('% Max');
+                ylabel('% Max Isometric Force');
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -475,7 +487,7 @@ classdef subject < handle
                 for i = 1:length(obj.Cycles{Cycle,'Simulations'})
                     h = plot(x,obj.Cycles{Cycle,'Forces'}.(Muscle)(:,i),'Color',colors(i,:),'LineWidth',1);
                     set(h,'DisplayName',regexprep(obj.Cycles{Cycle,'Simulations'}{i},'_','-'));
-                end                
+                end
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
@@ -485,7 +497,7 @@ classdef subject < handle
                 % Labels
                 title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('% Max');
+                ylabel('% Max Isometric Force');
             end
         end
     end

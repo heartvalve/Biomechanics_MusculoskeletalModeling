@@ -4,7 +4,7 @@ function dsStdDev = getDatasetStdDev(cycleName,dSet)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-14
+    % Last Modified 2014-01-20
     
     
     %% Main
@@ -16,7 +16,7 @@ function dsStdDev = getDatasetStdDev(cycleName,dSet)
         newdata(:,i) = nanstd(dSet.(dsnames{i}),0,2);
     end
     % Interpolate around data endpoint (Stair Descent to Floor - only for torques)
-    if ~isempty(regexp(cycleName,'ToFloor','ONCE')) && size(dSet,2) == 10
+    if ~isempty(regexp(cycleName,'2F','ONCE')) && size(dSet,2) == 10
         % First column only
         newdataWithNaNs = std(dSet.(dsnames{1}),0,2);
         % First NaN index
