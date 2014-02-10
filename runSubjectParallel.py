@@ -15,7 +15,7 @@
         Simulation results
 ----------------------------------------------------------------------
     Created by Megan Schroeder
-    Last Modified 2013-08-15
+    Last Modified 2014-01-16
 ----------------------------------------------------------------------
 """
 
@@ -26,13 +26,7 @@
 #                                                                    #
 # ####################################################################
 # Subject ID list
-#subIDs = ['20130221CONF']
-#subIDs = ['20130401CONM','20121205CONM']
-#subIDs = ['20130401AHLM','20121206CONF','20121205CONF','20121204CONF',
-#          '20121204APRM','20121110AHRM','20121108AHRM','20121008AHRM',
-#          '20120922AHRM','20120920APRM','20120919APLF','20120912AHRF']
-#subIDs = ['20130207APRM']
-subIDs = ['20110622CONM']
+#subIDs = ['20120920APRM']
 # ####################################################################
 
 
@@ -127,7 +121,7 @@ class runSubject:
         # Trial names
         trialNames = self.getTrialNames()
         # Start worker pool
-        pool = Pool(processes=8)
+        pool = Pool(processes=10)
         # Run parallel processes
         pool.map(runParallel, trialNames)
         # Clean up spawned processes
