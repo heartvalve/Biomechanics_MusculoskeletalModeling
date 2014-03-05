@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-02-21
     
     
     %% Properties
@@ -17,6 +17,7 @@ classdef simulation < handle
         Muscles             % Muscle names
         Leg                 % Cycle leg
         EMG                 % EMG data from experiment (for comparison)
+        KIN                 % Knee kinetics (from Cortex, for comparison)
         TRC                 % Marker data - input to simulation
         GRF                 % Ground Reaction Force data - input to simulation
         IK                  % Inverse Kinematics solution
@@ -26,6 +27,7 @@ classdef simulation < handle
         MuscleForces        % Muscle forces (summarized from CMC)
         Residuals           % Residuals
         MuscleEMG           % Muscle EMG (summarized from EMG)
+        KneeKin             % Knee kinematics and kinetics (summarized from KIN)
     end
     properties (Hidden = true, SetAccess = private)
         SubDir              % Directory where files are stored
@@ -83,6 +85,8 @@ classdef simulation < handle
             end
             % EMG
             obj.EMG = OpenSim.emg(subID,simName);
+            % KIN
+            obj.KIN = OpenSim.kin(subID,simName);
             % TRC
             obj.TRC = OpenSim.trc(subID,simName);
             % GRF
@@ -138,6 +142,23 @@ classdef simulation < handle
             end
             mEMG = dataset({iEMG,emgLegMuscles{:}});
             obj.MuscleEMG = mEMG;
+            % Interpolate Knee kinetics over normalized time window
+            kinProps = obj.KIN.Data.Properties.VarNames;
+            iKin = nan(101,length(kinProps));
+            for i = 1:length(kinProps)
+                if any(isnan(obj.KIN.Data.(kinProps{i})))
+                    nanInd = isnan(obj.KIN.Data.(kinProps{i}));
+                    if sum(nanInd) <= 8                        
+                        iKin(:,i) = interp1(obj.KIN.FrameTime(~nanInd),obj.KIN.Data.(kinProps{i})(~nanInd),xi,'spline','extrap');
+                    else
+                        iKin(:,i) = interp1(obj.KIN.FrameTime(~nanInd),obj.KIN.Data.(kinProps{i})(~nanInd),xi,'spline',NaN);
+                    end
+                else                    
+                    iKin(:,i) = interp1(obj.KIN.FrameTime,obj.KIN.Data.(kinProps{i}),xi,'spline');
+                end
+            end
+            kKIN = dataset({iKin,kinProps{:}});
+            obj.KneeKin = kKIN;
             % RRA Residuals (focus on cycle region)
             [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(1)));
             [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(2)));
@@ -305,8 +326,115 @@ classdef simulation < handle
             checkObj = @(x) isa(x,'OpenSim.simulation');
             p.addRequired('obj',checkObj);
             p.parse(obj);
-            % Export ...
-            
+            % Specify export folder path
+            wpath = regexp(obj.SubDir,'Northwestern-RIC','split');
+            ABQdir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
+                         filesep,'Subjects',filesep,obj.SubID,filesep];
+            % Create the folder if not already there
+            if ~isdir(ABQdir)
+                mkdir(ABQdir(1:end-1));
+                export = true;
+            else
+                % Check if the file exists
+                if ~exist([ABQdir,obj.SubID,'_',obj.SimName,'.inp'],'file')
+                    export = true;
+                else
+                    choice = questdlg(['Would you like to overwrite the existing file for ',obj.SubID,'_',obj.SimName,'?'],'Overwrite','Yes','No','No');
+                    if strcmp(choice,'Yes')
+                        export = true;
+                    else
+                        disp(['Skipping export for ',obj.SubID,'_',obj.SimName]);
+                        export = false;
+                    end                    
+                end
+            end
+            if export
+                % Open file
+                fid = fopen([ABQdir,obj.SubID,'_',obj.SimName,'.inp'],'w');
+                % Write common elements
+                fprintf(fid,['*Heading\n',...
+                             obj.SubID,'_',obj.SimName,'\n',...
+                            '*Preprint, echo=NO, model=NO, history=NO, contact=NO\n',...
+                            '**\n',...
+                            '*Parameter\n',...
+                            'time_step = 0.2\n',...
+                            '**\n',...
+                            '*Include, input=../../GenericFiles/Parts.inp\n',...
+                            '*Include, input=../../GenericFiles/Assembly__Instances_Surfaces.inp\n',...
+                            '*Include, input=../../GenericFiles/Assembly__Connectors.inp\n',...
+                            '*Include, input=../../GenericFiles/Assembly__Constraints.inp\n',...                            
+                            '*Include, input=../../GenericFiles/Model.inp\n',...
+                            '**\n',...
+                            '** AMPLITUDES\n',...
+                            '**\n']);
+                % Write amplitudes
+                for i = 1:length(obj.Muscles)
+                    mName = obj.Muscles{i};
+                    if strncmp(mName,'vas',3)
+                        ampNames = {['VASTUS',upper(mName(4:end))]};
+                    elseif strcmp(mName,'recfem')
+                        ampNames = {'RECTUSFEM'};
+                    elseif strncmp(mName,'bf',2)
+                        ampNames = {['BICEPSFEMORIS',upper(obj.Muscles{i}(3:4))]};
+                    elseif strcmp(mName,'semimem')
+                        ampNames = {'SEMIMEMBRANOSUS_WRAP','SEMIMEMBRANOSUS'};
+                    elseif strcmp(mName,'semiten')
+                        ampNames = {'SEMITENDINOSUS_WRAP','SEMITENDINOSUS'};
+                    elseif strncmp(mName,'gas',3)
+                        angles = {'0-5','5-10','10-15','15-20','20-25','25-30','30-35','35-40','40-45','45-50'};
+                        ampNames = cell(1,length(angles)+1);
+                        for j = 1:length(angles)
+                            ampNames{j} = [upper(mName(4)),'GASTROCNEMIUS_WRAP_',angles{j}];
+                        end
+                        ampNames{end} = [upper(mName(4)),'GASTROCNEMIUS'];
+                    end
+                    for k = 1:length(ampNames)
+                        fprintf(fid,['*Amplitude, name=',ampNames{k},', time=TOTAL TIME, definition=USER, properties=102\n',...
+                                     '<time_step>, ']);
+                        fprintf(fid,'%2.2f, ',obj.MuscleForces.(mName)(1:7));
+                        fprintf(fid,'\n');
+                        iAmp = (8:8:101)';
+                        for m = 1:(length(iAmp)-1)
+                            fprintf(fid,'%2.2f, ',obj.MuscleForces.(mName)(iAmp(m):(iAmp(m)+7)));
+                            fprintf(fid,'\n');                            
+                        end
+                        lastLine = sprintf('%2.2f, ',obj.MuscleForces.(mName)(iAmp(end):101));
+                        lastLine = [lastLine(1:end-2),'\n'];
+                        fprintf(fid,lastLine);
+                    end
+                end
+                % Ground reaction force and moment amplitudes
+                grfNames = {'KNEEJC_F','KNEEJC_M'};
+                dofs = {'X','Y','Z'};
+                for k = 1:2
+                    for m = 1:3
+                        fprintf(fid,['*Amplitude, name=',grfNames{k},dofs{m},', time=TOTAL TIME, definition=USER, properties=304\n',...
+                                     '<time_step>, ']);
+                        % Forces, in Newtons
+                        if k == 1
+                            concatGRF = reshape(double(obj.KneeKin(:,(3*(k+1)-2):3*(k+1)))',1,[]);
+                        % Moments, in Newton-millimeters
+                        elseif k == 2
+                            concatGRF = 1000*reshape(double(obj.KneeKin(:,(3*(k+1)-2):3*(k+1)))',1,[]);    
+                        end
+                        fprintf(fid,'%2.2f, ',concatGRF(1:7));
+                        fprintf(fid,'\n');
+                        iAmp = (8:8:303)';
+                        for n = 1:(length(iAmp)-1)
+                            fprintf(fid,'%2.2f, ',concatGRF(iAmp(n):(iAmp(n)+7)));
+                            fprintf(fid,'\n');                            
+                        end
+                        lastLine = sprintf('%2.2f, ',concatGRF(iAmp(end):303));
+                        lastLine = [lastLine(1:end-2),'\n'];
+                        fprintf(fid,lastLine);
+                    end
+                end
+                % Final common elements
+                fprintf(fid,['**\n',...
+                             '*Include, input=../../GenericFiles/History.inp\n']);                
+                % Close file
+                fclose(fid);                
+            end
         end
     end
     
