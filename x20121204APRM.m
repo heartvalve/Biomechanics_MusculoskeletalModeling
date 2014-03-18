@@ -4,7 +4,7 @@ classdef x20121204APRM < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-01-15
+    % Last Modified 2014-03-17
 
 
     %% Properties
@@ -29,7 +29,7 @@ classdef x20121204APRM < OpenSim.subject
         U_SD2F_01
         U_SD2F_02
         U_SD2F_03
-        U_SD2F_04
+%         U_SD2F_04
         U_SD2F_05
         A_SD2S_01
         A_SD2S_02
@@ -39,7 +39,7 @@ classdef x20121204APRM < OpenSim.subject
         U_SD2S_01
         U_SD2S_02
         U_SD2S_03
-        U_SD2S_04
+%         U_SD2S_04
         U_SD2S_05
     end
 

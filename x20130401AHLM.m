@@ -4,7 +4,7 @@ classdef x20130401AHLM < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-01-15
+    % Last Modified 2014-03-17
 
 
     %% Properties
@@ -19,7 +19,7 @@ classdef x20130401AHLM < OpenSim.subject
         U_Walk_01
         U_Walk_02
         U_Walk_03
-        U_Walk_04
+%         U_Walk_04
         U_Walk_05
         A_SD2F_01
         A_SD2F_02

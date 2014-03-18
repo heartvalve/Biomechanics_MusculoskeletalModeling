@@ -4,7 +4,7 @@ classdef x20121206CONF < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-01-15
+    % Last Modified 2014-03-17
 
 
     %% Properties
@@ -23,7 +23,7 @@ classdef x20121206CONF < OpenSim.subject
         U_Walk_05
         A_SD2F_01
         A_SD2F_02
-        A_SD2F_03
+%         A_SD2F_03
         A_SD2F_04
         A_SD2F_05
         U_SD2F_01

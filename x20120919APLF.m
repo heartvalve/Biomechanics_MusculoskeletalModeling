@@ -4,7 +4,7 @@ classdef x20120919APLF < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-01-15
+    % Last Modified 2014-03-17
 
 
     %% Properties
@@ -15,19 +15,19 @@ classdef x20120919APLF < OpenSim.subject
         A_Walk_02
         A_Walk_03
         A_Walk_04
-        A_Walk_05
+%         A_Walk_05
         U_Walk_01
         U_Walk_02
         U_Walk_03
         U_Walk_04
         U_Walk_05
-        A_SD2F_01
+%         A_SD2F_01
         A_SD2F_02
         A_SD2F_03
-        A_SD2F_04
+%         A_SD2F_04
         A_SD2F_05
         U_SD2F_01
-        U_SD2F_02
+%         U_SD2F_02
         U_SD2F_03
         U_SD2F_04
         U_SD2F_05
