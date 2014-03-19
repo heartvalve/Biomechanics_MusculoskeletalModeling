@@ -4,7 +4,7 @@ classdef controlGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-20
+    % Last Modified 2014-03-18
     
     
     %% Properties
@@ -41,40 +41,54 @@ classdef controlGroup < OpenSim.group
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'Subjects','Forces'};
-            allCycles = get(obj.Cycles,'ObsNames');
-            uniqueCycles = unique(cellfun(@(x) x(3:end),allCycles,'UniformOutput',false));  
+            varnames = {'Simulations','Weights','Forces','Subjects','AvgForces'};
+            uniqueCycles = {'Walk','SD2F','SD2S'};  
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             %       Cycle Aggregates            
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             cdata = cell(length(uniqueCycles),length(varnames));
             cdataset = dataset({cdata,varnames{:}});
             for i = 1:length(uniqueCycles)
-                % Subjects
-                cdataset{i,'Subjects'} = [obj.Cycles{['A_',uniqueCycles{i}],'Subjects'}; obj.Cycles{['U_',uniqueCycles{i}],'Subjects'}];                
+                % Simulations
+                cdataset{i,'Simulations'} = [obj.Cycles{['A_',uniqueCycles{i}],'Simulations'}; obj.Cycles{['U_',uniqueCycles{i}],'Simulations'}];                
                 % Muscle Forces
                 innerVarNames = obj.Cycles{['A_',uniqueCycles{i}],'Forces'}.Properties.VarNames;
                 fdata = cell(length(obj.Cycles{['A_',uniqueCycles{i}],'Forces'}),length(innerVarNames));
                 cdataset{i,'Forces'} = dataset({fdata,innerVarNames{:}});
                 for k = 1:length(innerVarNames)
                     cdataset{i,'Forces'}.(innerVarNames{k}) = [obj.Cycles{['A_',uniqueCycles{i}],'Forces'}.(innerVarNames{k}) obj.Cycles{['U_',uniqueCycles{i}],'Forces'}.(innerVarNames{k})];
-                end                           
+                end  
+                % Weights
+                cdataset{i,'Weights'} = [obj.Cycles{['A_',uniqueCycles{i}],'Weights'}; obj.Cycles{['U_',uniqueCycles{i}],'Weights'}];
+                % Subject average forces
+                innerVarNames = obj.Cycles{['A_',uniqueCycles{i}],'AvgForces'}.Properties.VarNames;
+                fdata = cell(length(obj.Cycles{['A_',uniqueCycles{i}],'AvgForces'}),length(innerVarNames));
+                cdataset{i,'AvgForces'} = dataset({fdata,innerVarNames{:}});
+                for k = 1:length(innerVarNames)
+                    cdataset{i,'AvgForces'}.(innerVarNames{k}) = [obj.Cycles{['A_',uniqueCycles{i}],'AvgForces'}.(innerVarNames{k}) obj.Cycles{['U_',uniqueCycles{i}],'AvgForces'}.(innerVarNames{k})];
+                end 
+                % Subjects
+                cdataset{i,'Subjects'} = [obj.Cycles{['A_',uniqueCycles{i}],'Subjects'}; obj.Cycles{['U_',uniqueCycles{i}],'Subjects'}];
             end
             cdataset = set(cdataset,'ObsNames',uniqueCycles);
             % Assign Property
             obj.AvgCycles = cdataset;
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             %       Averages & Standard Deviations
-            % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~            
-            adata = cell(length(uniqueCycles),length(varnames)-1);
-            sdata = cell(length(uniqueCycles),length(varnames)-1);            
-            adataset = dataset({adata,varnames{2:end}});
-            sdataset = dataset({sdata,varnames{2:end}});
+            % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+            varnames = {'Forces','AvgForces'};
+            adata = cell(length(uniqueCycles),length(varnames));
+            sdata = cell(length(uniqueCycles),length(varnames));            
+            adataset = dataset({adata,varnames{:}});
+            sdataset = dataset({sdata,varnames{:}});
             % Calculate averages
             for i = 1:length(uniqueCycles)
                 % Muscle Forces
-                adataset{i,'Forces'} = OpenSim.getDatasetMean(uniqueCycles{i},cdataset{i,'Forces'},2);
-                sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(uniqueCycles{i},cdataset{i,'Forces'});
+                adataset{i,'Forces'} = OpenSim.getDatasetMean(uniqueCycles{i},cdataset{i,'Forces'},2,cdataset{i,'Weights'});
+                sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(uniqueCycles{i},cdataset{i,'Forces'},cdataset{i,'Weights'});
+                % Subject average forces
+                adataset{i,'AvgForces'} = OpenSim.getDatasetMean(uniqueCycles{i},cdataset{i,'AvgForces'},2);
+                sdataset{i,'AvgForces'} = OpenSim.getDatasetStdDev(uniqueCycles{i},cdataset{i,'AvgForces'});
             end
             adataset = set(adataset,'ObsNames',uniqueCycles);
             sdataset = set(sdataset,'ObsNames',uniqueCycles);

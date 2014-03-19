@@ -4,7 +4,7 @@ classdef summary < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-26
+    % Last Modified 2014-03-18
     
     
     %% Properties
@@ -13,8 +13,7 @@ classdef summary < handle
     properties (SetAccess = private)
         Control             % Control group        
         HamstringACL        % Hamstring tendon ACL-R
-        PatellaACL          % Patella tendon ACL-R        
-        CombinedSummary     % Combined group (HT+PT) summaries
+        PatellaACL          % Patella tendon ACL-R
     end
     properties (SetAccess = public)
         Statistics          % Group comparison statistics
@@ -39,72 +38,12 @@ classdef summary < handle
             obj.Control = OpenSim.controlGroup();
             obj.HamstringACL = OpenSim.hamstringGroup();
             obj.PatellaACL = OpenSim.patellaGroup();
-            % -------------------------------------------------------------
-            %   Combined Summary - Averages & Standard Deviations
-            % -------------------------------------------------------------
-            % Set up struct
-            combinedSummary = struct();
-            varnames = {'Forces'};                        
-            obsnames = {'Walk','SD2F','SD2S'};
-            % A - ACLR (PT+HT); U - Uninvolved (PT+HT); C - Control (L+R)
-            adataA = cell(length(obsnames),length(varnames));
-            sdataA = cell(length(obsnames),length(varnames));
-            adataU = cell(length(obsnames),length(varnames));
-            sdataU = cell(length(obsnames),length(varnames));
-            adataC = cell(length(obsnames),length(varnames));
-            sdataC = cell(length(obsnames),length(varnames));
-            adatasetA = dataset({adataA,varnames{:}});
-            sdatasetA = dataset({sdataA,varnames{:}});
-            adatasetU = dataset({adataU,varnames{:}});
-            sdatasetU = dataset({sdataU,varnames{:}});
-            adatasetC = dataset({adataC,varnames{:}});
-            sdatasetC = dataset({sdataC,varnames{:}});
-            % Calculate averages
-            for i = 1:length(obsnames)
-                % Forces
-                tempA = XcombineDatasets(obj.HamstringACL.Cycles{['A_',obsnames{i}],'Forces'}, obj.PatellaACL.Cycles{['A_',obsnames{i}],'Forces'});
-                tempU = XcombineDatasets(obj.HamstringACL.Cycles{['U_',obsnames{i}],'Forces'}, obj.PatellaACL.Cycles{['U_',obsnames{i}],'Forces'});
-                tempC = XcombineDatasets(obj.Control.Cycles{['A_',obsnames{i}],'Forces'}, obj.Control.Cycles{['U_',obsnames{i}],'Forces'});
-                adatasetA{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},tempA,2);
-                adatasetU{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},tempU,2);
-                adatasetC{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},tempC,2);
-                sdatasetA{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},tempA);
-                sdatasetU{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},tempU);
-                sdatasetC{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},tempC);              
-            end
-            adatasetA = set(adatasetA,'ObsNames',obsnames);
-            sdatasetA = set(sdatasetA,'ObsNames',obsnames);
-            adatasetU = set(adatasetU,'ObsNames',obsnames);
-            sdatasetU = set(sdatasetU,'ObsNames',obsnames);
-            adatasetC = set(adatasetC,'ObsNames',obsnames);
-            sdatasetC = set(sdatasetC,'ObsNames',obsnames);
-            % Add to struct
-            combinedSummary.ACLR.Mean = adatasetA;
-            combinedSummary.ACLR.StdDev = sdatasetA;
-            combinedSummary.Uninvolved.Mean = adatasetU;
-            combinedSummary.Uninvolved.StdDev = sdatasetU;
-            combinedSummary.Control.Mean = adatasetC;
-            combinedSummary.Control.StdDev = sdatasetC;
-            % Assign Property
-            obj.CombinedSummary = combinedSummary;
             % --------------------
             obj.Statistics = OpenSim.getSummaryStatistics(obj);
             % --------------------
             % Elapsed time
             eTime = toc;
             disp(['Elapsed summary processing time is ',num2str(floor(eTime/60)),' minutes and ',num2str(round(mod(eTime,60))),' seconds.']);
-            % #############################################################
-            function ds = XcombineDatasets(ds1,ds2)
-                % XCOMBINEDATASETS
-                %
-
-                dsdata = cell(size(ds1));    
-                vNames = ds1.Properties.VarNames;
-                ds = dataset({dsdata,vNames{:}});
-                for v = 1:length(vNames)
-                    ds.(vNames{v}) = [ds1.(vNames{v}) ds2.(vNames{v})];
-                end
-            end
         end
         % *****************************************************************
         %       Plotting Methods
@@ -428,8 +367,29 @@ classdef summary < handle
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
-            if ~isempty(p.UsingDefaults)                
-                set(fig_handle,'Name',['Forces (',p.Results.Muscle,')'],'Visible','on');
+            if ~isempty(p.UsingDefaults)
+                if strcmp(p.Results.Muscle,'vasmed')
+                    mName = 'Vastus Medialis';
+                elseif strcmp(p.Results.Muscle,'vaslat')
+                    mName = 'Vastus Lateralis';
+                elseif strcmp(p.Results.Muscle,'vasint')
+                    mName = 'Vastus Intermedius';
+                elseif strcmp(p.Results.Muscle,'recfem')
+                    mName = 'Rectus Femoris';
+                elseif strcmp(p.Results.Muscle,'semimem')
+                    mName = 'Semimembranosus';
+                elseif strcmp(p.Results.Muscle,'semiten')
+                    mName = 'Semitendinosus';
+                elseif strcmp(p.Results.Muscle,'bflh')
+                    mName = 'Biceps Fem LH';
+                elseif strcmp(p.Results.Muscle,'bfsh')
+                    mName = 'Biceps Fem SH';
+                elseif strcmp(p.Results.Muscle,'gasmed')
+                    mName = 'Medial Gastroc';
+                elseif strcmp(p.Results.Muscle,'gaslat')
+                    mName = 'Lateral Gastroc';
+                end                                
+                set(fig_handle,'Name',['Muscle Forces ',mName],'Visible','on');
                 axes_handles = zeros(1,2*3);
                 for k = 1:2*3
                     axes_handles(k) = subplot(2,3,k);
@@ -469,19 +429,21 @@ classdef summary < handle
                 %
 
                 % Colors
-                Color1 = [1 0 0.6];
-                Color2 = [0 0.5 1];
+                ColorHA = [237 17 100]/255;
+                ColorHU = [47 180 74]/255;
+                ColorPA = [228 70 37]/255;
+                ColorPU = [34 189 189]/255;
                 ColorC = [0.15 0.15 0.15];
                 % X vector
                 x = (0:100)';
                 % Plot
                 if strcmp(Type,'Hamstring')
-                    plot(x,obj.HamstringACL.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',Color2,'LineWidth',3,'LineStyle',':'); hold on;
-                    plot(x,obj.HamstringACL.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',Color1,'LineWidth',3,'LineStyle','--');
+                    plot(x,obj.HamstringACL.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorHU,'LineWidth',3,'LineStyle',':'); hold on;
+                    plot(x,obj.HamstringACL.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorHA,'LineWidth',3,'LineStyle','--');
                     plot(x,obj.Control.AvgSummary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorC,'LineWidth',3);
                 elseif strcmp(Type,'Patella')
-                    plot(x,obj.PatellaACL.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',Color2,'LineWidth',3,'LineStyle',':'); hold on;
-                    plot(x,obj.PatellaACL.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',Color1,'LineWidth',3,'LineStyle','--');
+                    plot(x,obj.PatellaACL.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorPU,'LineWidth',3,'LineStyle',':'); hold on;
+                    plot(x,obj.PatellaACL.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorPA,'LineWidth',3,'LineStyle','--');
                     plot(x,obj.Control.AvgSummary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorC,'LineWidth',3);                
                 end
                 % Reverse children order (so mean is on top and shaded region is in back)
@@ -541,37 +503,7 @@ classdef summary < handle
                     end
                 end
             end            
-        end
-        % *****************************************************************
-        %       Export Muscle Forces
-        % *****************************************************************
-        function exportMuscleForces(obj)
-            % EXPORTMUSCLEFORCES
-            %
-
-            % Parse inputs
-            p = inputParser;
-            checkObj = @(x) isa(x,'OpenSim.summary');
-            p.addRequired('obj',checkObj);
-            p.parse(obj);
-            % Invoke the method for all of the simulations
-            groups = properties(obj);
-            checkGroups = @(x) isa(obj.(x{1}),'OpenSim.group');
-            groups(~arrayfun(checkGroups,groups)) = [];
-            for i = 1:length(groups)
-                subjects = properties(obj.(groups{i}));
-                checkSubjects = @(x) isa(obj.(groups{i}).(x{1}),'OpenSim.subject');
-                subjects(~arrayfun(checkSubjects,subjects)) = [];
-                for j = 1:length(subjects)
-                    simulations = properties(obj.(groups{i}).(subjects{j}));
-                    checkSimulations = @(x) isa(obj.(groups{i}).(subjects{j}).(x{1}),'OpenSim.simulation');
-                    simulations(~arrayfun(checkSimulations,simulations)) = [];
-                    for k = 1:length(simulations)
-                        obj.(groups{i}).(subjects{j}).(simulations{k}).exportMuscleForces();                    
-                    end                    
-                end
-            end            
-        end        
+        end      
         % *****************************************************************
         %       Export for Abaqus
         % *****************************************************************
@@ -763,15 +695,19 @@ function XplotStatistics2(obj,yPos,Type,varType,Cycle,varargin)
     %
 
     % Colors
-    Color1 = [1 0 0.6];
-    Color2 = [0 0.5 1];
+%     Color1 = [1 0 0.6];
+%     Color2 = [0 0.5 1];
     Color3 = [0.4 0.2 0.6];
     % Plot Type    
     if strcmp(Type,'Patella')
+        Color1 = [228 70 37]/255;
+        Color2 = [34 189 189]/255;
         stats = [obj.Statistics.CtoP{['A_',Cycle],varType}.(varargin{1}), ...
                  obj.Statistics.CtoP{['U_',Cycle],varType}.(varargin{1}), ...
                  obj.Statistics.AtoU_P{Cycle,varType}.(varargin{1})];
-    elseif strcmp(Type,'Hamstring')        
+    elseif strcmp(Type,'Hamstring') 
+        Color1 = [237 17 100]/255;
+        Color2 = [47 180 74]/255;
         stats = [obj.Statistics.CtoH{['A_',Cycle],varType}.(varargin{1}), ...
                  obj.Statistics.CtoH{['U_',Cycle],varType}.(varargin{1}), ...
                  obj.Statistics.AtoU_H{Cycle,varType}.(varargin{1})];       

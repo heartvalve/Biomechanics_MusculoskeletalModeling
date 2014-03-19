@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-20
+    % Last Modified 2014-03-18
     
     
     %% Properties
@@ -60,29 +60,52 @@ classdef group < handle
                     if ~isfield(cstruct,cycleNames{k})
                         cstruct.(cycleNames{k}) = struct();
                         % Muscle forces
-                        cstruct.(cycleNames{k}).Forces = obj.(subjects{j}).Summary.Mean.Forces{k};
-                        % Subject / type name
+                        cstruct.(cycleNames{k}).Forces = obj.(subjects{j}).Cycles.Forces{k};
+                        % Subject average forces
+                        cstruct.(cycleNames{k}).AvgForces = obj.(subjects{j}).Summary.Mean.Forces{k};
+                        % Simulation / type name
+                        cstruct.(cycleNames{k}).Simulations = arrayfun(@(x) char(strcat(obj.(subjects{j}).SubID,'_',x)), ...
+                                                              obj.(subjects{j}).Cycles.Simulations{k},'UniformOutput',false);
+                        % Weights (based on number of simulations)
+                        cstruct.(cycleNames{k}).Weights = repmat(5/length(obj.(subjects{j}).Cycles.Simulations{k}),length(obj.(subjects{j}).Cycles.Simulations{k}),1);
+                        % Subjects
                         cstruct.(cycleNames{k}).Subjects = subjects(j);
                     % If field exists, append new to existing
                     else
                         % Muscle forces
                         oldM = cstruct.(cycleNames{k}).Forces;
-                        newM = obj.(subjects{j}).Summary.Mean.Forces{k};
+                        newM = obj.(subjects{j}).Cycles.Forces{k};
                         mNames = newM.Properties.VarNames;
                         for m = 1:length(mNames)
                             newM.(mNames{m}) = [oldM.(mNames{m}) newM.(mNames{m})];
                         end
                         cstruct.(cycleNames{k}).Forces = newM;
-                        % Subject / type names
+                        % Subject average forces
+                        oldM = cstruct.(cycleNames{k}).AvgForces;
+                        newM = obj.(subjects{j}).Summary.Mean.Forces{k};
+                        mNames = newM.Properties.VarNames;
+                        for m = 1:length(mNames)
+                            newM.(mNames{m}) = [oldM.(mNames{m}) newM.(mNames{m})];
+                        end
+                        cstruct.(cycleNames{k}).AvgForces = newM;
+                        % Simulation / type names
+                        oldNames = cstruct.(cycleNames{k}).Simulations;
+                        newNames = arrayfun(@(x) char(strcat(obj.(subjects{j}).SubID,'_',x)), ...
+                                   obj.(subjects{j}).Cycles.Simulations{k},'UniformOutput',false);
+                        cstruct.(cycleNames{k}).Simulations = [oldNames; newNames];
+                        % Weights
+                        oldWeights = cstruct.(cycleNames{k}).Weights;
+                        newWeights = repmat(5/length(obj.(subjects{j}).Cycles.Simulations{k}),length(obj.(subjects{j}).Cycles.Simulations{k}),1);
+                        cstruct.(cycleNames{k}).Weights = [oldWeights; newWeights];
+                        % Subjects
                         oldNames = cstruct.(cycleNames{k}).Subjects;
                         newName = subjects(j);
                         cstruct.(cycleNames{k}).Subjects = [oldNames; newName];
                     end
-
                 end
             end
             % Convert structure to dataset
-            varnames = {'Subjects','Forces'};
+            varnames = {'Simulations','Weights','Forces','Subjects','AvgForces'};
             obsnames = fieldnames(cstruct);
             cdata = cell(length(obsnames),length(varnames));
             cdataset = dataset({cdata,varnames{:}});
@@ -99,7 +122,7 @@ classdef group < handle
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'Forces'};
+            varnames = {'Forces','AvgForces'};
             obsnames = get(cdataset,'ObsNames');
             % Averages and standard deviations
             adata = cell(length(obsnames),length(varnames));
@@ -108,8 +131,10 @@ classdef group < handle
             sdataset = dataset({sdata,varnames{:}});
             % Calculate
             for i = 1:length(obsnames)
-                adataset{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Forces'},2);
-                sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Forces'});
+                adataset{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Forces'},2,cdataset{i,'Weights'});
+                sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Forces'},cdataset{i,'Weights'});
+                adataset{i,'AvgForces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'AvgForces'},2);
+                sdataset{i,'AvgForces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'AvgForces'});
             end
             adataset = set(adataset,'ObsNames',obsnames);
             sdataset = set(sdataset,'ObsNames',obsnames);
@@ -120,14 +145,14 @@ classdef group < handle
             obj.Summary = sumStruct;
             % -------------------------------------------------------------
             %       Statistics
-            % -------------------------------------------------------------
-            allCycles = get(obj.Cycles,'ObsNames');
-            cycleTypes =  unique(cellfun(@(x) x(3:end),allCycles,'UniformOutput',false));            
+            % -------------------------------------------------------------          
+            cycleTypes = {'Walk','SD2F','SD2S'};
+            varnames = {'Forces'};
             hdata = cell(length(cycleTypes),length(varnames));
             hdataset = dataset({hdata,varnames{:}});
             for i = 1:length(cycleTypes)
-                % Forces
-                hdataset{i,'Forces'} = XrunPairedTTest(cdataset{['A_',cycleTypes{i}],'Forces'},cdataset{['U_',cycleTypes{i}],'Forces'},'Forces');                               
+                % Subject Average Forces
+                hdataset{i,'Forces'} = XrunPairedTTest(cdataset{['A_',cycleTypes{i}],'AvgForces'},cdataset{['U_',cycleTypes{i}],'AvgForces'},'Forces');                               
             end
             % Add to struct
             hdataset = set(hdataset,'ObsNames',cycleTypes);
@@ -294,12 +319,12 @@ classdef group < handle
                 set(h,'DisplayName','Mean');
                 % Individual subjects
                 % Colors
-                colors = colormap(hsv(length(obj.Cycles{Cycle,'Subjects'})));
+                colors = colormap(hsv(length(obj.Cycles{Cycle,'Simulations'})));
                 % Individual Subjects
-                for i = 1:length(obj.Cycles{Cycle,'Subjects'})
+                for i = 1:length(obj.Cycles{Cycle,'Simulations'})
                     h = plot(x,obj.Cycles{Cycle,'Forces'}.(Muscle)(:,i),'Color',colors(i,:),'LineWidth',1);
-                    set(h,'DisplayName',obj.Cycles{Cycle,'Subjects'}{i});
-                end                
+                    set(h,'DisplayName',regexprep(obj.Cycles{Cycle,'Simulations'}{i},'_','-'));
+                end
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits

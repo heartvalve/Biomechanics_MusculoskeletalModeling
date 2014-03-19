@@ -307,6 +307,8 @@ classdef subject < handle
                 minusSDU = obj.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle)-obj.Summary.StdDev{['U_',Cycle],'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDU' fliplr(minusSDU')];
+                xx(isnan(yy)) = []; 
+                yy(isnan(yy)) = [];
                 hFill = fill(xx,yy,ColorU);
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);
@@ -314,6 +316,8 @@ classdef subject < handle
                 minusSDA = obj.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle)-obj.Summary.StdDev{['A_',Cycle],'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDA' fliplr(minusSDA')];
+                xx(isnan(yy)) = []; 
+                yy(isnan(yy)) = [];
                 hFill = fill(xx,yy,ColorA);
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);

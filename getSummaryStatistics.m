@@ -4,7 +4,7 @@ function stats = getSummaryStatistics(obj,alpha)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-26
+    % Last Modified 2014-03-18
 
     
     %% Main
@@ -29,10 +29,10 @@ function stats = getSummaryStatistics(obj,alpha)
     % Loop
     for i = 1:length(uniqueCycles)
         % Muscle Forces
-        [CtoH_A,CtoH_U] = XrunIndANOVA(obj,alpha,uniqueCycles{i},'Hamstring','Forces');
+        [CtoH_A,CtoH_U] = XrunIndANOVA(obj,alpha,uniqueCycles{i},'Hamstring','AvgForces');
         CtoHdataset{['A_',uniqueCycles{i}],'Forces'} = CtoH_A;
         CtoHdataset{['U_',uniqueCycles{i}],'Forces'} = CtoH_U;
-        [CtoP_A,CtoP_U] = XrunIndANOVA(obj,alpha,uniqueCycles{i},'Patella','Forces');
+        [CtoP_A,CtoP_U] = XrunIndANOVA(obj,alpha,uniqueCycles{i},'Patella','AvgForces');
         CtoPdataset{['A_',uniqueCycles{i}],'Forces'} = CtoP_A;
         CtoPdataset{['U_',uniqueCycles{i}],'Forces'} = CtoP_U;     
     end  
@@ -41,33 +41,33 @@ function stats = getSummaryStatistics(obj,alpha)
     stats.CtoH = CtoHdataset;
     stats.CtoP = CtoPdataset;
     % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    % Cycles irrespective of leg
-    uniqueCycles =  unique(cellfun(@(x) x(3:end),allCycles,'UniformOutput',false));    
-    % Control (combined) vs. ACLR (HT & PT combined)
-    CtoAdata = cell(length(uniqueCycles),length(varnames));
-    CtoAdataset = dataset({CtoAdata,varnames{:}});        
-    % Control (combined) vs. Uninvolved (HT & PT combined)
-    CtoUdata = cell(length(uniqueCycles),length(varnames));
-    CtoUdataset = dataset({CtoUdata,varnames{:}});    
-    % ACLR (HT & PT combined) vs. Uninvovled (HT & PT combined)
-    AtoUdata = cell(length(uniqueCycles),length(varnames));
-    AtoUdataset = dataset({AtoUdata,varnames{:}});
-    % Loop
-    for i = 1:length(uniqueCycles)
-        % Muscle Forces
-        [CtoAtemp, CtoUtemp, AtoUtemp] = XrunCombinedANOVA(obj,alpha,uniqueCycles{i},'Forces');
-        CtoAdataset{i,'Forces'} = CtoAtemp;
-        CtoUdataset{i,'Forces'} = CtoUtemp;
-        AtoUdataset{i,'Forces'} = AtoUtemp;        
-    end
-    % Set observation names 
-    CtoAdataset = set(CtoAdataset,'ObsNames',uniqueCycles);
-    CtoUdataset = set(CtoUdataset,'ObsNames',uniqueCycles);
-    AtoUdataset = set(AtoUdataset,'ObsNames',uniqueCycles);
-    % Add to struct        
-    stats.CtoA = CtoAdataset;
-    stats.CtoU = CtoUdataset;
-    stats.AtoU = AtoUdataset;
+% %     % Cycles irrespective of leg
+% %     uniqueCycles =  unique(cellfun(@(x) x(3:end),allCycles,'UniformOutput',false));    
+% %     % Control (combined) vs. ACLR (HT & PT combined)
+% %     CtoAdata = cell(length(uniqueCycles),length(varnames));
+% %     CtoAdataset = dataset({CtoAdata,varnames{:}});        
+% %     % Control (combined) vs. Uninvolved (HT & PT combined)
+% %     CtoUdata = cell(length(uniqueCycles),length(varnames));
+% %     CtoUdataset = dataset({CtoUdata,varnames{:}});    
+% %     % ACLR (HT & PT combined) vs. Uninvovled (HT & PT combined)
+% %     AtoUdata = cell(length(uniqueCycles),length(varnames));
+% %     AtoUdataset = dataset({AtoUdata,varnames{:}});
+% %     % Loop
+% %     for i = 1:length(uniqueCycles)
+% %         % Muscle Forces
+% %         [CtoAtemp, CtoUtemp, AtoUtemp] = XrunCombinedANOVA(obj,alpha,uniqueCycles{i},'Forces');
+% %         CtoAdataset{i,'Forces'} = CtoAtemp;
+% %         CtoUdataset{i,'Forces'} = CtoUtemp;
+% %         AtoUdataset{i,'Forces'} = AtoUtemp;        
+% %     end
+% %     % Set observation names 
+% %     CtoAdataset = set(CtoAdataset,'ObsNames',uniqueCycles);
+% %     CtoUdataset = set(CtoUdataset,'ObsNames',uniqueCycles);
+% %     AtoUdataset = set(AtoUdataset,'ObsNames',uniqueCycles);
+% %     % Add to struct        
+% %     stats.CtoA = CtoAdataset;
+% %     stats.CtoU = CtoUdataset;
+% %     stats.AtoU = AtoUdataset;
     % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     % Copy from group data
     stats.AtoU_H = obj.HamstringACL.Statistics;
