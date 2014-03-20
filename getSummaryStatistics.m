@@ -121,12 +121,12 @@ function [CtoG_A,CtoG_U] = XrunIndANOVA(obj,alpha,cycle,graft,varType)
         end
     end    
     % Eliminate areas where forces are small
-    if strcmp(varType,'Forces')
+    if strcmp(varType,'Forces') || strcmp(varType,'AvgForces')
         for j = 1:length(varNames)
-            CtoG_Adata((((nanmean(control.(varNames{j}),2) < 5) & (nanmean(graft_A.(varNames{j}),2) < 5)) | ...
-                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_A.(varNames{j}),2)) < 2)),j) = 0;
-            CtoG_Udata((((nanmean(control.(varNames{j}),2) < 5) & (nanmean(graft_U.(varNames{j}),2) < 5)) | ...
-                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_U.(varNames{j}),2)) < 2)),j) = 0;            
+            CtoG_Adata((((nanmean(control.(varNames{j}),2) < 0.025) & (nanmean(graft_A.(varNames{j}),2) < 0.025)) | ...
+                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_A.(varNames{j}),2)) < 0.01)),j) = 0;
+            CtoG_Udata((((nanmean(control.(varNames{j}),2) < 0.025) & (nanmean(graft_U.(varNames{j}),2) < 0.025)) | ...
+                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_U.(varNames{j}),2)) < 0.01)),j) = 0;            
         end
     end
     % Datasets

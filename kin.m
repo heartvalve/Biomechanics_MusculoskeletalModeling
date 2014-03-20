@@ -15,7 +15,7 @@ classdef kin < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-02-20
+    % Last Modified 2014-03-19
     
     
     %% Properties
@@ -24,6 +24,9 @@ classdef kin < handle
     properties (SetAccess = private)
         FrameTime
         Data
+    end
+    properties (SetAccess = public)
+        Norm            % Normalized to % of cycle (added in 'simulation' class)
     end
     
     

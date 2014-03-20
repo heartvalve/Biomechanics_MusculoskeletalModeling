@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-17
+    % Last Modified 2014-03-19
     
     
     %% Properties
@@ -13,11 +13,8 @@ classdef simulation < handle
     properties (SetAccess = private)        
         SubID               % Subject ID
         SimName             % Simulation name
-        Model               % Generic model
-        Muscles             % Muscle names
-        Leg                 % Cycle leg
         EMG                 % EMG data from experiment (for comparison)
-        KIN                 % Knee kinetics (from Cortex, for comparison)
+        KIN                 % Knee kinetics from Cortex (for comparison)
         TRC                 % Marker data - input to simulation
         GRF                 % Ground Reaction Force data - input to simulation
         IK                  % Inverse Kinematics solution
@@ -25,12 +22,14 @@ classdef simulation < handle
         RRA                 % Residual Reduction Algorithm solution
         CMC                 % Computed Muscle Control solution
         MuscleForces        % Muscle forces (summarized from CMC)
-        Residuals           % Residuals
-        MuscleEMG           % Muscle EMG (summarized from EMG)
-        KneeKin             % Knee kinematics and kinetics (summarized from KIN)
+        Residuals           % Residuals (summarized from RRA & CMC)
     end
     properties (Hidden = true, SetAccess = private)
         SubDir              % Directory where files are stored
+        Model               % Generic model
+        Muscles             % Muscle names
+        Leg                 % Cycle leg
+        ScaleFactor         % Sum of masses for subject / sum of masses for generic model
     end
     properties (Hidden = true)
         NormMuscleForces    % Normalized muscle forces
@@ -98,8 +97,21 @@ classdef simulation < handle
             % RRA
             obj.RRA = OpenSim.rra(subID,simName);
             % CMC
-            obj.CMC = OpenSim.cmc(subID,simName);
+            obj.CMC = OpenSim.cmc(subID,simName);            
             % -------------------------------------------------------------
+            % Total mass of model used (subject specific)
+            modelFile = [obj.SubDir,filesep,obj.SubID,'_',obj.SimName,'.osim'];
+            domNode = xmlread(modelFile);
+            massNodeList = domNode.getElementsByTagName('mass');
+            subMass = 0;
+            for i = 1:massNodeList.getLength                
+                subMass = subMass + str2double(char(massNodeList.item(i-1).getFirstChild.getData));               
+            end
+            % Total mass of generic model
+            genMass = 75.337;
+            obj.ScaleFactor = subMass/genMass;
+            % --------------------------
+            % Muscle forces
             % Calculate Nyquist frequency
             nyquist = 0.5*1000;                
             % Design a 4th order 15 Hz cutoff low pass Butterworth filter
@@ -148,7 +160,7 @@ classdef simulation < handle
                 end
             end
             mEMG = dataset({iEMG,emgLegMuscles{:}});
-            obj.MuscleEMG = mEMG;
+            obj.EMG.Norm = mEMG;
             % --------------------------
             % Interpolate knee kinetics over normalized time window
             kinProps = obj.KIN.Data.Properties.VarNames;
@@ -166,7 +178,63 @@ classdef simulation < handle
                 end
             end
             kKIN = dataset({iKin,kinProps{:}});
-            obj.KneeKin = kKIN;
+            obj.KIN.Norm = kKIN;
+            % --------------------------
+            leg = lower(obj.Leg);
+            kinProps = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
+                        'pelvis_tilt','pelvis_list','pelvis_rotation',...
+                        ['hip_flexion_',leg],['hip_adduction_',leg],['hip_rotation_',leg],...
+                        ['knee_angle_',leg],['ankle_angle_',leg]};
+            kinNames = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
+                        'pelvis_tilt','pelvis_list','pelvis_rotation',...
+                        'hip_flexion','hip_adduction','hip_rotation',...
+                        'knee_flexion','ankle_plantar'};
+            % Design IK filter
+            nyquist = 0.5*round(1/(obj.IK.Time(2)-obj.IK.Time(1)));                
+            % Design a 4th order 6 Hz cutoff low pass Butterworth filter
+            order = 4;
+            cutoff = 6;
+            [b, a] = butter(order, cutoff/nyquist);
+            % Filter and interpolate IK kinematics over normalized time window
+            iIK = nan(101,length(kinProps));
+            for i = 1:length(kinProps)                
+                filtIK = filtfilt(b, a, obj.IK.Data.(kinProps{i}));
+                iIK(:,i) = interp1(obj.IK.Time,filtIK,xi,'spline',NaN);            
+            end
+            dsIK = dataset({iIK,kinNames{:}});
+            obj.IK.Norm = dsIK;
+            % --------------------------
+            % Interpolate RRA & CMC kinematics over normalized time window            
+            iRRA = nan(101,length(kinProps));
+            iCMC = nan(101,length(kinProps));
+            for i = 1:length(kinProps)
+                iRRA(:,i) = interp1(obj.RRA.Kinematics.Coordinate.time,obj.RRA.Kinematics.Coordinate.(kinProps{i}),xi,'spline',NaN);
+                iCMC(:,i) = interp1(obj.CMC.Kinematics.Coordinate.time,obj.CMC.Kinematics.Coordinate.(kinProps{i}),xi,'spline',NaN);                
+            end
+            dsRRA = dataset({iRRA,kinNames{:}});
+            dsCMC = dataset({iCMC,kinNames{:}});
+            obj.RRA.NormKinematics = dsRRA;
+            obj.CMC.NormKinematics = dsCMC;
+            % --------------------------
+            % Interpolate CMC reserves over normalized time window
+            cmcProps = obj.CMC.Actuation.Force.Properties.VarNames;
+            cellMatch = regexp(cmcProps,'_reserve');
+            logMatch = false(size(cellMatch));
+            for k = 1:length(cellMatch)
+                if ~isempty(cellMatch{k})
+                    logMatch(k) = true;
+                else
+                    logMatch(k) = false;
+                end
+            end
+            cmcProps(~logMatch) = [];            
+            resProps = arrayfun(@(x) x{1}(1:end-8), cmcProps, 'UniformOutput', false);
+            iRes = nan(101,length(resProps));
+            for i = 1:length(cmcProps)
+                iRes(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.(cmcProps{i}),xi,'spline',NaN);                
+            end
+            dsRes = dataset({iRes,resProps{:}});
+            obj.CMC.NormReserves = dsRes;
             % --------------------------
             % RRA Residuals (focus on cycle region)
             [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(1)));
@@ -233,28 +301,28 @@ classdef simulation < handle
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XplotResiduals(obj,residual)
+            function XplotResiduals(obj,Residual)
                 % XPLOTRESIDUALS
                 %
                 
-                % Plot                
-                plot(obj.rra.actuation.force.time,obj.rra.actuation.force.(residual),'Color','b','LineWidth',2); hold on;
+                % Plot
+                plot(obj.RRA.Actuation.Force.time,obj.RRA.Actuation.Force.(Residual),'Color','b','LineWidth',2); hold on;
                 % Average
-                plot(obj.grf.cycleTime,[obj.rra.residuals.mean.(residual) obj.rra.residuals.mean.(residual)],...
+                plot(obj.GRF.CycleTime,[obj.Residuals{'Mean_RRA',Residual} obj.Residuals{'Mean_RRA',Residual}],...
                     'Color','r','LineWidth',1,'LineStyle',':');
                 % RMS
-                plot(obj.grf.cycleTime,[obj.rra.residuals.rms.(residual) obj.rra.residuals.rms.(residual)],...
+                plot(obj.GRF.CycleTime,[obj.Residuals{'RMS_RRA',Residual} obj.Residuals{'RMS_RRA',Residual}],...
                     'Color','r','LineWidth',1,'LineStyle','-');
                 % Horizontal line at zero
-                plot(obj.grf.cycleTime,[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
+                plot(obj.GRF.CycleTime,[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
-                xlim(obj.grf.cycleTime);
+                xlim(obj.GRF.CycleTime);
                 % Labels
-                title(residual,'FontWeight','bold');
+                title(Residual,'FontWeight','bold');
                 xlabel({'Time (s)',''});
-                ylabel('Magnitude (N)');
+                ylabel('Magnitude (N or Nm)');
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -364,7 +432,68 @@ classdef simulation < handle
                 xlabel({'% Cycle',''});
                 ylabel('Muscle Force (N)');
             end
-        end       
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotKinematics(obj,varargin)
+            % PLOTKINEMATICS
+            %
+            
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.simulation');
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Shortcut references to input arguments (and updates)
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)                
+                set(fig_handle,'Name',[obj.SubID,'_',obj.SimName,' - Kinematics']);
+                axes_handles = zeros(1,11);
+                for k = 1:11
+                    axes_handles(k) = subplot(4,3,k);
+                end
+            else
+                axes_handles = p.Results.axes_handles;
+            end
+            kinNames = obj.IK.Norm.Properties.VarNames;
+            % Plot
+            figure(fig_handle);
+            for j = 1:length(kinNames)
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                XplotKinematics(obj,kinNames{j});
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function XplotKinematics(obj,Kin)
+                % XPLOTKINEMATICS
+                %
+               
+                % Plot IK
+                plot((0:100)',obj.IK.Norm.(Kin),'k','LineWidth',3); hold on;
+                % Plot RRA
+                plot((0:100)',obj.RRA.NormKinematics.(Kin),'Color',[0.67,0.67,0.67],'LineWidth',3,'LineStyle','--');
+                % Plot CMC
+                plot((0:100)',obj.CMC.NormKinematics.(Kin),'Color',[0.33,0.33,0.33],'LineWidth',3,'LineStyle',':');
+                % Axes properties
+                set(gca,'box','off');
+                % Set axes limits
+                xlim([0 100]);
+                if strcmp(Kin,'lumbar_extension')
+                    ylim([-5 10]);
+                elseif strcmp(Kin,'pelvis_tilt')
+                    ylim([-15 0]);
+                end
+                % Labels
+                spaceInd = regexp(Kin,'_');
+                kinName = [upper(Kin(1)),Kin(2:spaceInd-1),' ',upper(Kin(spaceInd+1)),Kin(spaceInd+2:end)];
+                title(kinName,'FontWeight','bold');
+                xlabel({'% Cycle',''});
+                ylabel('Angle (deg)');            
+            end
+        end
         % *****************************************************************
         %       Export for Abaqus
         % *****************************************************************

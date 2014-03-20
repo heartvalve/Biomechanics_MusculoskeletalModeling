@@ -4,7 +4,7 @@ classdef ik < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-13
+    % Last Modified 2014-03-19
     
     
     %% Properties
@@ -13,6 +13,9 @@ classdef ik < handle
     properties (SetAccess = private)
         Time
         Data
+    end
+    properties (SetAccess = public)
+        Norm    % Normalized to % of cycle (added in 'simulation' class)
     end
     
     

@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-20
+    % Last Modified 2014-03-19
     
     
     %% Properties
@@ -17,10 +17,7 @@ classdef subject < handle
     properties (Hidden = true, SetAccess = protected)
         SubID           % Subject ID
         SubDir          % Directory where files are stored
-        WeightN         % Body weight in Newtons
-        MaxIsometric    % Maximum isometric muscle force
-        MaxWalkingLR    % Maximum muscle force during walking (separately)
-        MaxWalking      % Maximum muscle force during walking (both legs)
+        MaxIsometric    % Maximum isometric muscle forces
     end
     
     
@@ -51,12 +48,7 @@ classdef subject < handle
             % Assign properties
             for i = 1:length(simNames)
                 obj.(simNames{i}) = tempData{i};
-            end
-            persInfo = [obj.SubDir,filesep,obj.SubID,'__PersonalInformation.xml'];
-            domNode = xmlread(persInfo);
-            massNode = domNode.getElementsByTagName('mass');
-            weightKG = str2double(char(massNode.item(0).getFirstChild.getData));
-            obj.WeightN = weightKG*9.81;
+            end            
             % ---------------
             % Isometric muscle forces            
             muscles = obj.(simNames{1}).Muscles;
@@ -68,7 +60,7 @@ classdef subject < handle
             maxForces = dataset({maxForces,muscles{:}});
             % Parse xml
             modelFile = [obj.SubDir,filesep,obj.SubID,'.osim'];
-            domNode = xmlread(modelFile);            
+            domNode = xmlread(modelFile);
             maxIsoNodeList = domNode.getElementsByTagName('max_isometric_force');
             for i = 1:maxIsoNodeList.getLength
                 if any(strcmp(maxIsoNodeList.item(i-1).getParentNode.getAttribute('name'),muscleLegs))
@@ -77,70 +69,21 @@ classdef subject < handle
                 end
             end
             obj.MaxIsometric = maxForces;            
-            % ---------------
-            % Maximum force during walking (separately for each leg)
-            sims = properties(obj);
-            checkSim = @(x) isa(obj.(x{1}),'OpenSim.simulation');
-            sims(~arrayfun(checkSim,sims)) = [];
-            maxA = zeros(5,length(muscles));
-            maxU = zeros(5,length(muscles));
-            a = 1; u = 1;
-            for i = 1:length(sims)
-                if strcmp(sims{i}(1:end-3),'A_Walk')
-                    maxA(a,:) = nanmax(double(obj.(sims{i}).MuscleForces));
-                    a = a+1;                    
-                elseif strcmp(sims{i}(1:end-3),'U_Walk')
-                    maxU(u,:) = nanmax(double(obj.(sims{i}).MuscleForces));
-                    u = u+1;                    
-                end   
-            end
-            maxNames = [strcat(repmat({'r_'},1,length(muscles)),muscles) ...
-                        strcat(repmat({'l_'},1,length(muscles)),muscles)];
-            if strcmp(obj.SubID(9:11),'CON') || strcmp(obj.SubID(11),'R')
-                maxData = [nanmax(maxA) nanmax(maxU)];
-            elseif strcmp(obj.SubID(11),'L')
-                maxData = [nanmax(maxU) nanmax(maxA)];
-            end
-            maxDS = dataset({maxData,maxNames{:}});
-            obj.MaxWalkingLR = maxDS;
-            % ----------------
-            % Maximum force during walking (both legs combined)
-            maxData = nanmax([maxA; maxU]);
-            maxDS = dataset({maxData,muscles{:}});
-            obj.MaxWalking = maxDS;
             % ----------------------
             % Add normalized muscle forces property to individual simulations
-            % Based on body weight
+            % Based on maximum isometric force & scale factor
             for i = 1:length(simNames)
                 for j = 1:length(muscles)
-                    obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.WeightN.*100;
+                    obj.(simNames{i}).NormMuscleForces.(muscles{j}) = ...
+                        obj.(simNames{i}).MuscleForces.(muscles{j})./(obj.MaxIsometric.(muscles{j}).*obj.(simNames{i}).ScaleFactor);
                 end
             end
-%             % Based on maximum isometric force
-%             for i = 1:length(simNames)
-%                 muscles = obj.(simNames{i}).Muscles;
-%                 for j = 1:length(muscles)
-%                     obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxIsometric.(muscles{j}).*100;
-%                 end
-%             end
-%             % Based on maximum during walking (over both legs)
-%             for i = 1:length(simNames)
-%                 muscles = obj.(simNames{i}).Muscles;
-%                 for j = 1:length(muscles)
-%                     obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxWalking.(muscles{j}).*100;
-%                 end                
-%             end
-%             % Based on maximum during walking (each leg separately)
-%             for i = 1:length(simNames)
-%                 muscles = obj.(simNames{i}).Muscles;
-%                 leg = lower(obj.(simNames{i}).Leg);
-%                 for j = 1:length(muscles)
-%                     obj.(simNames{i}).NormMuscleForces.(muscles{j}) = obj.(simNames{i}).MuscleForces.(muscles{j})./obj.MaxWalkingLR.([leg,'_',muscles{j}]).*100;
-%                 end
-%             end
             % -------------------------------------------------------------
             %       Cycles
             % -------------------------------------------------------------
+            sims = properties(obj);
+            checkSim = @(x) isa(obj.(x{1}),'OpenSim.simulation');
+            sims(~arrayfun(checkSim,sims)) = [];
             cstruct = struct();            
             % Loop through all simulations
             for i = 1:length(sims)
@@ -149,8 +92,8 @@ classdef subject < handle
                     % Create field
                     cstruct.(cycleName) = struct();
                     % EMG
-                    cstruct.(cycleName).EMG = obj.(sims{i}).MuscleEMG;
-                    % Muscle Forces (normalized to max)
+                    cstruct.(cycleName).EMG = obj.(sims{i}).EMG.Norm;
+                    % Muscle Forces (normalized)
                     cstruct.(cycleName).Forces = obj.(sims{i}).NormMuscleForces;
                     % Residuals
                     cstruct.(cycleName).Residuals = obj.(sims{i}).Residuals;
@@ -160,7 +103,7 @@ classdef subject < handle
                 else
                     % EMG
                     oldEMG = cstruct.(cycleName).EMG;
-                    newEMG = obj.(sims{i}).MuscleEMG;
+                    newEMG = obj.(sims{i}).EMG.Norm;
                     emgprops = newEMG.Properties.VarNames;
                     for m = 1:length(emgprops)
                         newEMG.(emgprops{m}) = [oldEMG.(emgprops{m}) newEMG.(emgprops{m})];
@@ -181,6 +124,7 @@ classdef subject < handle
                     for m = 1:length(resProps)
                         newResiduals.(resProps{m}) = [oldResiduals.(resProps{m}) newResiduals.(resProps{m})];
                     end
+                    cstruct.(cycleName).Residuals = newResiduals;
                     % Simulation Name
                     oldNames = cstruct.(cycleName).Simulations;
                     cstruct.(cycleName).Simulations = [oldNames; {sims{i}}];
@@ -207,6 +151,7 @@ classdef subject < handle
             sumStruct = struct();
             varnames = {'EMG','Forces','Residuals'};
             obsnames = get(cdataset,'ObsNames');
+            resObsNames = {'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'};
             nrows = size(cdataset,1);
             adata = cell(nrows,length(varnames));
             sdata = cell(nrows,length(varnames));
@@ -221,8 +166,8 @@ classdef subject < handle
                 adataset{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Forces'},2);
                 sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Forces'});
                 % Residuals
-                adataset{i,'Residuals'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Residuals'},2);
-                sdataset{i,'Residuals'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Residuals'});
+                adataset{i,'Residuals'} = set(OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Residuals'},2),'ObsNames',resObsNames);
+                sdataset{i,'Residuals'} = set(OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Residuals'}),'ObsNames',resObsNames);
             end
             adataset = set(adataset,'ObsNames',obsnames);
             sdataset = set(sdataset,'ObsNames',obsnames);

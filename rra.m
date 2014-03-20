@@ -4,7 +4,15 @@ classdef rra < OpenSim.rraSuper
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-01-17
+    % Last Modified 2014-03-19
+    
+    
+    %% Properties
+    % Properties for the rra class
+    
+    properties (SetAccess = public)
+        NormKinematics  % Normalized to % of cycle (added in 'simulation' class)
+    end
     
     
     %% Methods

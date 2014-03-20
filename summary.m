@@ -389,7 +389,7 @@ classdef summary < handle
                 elseif strcmp(p.Results.Muscle,'gaslat')
                     mName = 'Lateral Gastroc';
                 end                                
-                set(fig_handle,'Name',['Muscle Forces ',mName],'Visible','on');
+                set(fig_handle,'Name',['Muscle Forces Avg ',mName],'Visible','on');
                 axes_handles = zeros(1,2*3);
                 for k = 1:2*3
                     axes_handles(k) = subplot(2,3,k);
@@ -438,13 +438,172 @@ classdef summary < handle
                 x = (0:100)';
                 % Plot
                 if strcmp(Type,'Hamstring')
-                    plot(x,obj.HamstringACL.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorHU,'LineWidth',3,'LineStyle',':'); hold on;
-                    plot(x,obj.HamstringACL.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorHA,'LineWidth',3,'LineStyle','--');
-                    plot(x,obj.Control.AvgSummary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorC,'LineWidth',3);
+                    plot(x,obj.HamstringACL.Summary.Mean{['U_',Cycle],'AvgForces'}.(Muscle),'Color',ColorHU,'LineWidth',3,'LineStyle',':'); hold on;
+                    plot(x,obj.HamstringACL.Summary.Mean{['A_',Cycle],'AvgForces'}.(Muscle),'Color',ColorHA,'LineWidth',3,'LineStyle','--');
+                    plot(x,obj.Control.AvgSummary.Mean{Cycle,'AvgForces'}.(Muscle),'Color',ColorC,'LineWidth',3);
                 elseif strcmp(Type,'Patella')
-                    plot(x,obj.PatellaACL.Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorPU,'LineWidth',3,'LineStyle',':'); hold on;
-                    plot(x,obj.PatellaACL.Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorPA,'LineWidth',3,'LineStyle','--');
-                    plot(x,obj.Control.AvgSummary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorC,'LineWidth',3);                
+                    plot(x,obj.PatellaACL.Summary.Mean{['U_',Cycle],'AvgForces'}.(Muscle),'Color',ColorPU,'LineWidth',3,'LineStyle',':'); hold on;
+                    plot(x,obj.PatellaACL.Summary.Mean{['A_',Cycle],'AvgForces'}.(Muscle),'Color',ColorPA,'LineWidth',3,'LineStyle','--');
+                    plot(x,obj.Control.AvgSummary.Mean{Cycle,'AvgForces'}.(Muscle),'Color',ColorC,'LineWidth',3);                
+                end
+                % Reverse children order (so mean is on top and shaded region is in back)
+                set(gca,'Children',flipud(get(gca,'Children')));
+                % Axes properties
+                set(gca,'Box','off');
+                % Set axes limits
+                xlim([0 100]);
+                ydefault = get(gca,'YLim');
+                ylim([0 ydefault(2)]);
+                if strcmp(Muscle,'vasmed')
+                    mLabel = 'Vastus Medialis';
+                    ylim([0 0.35]);
+                elseif strcmp(Muscle,'vaslat')
+                    mLabel = 'Vastus Lateralis';
+                    ylim([0 0.45]);
+                elseif strcmp(Muscle,'vasint')
+                    mLabel = 'Vastus Int';
+                    ylim([0 0.35]);
+                elseif strcmp(Muscle,'recfem')
+                    mLabel = 'Rectus Fem';
+                    ylim([0 0.9]);
+                elseif strcmp(Muscle,'semimem')
+                    mLabel = 'Semimem';
+                    ylim([0 0.4]);
+                elseif strcmp(Muscle,'semiten')
+                    mLabel = 'Semiten';
+                    ylim([0 0.7]);
+                elseif strcmp(Muscle,'bflh')
+                    mLabel = 'Biceps Fem LH';
+                    ylim([0 0.35]);
+                elseif strcmp(Muscle,'bfsh')
+                    mLabel = 'Biceps Fem SH';
+                    ylim([0 0.45]);
+                elseif strcmp(Muscle,'gasmed')
+                    mLabel = 'Medial Gastroc';
+                    ylim([0 0.8]);
+                elseif strcmp(Muscle,'gaslat')
+                    mLabel = 'Lateral Gastroc';
+                    ylim([0 0.55]);
+                end
+                % Labels
+                if strcmp(Type,'Hamstring')
+                    xlabel('% Stance');
+                end               
+                if strcmp(Cycle,'Walk')
+                    ylabel({['\bf',mLabel],'\rmForce (N/Fmax)'});
+                end
+                % Title
+                if strcmp(Type,'Patella')
+                    if strcmp(Cycle,'Walk')
+                        title('Walk','FontWeight','bold');
+                    elseif strcmp(Cycle,'SD2F');
+                        title('Stair Descent (To Floor)','FontWeight','bold');
+                    elseif strcmp(Cycle,'SD2S');
+                        title('Stair Descent (To Step)','FontWeight','bold');
+                    end
+                end
+            end            
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function troubleshoot(obj,varargin)
+            % TROUBLESHOOT
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.summary');            
+            validMuscles = {'vasmed','vaslat','vasint','recfem',...
+                            'semimem','semiten','bflh','bfsh',...
+                            'gasmed','gaslat'};
+            defaultMuscle = 'vasmed';
+            checkMuscle = @(x) any(validatestring(x,validMuscles));
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)
+                if strcmp(p.Results.Muscle,'vasmed')
+                    mName = 'Vastus Medialis';
+                elseif strcmp(p.Results.Muscle,'vaslat')
+                    mName = 'Vastus Lateralis';
+                elseif strcmp(p.Results.Muscle,'vasint')
+                    mName = 'Vastus Intermedius';
+                elseif strcmp(p.Results.Muscle,'recfem')
+                    mName = 'Rectus Femoris';
+                elseif strcmp(p.Results.Muscle,'semimem')
+                    mName = 'Semimembranosus';
+                elseif strcmp(p.Results.Muscle,'semiten')
+                    mName = 'Semitendinosus';
+                elseif strcmp(p.Results.Muscle,'bflh')
+                    mName = 'Biceps Fem LH';
+                elseif strcmp(p.Results.Muscle,'bfsh')
+                    mName = 'Biceps Fem SH';
+                elseif strcmp(p.Results.Muscle,'gasmed')
+                    mName = 'Medial Gastroc';
+                elseif strcmp(p.Results.Muscle,'gaslat')
+                    mName = 'Lateral Gastroc';
+                end                                
+                set(fig_handle,'Name',['Muscle Forces Avg ',mName],'Visible','on');
+                axes_handles = zeros(1,2*3);
+                for k = 1:2*3
+                    axes_handles(k) = subplot(2,3,k);
+                end
+            else
+                axes_handles = p.Results.axes_handles;
+            end
+            % Plot
+            figure(fig_handle);
+            typeNames = {'Patella','Hamstring'};
+            cycleNames = {'Walk','SD2F','SD2S'};
+            for k = 1:3
+                for j = 1:2
+                    set(fig_handle,'CurrentAxes',axes_handles(3*(j-1)+k));
+                    Xtroubleshoot(obj,cycleNames{k},typeNames{j},p.Results.Muscle);
+                end
+            end
+            % Update y limits and plot statistics
+            for j = 1:2
+                set(fig_handle,'CurrentAxes',axes_handles(3*(j-1)+1));
+                yLim = get(gca,'YLim');
+                yTick = get(gca,'YTick');
+                yNewMax = yLim(2)+0.9*(yTick(2)-yTick(1));
+                yNewMin = yLim(1)-0.5*(yTick(2)-yTick(1));
+                for k = 1:3
+                    set(fig_handle,'CurrentAxes',axes_handles(3*(j-1)+k));
+                    set(gca,'YLim',[yNewMin,yNewMax]);                    
+                    XplotStatistics2(obj,[yLim(2) yNewMax],typeNames{j},'Forces',cycleNames{k},p.Results.Muscle);
+                    XlabelRegions([yNewMin yLim(1)]);
+                end
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function Xtroubleshoot(obj,Cycle,Type,Muscle)
+                % XTROUBLESHOOT
+                %
+
+                % Colors
+                ColorHA = [237 17 100]/255;
+                ColorHU = [47 180 74]/255;
+                ColorPA = [228 70 37]/255;
+                ColorPU = [34 189 189]/255;
+                ColorC = [0.15 0.15 0.15];
+                % X vector
+                x = (0:100)';
+                % Plot
+                if strcmp(Type,'Hamstring')
+                    plot(x,obj.HamstringACL.Cycles{['U_',Cycle],'AvgForces'}.(Muscle),'Color',ColorHU,'LineWidth',1,'LineStyle',':'); hold on;
+                    plot(x,obj.HamstringACL.Cycles{['A_',Cycle],'AvgForces'}.(Muscle),'Color',ColorHA,'LineWidth',1,'LineStyle','--');
+                    plot(x,obj.Control.AvgCycles{Cycle,'AvgForces'}.(Muscle),'Color',ColorC,'LineWidth',1);
+                elseif strcmp(Type,'Patella')
+                    plot(x,obj.PatellaACL.Cycles{['U_',Cycle],'AvgForces'}.(Muscle),'Color',ColorPU,'LineWidth',1,'LineStyle',':'); hold on;
+                    plot(x,obj.PatellaACL.Cycles{['A_',Cycle],'AvgForces'}.(Muscle),'Color',ColorPA,'LineWidth',1,'LineStyle','--');
+                    plot(x,obj.Control.AvgCycles{Cycle,'AvgForces'}.(Muscle),'Color',ColorC,'LineWidth',1);                
                 end
                 % Reverse children order (so mean is on top and shaded region is in back)
                 set(gca,'Children',flipud(get(gca,'Children')));
@@ -461,22 +620,22 @@ classdef summary < handle
                     mLabel = 'Vastus Lateralis';
                     ylim([0 200]);
                 elseif strcmp(Muscle,'vasint')
-                    mLabel = 'Vastus Intermedius';
+                    mLabel = 'Vastus Int';
                     ylim([0 60]);
                 elseif strcmp(Muscle,'recfem')
-                    mLabel = 'Rectus Femoris';
+                    mLabel = 'Rectus Fem';
                     ylim([0 200]);
                 elseif strcmp(Muscle,'semimem')
-                    mLabel = 'Semimembranosus';
+                    mLabel = 'Semimem';
                     ylim([0 100]);
                 elseif strcmp(Muscle,'semiten')
-                    mLabel = 'Semitendinosus';
+                    mLabel = 'Semiten';
                     ylim([0 50]);
                 elseif strcmp(Muscle,'bflh')
-                    mLabel = 'Biceps Fem (LH)';
+                    mLabel = 'Biceps Fem LH';
                     ylim([0 40]);
                 elseif strcmp(Muscle,'bfsh')
-                    mLabel = 'Biceps Fem (SH)';
+                    mLabel = 'Biceps Fem SH';
                     ylim([0 30]);
                 elseif strcmp(Muscle,'gasmed')
                     mLabel = 'Medial Gastroc';
@@ -490,7 +649,7 @@ classdef summary < handle
                     xlabel('% Stance');
                 end               
                 if strcmp(Cycle,'Walk')
-                    ylabel({['\bf',mLabel],'\rmForce (% BW)'});
+                    ylabel({['\bf',mLabel],'\rmForce (N/F_max)'});
                 end
                 % Title
                 if strcmp(Type,'Patella')

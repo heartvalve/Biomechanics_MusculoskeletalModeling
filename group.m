@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-18
+    % Last Modified 2014-03-19
     
     
     %% Properties
@@ -69,7 +69,7 @@ classdef group < handle
                         % Weights (based on number of simulations)
                         cstruct.(cycleNames{k}).Weights = repmat(5/length(obj.(subjects{j}).Cycles.Simulations{k}),length(obj.(subjects{j}).Cycles.Simulations{k}),1);
                         % Subjects
-                        cstruct.(cycleNames{k}).Subjects = subjects(j);
+                        cstruct.(cycleNames{k}).Subjects = {obj.(subjects{j}).SubID};
                     % If field exists, append new to existing
                     else
                         % Muscle forces
@@ -99,7 +99,7 @@ classdef group < handle
                         cstruct.(cycleNames{k}).Weights = [oldWeights; newWeights];
                         % Subjects
                         oldNames = cstruct.(cycleNames{k}).Subjects;
-                        newName = subjects(j);
+                        newName = {obj.(subjects{j}).SubID};
                         cstruct.(cycleNames{k}).Subjects = [oldNames; newName];
                     end
                 end
@@ -315,11 +315,18 @@ classdef group < handle
                 % Percent cycle
                 x = (0:100)';
                 % Mean
-                 h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',[0.15,0.15,0.15],'LineWidth',3); hold on;
+                h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',[0.15,0.15,0.15],'LineWidth',3); hold on;
                 set(h,'DisplayName','Mean');
                 % Individual subjects
                 % Colors
-                colors = colormap(hsv(length(obj.Cycles{Cycle,'Simulations'})));
+                subColors = colormap(hsv(length(obj.Cycles{Cycle,'Subjects'})));
+                colors = zeros(length(obj.Cycles{Cycle,'Simulations'}),3);
+                subs = obj.Cycles{Cycle,'Subjects'};
+                sims = obj.Cycles{Cycle,'Simulations'};
+                for i = 1:length(subs)
+                    cLogical = strncmp(subs{i},sims,12);
+                    colors(cLogical,:) = ones(sum(cLogical),1)*subColors(i,:);                    
+                end                
                 % Individual Subjects
                 for i = 1:length(obj.Cycles{Cycle,'Simulations'})
                     h = plot(x,obj.Cycles{Cycle,'Forces'}.(Muscle)(:,i),'Color',colors(i,:),'LineWidth',1);
@@ -355,8 +362,8 @@ function dsH = XrunPairedTTest(dSet1,dSet2,varType)
         newdata(:,j) = (ttest(dSet1.(dsnames{j})',dSet2.(dsnames{j})'))';
         % Eliminate areas where forces are small
         if strcmp(varType,'Forces')
-            newdata((((nanmean(dSet1.(dsnames{j}),2) < 5) & (nanmean(dSet2.(dsnames{j}),2) < 5)) | ...
-                      (abs(nanmean(dSet1.(dsnames{j}),2)-nanmean(dSet2.(dsnames{j}),2)) < 2)),j) = 0;
+            newdata((((nanmean(dSet1.(dsnames{j}),2) < 0.025) & (nanmean(dSet2.(dsnames{j}),2) < 0.025)) | ...
+                      (abs(nanmean(dSet1.(dsnames{j}),2)-nanmean(dSet2.(dsnames{j}),2)) < 0.01)),j) = 0;
         end
     end
     % Return

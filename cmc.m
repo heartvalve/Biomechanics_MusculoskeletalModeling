@@ -4,7 +4,16 @@ classdef cmc < OpenSim.rraSuper
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2013-09-05
+    % Last Modified 2014-03-19
+    
+    
+    %% Properties
+    % Properties for the cmc class
+    
+    properties (SetAccess = public)
+        NormKinematics  % Normalized to % of cycle (added in 'simulation' class)
+        NormReserves    % Reserve actators, normalized to % of cycle (added in 'simulation' class)
+    end
     
     
     %% Methods
