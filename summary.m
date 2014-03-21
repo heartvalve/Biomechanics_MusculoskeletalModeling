@@ -55,33 +55,31 @@ classdef summary < handle
             % Parse inputs
             p = inputParser;
             checkObj = @(x) isa(x,'OpenSim.summary');
-            validCycles = {'A_Walk','A_SD2F','A_SD2S','U_Walk','U_SD2F','U_SD2S'};
+            validCycles = {'A_Walk','A_SD2F','A_SD2S'};
             defaultCycle = 'A_Walk';
             checkCycle = @(x) any(validatestring(x,validCycles));
-            summaryProps = properties(obj);
-            groupProps = properties(obj.(summaryProps{1}));
-            subProps = properties(obj.(summaryProps{1}).(groupProps{1}));
-            simObj = obj.(summaryProps{1}).(groupProps{1}).(subProps{1});
-            validMuscles = [simObj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
-            defaultMuscle = 'All';
-            checkMuscle = @(x) any(validatestring(x,validMuscles));
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);            
             p.addOptional('Cycle',defaultCycle,checkCycle)            
-            p.addOptional('Muscle',defaultMuscle,checkMuscle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Summary Muscle Forces (',p.Results.Muscle,') for ',p.Results.Cycle],'Visible','on');
-                [axes_handles,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
+                set(fig_handle,'Name',['Muscle Forces Task ',p.Results.Cycle(3:end)],'Visible','on');
+                axes_handles = zeros(1,9);
+                for k = 1:9
+                    axes_handles(k) = subplot(3,3,k);
+                end
             else
-                axes_handles = p.Results.axes_handles;
-                [~,mNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
+                axes_handles = p.Results.axes_handles;                
             end
+            % Muscle names
+            mNames = {'vasmed','vaslat','vasint',...
+                      'semimem','semiten','bflh',...
+                      'recfem','gasmed','gaslat'};                      
             % Plot
             figure(fig_handle);
             for j = 1:length(mNames)
@@ -100,29 +98,32 @@ classdef summary < handle
                 % Mean
                 % Plot all groups
                 plot(x,obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','k','LineWidth',3); hold on;
-                plot(x,obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','c','LineWidth',3);
-                plot(x,obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','m','LineWidth',3);
+                plot(x,obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','m','LineWidth',3,'LineStyle','--');
+                plot(x,obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','c','LineWidth',3,'LineStyle',':');
                 % Standard Deviation
                 plusSDC = obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Control.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 minusSDC = obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Control.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDC' fliplr(minusSDC')];
                 hFill = fill(xx,yy,[0 0 0]); 
-                set(hFill,'EdgeColor','none');
+                set(hFill,'EdgeColor',[0 0 0],...
+                          'LineStyle','-');
                 alpha(0.25);
                 plusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.HamstringACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 minusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.HamstringACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDH' fliplr(minusSDH')];
-                hFill = fill(xx,yy,[0 1 1]);
-                set(hFill,'EdgeColor','none');
+                hFill = fill(xx,yy,[1 0 1]);
+                set(hFill,'EdgeColor',[1 0 1],...
+                          'LineStyle','--');
                 alpha(0.25);
                 plusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.PatellaACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 minusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.PatellaACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 xx = [x' fliplr(x')];
                 yy = [plusSDP' fliplr(minusSDP')];
-                hFill = fill(xx,yy,[1 0 1]);
-                set(hFill,'EdgeColor','none');
+                hFill = fill(xx,yy,[0 1 1]);
+                set(hFill,'EdgeColor',[0 1 1],...
+                          'LineStyle',':');
                 alpha(0.25);
                 % Reverse children order (so mean is on top and shaded region is in back)
                 set(gca,'Children',flipud(get(gca,'Children')));
@@ -133,9 +134,32 @@ classdef summary < handle
                 ydefault = get(gca,'YLim');
                 ylim([0 ydefault(2)]);
                 % Labels
-                title(upper(Muscle),'FontWeight','bold');
-                xlabel({'% Cycle',''});
-                ylabel('% Max Isometric Force');
+                if strcmp(Muscle,'vasmed')
+                    mLabel = 'Vastus Medialis';
+                elseif strcmp(Muscle,'vaslat')
+                    mLabel = 'Vastus Lateralis';
+                elseif strcmp(Muscle,'vasint')
+                    mLabel = 'Vastus Intermedius';
+                elseif strcmp(Muscle,'recfem')
+                    mLabel = 'Rectus Femoris';
+                elseif strcmp(Muscle,'semimem')
+                    mLabel = 'Semimembranosus';
+                elseif strcmp(Muscle,'semiten')
+                    mLabel = 'Semitendinosus';
+                elseif strcmp(Muscle,'bflh')
+                    mLabel = 'Biceps Femoris';
+                elseif strcmp(Muscle,'gasmed')
+                    mLabel = 'Medial Gastrocnemius';
+                elseif strcmp(Muscle,'gaslat')
+                    mLabel = 'Lateral Gastrocnemius';
+                end
+                title(mLabel,'FontWeight','bold');
+                if strcmp(Muscle,'recfem') || strcmp(Muscle,'gasmed') || strcmp(Muscle,'gaslat')
+                    xlabel('% Stance');
+                end
+                if strcmp(Muscle,'vasmed') || strcmp(Muscle,'semimem') || strcmp(Muscle,'recfem')
+                    ylabel('Force (N/Fmax)');
+                end
             end            
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

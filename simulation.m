@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-19
+    % Last Modified 2014-03-20
     
     
     %% Properties
@@ -23,6 +23,8 @@ classdef simulation < handle
         CMC                 % Computed Muscle Control solution
         MuscleForces        % Muscle forces (summarized from CMC)
         Residuals           % Residuals (summarized from RRA & CMC)
+        Reserves            % Reserves (summarized from CMC)
+        PosErrors           % Position Errors (summarized from CMC)
     end
     properties (Hidden = true, SetAccess = private)
         SubDir              % Directory where files are stored
@@ -182,10 +184,12 @@ classdef simulation < handle
             % --------------------------
             leg = lower(obj.Leg);
             kinProps = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
+                        'pelvis_tx','pelvis_ty','pelvis_tz',...
                         'pelvis_tilt','pelvis_list','pelvis_rotation',...
                         ['hip_flexion_',leg],['hip_adduction_',leg],['hip_rotation_',leg],...
                         ['knee_angle_',leg],['ankle_angle_',leg]};
             kinNames = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
+                        'pelvis_tx','pelvis_ty','pelvis_tz',...            
                         'pelvis_tilt','pelvis_list','pelvis_rotation',...
                         'hip_flexion','hip_adduction','hip_rotation',...
                         'knee_flexion','ankle_plantar'};
@@ -228,14 +232,14 @@ classdef simulation < handle
                 end
             end
             cmcProps(~logMatch) = [];            
-            resProps = arrayfun(@(x) x{1}(1:end-8), cmcProps, 'UniformOutput', false);
+            resProps = cellfun(@(x) x(1:end-8), cmcProps, 'UniformOutput', false);
             iRes = nan(101,length(resProps));
             for i = 1:length(cmcProps)
                 iRes(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.(cmcProps{i}),xi,'spline',NaN);                
             end
             dsRes = dataset({iRes,resProps{:}});
             obj.CMC.NormReserves = dsRes;
-            % --------------------------
+            % -------------------------------------------------------------
             % RRA Residuals (focus on cycle region)
             [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(1)));
             [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(2)));
@@ -259,6 +263,37 @@ classdef simulation < handle
             rDataset = set(rDataset,'ObsNames',{'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'});
             obj.Residuals = rDataset;
             % --------------------------
+            % CMC Reserves
+            resProps = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
+                        ['hip_flexion_',leg],['hip_adduction_',leg],['hip_rotation_',leg],...
+                        ['knee_angle_',leg],['ankle_angle_',leg]};
+            resProps = cellfun(@(x) [x,'_reserve'], resProps, 'UniformOutput',false);
+            resNames = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
+                        'hip_flexion','hip_adduction','hip_rotation',...
+                        'knee_flexion','ankle_plantar'};
+            meanRMSmaxData = zeros(3,length(resProps));
+            for i = 1:length(resProps)
+                meanRMSmaxData(1,i) = mean(obj.CMC.Actuation.Force.(resProps{i})(iStart:iStop));
+                meanRMSmaxData(2,i) = rms(obj.CMC.Actuation.Force.(resProps{i})(iStart:iStop));
+                meanRMSmaxData(3,i) = max(abs(obj.CMC.Actuation.Force.(resProps{i})(iStart:iStop)));                
+            end
+            rDataset = dataset({meanRMSmaxData,resNames{:}});
+            rDataset = set(rDataset,'ObsNames',{'Mean','RMS','Max'});
+            obj.Reserves = rDataset;
+            % --------------------------
+            % CMC Errors
+            [~,iStart] = min(abs(obj.CMC.PositionError.time-obj.GRF.CycleTime(1)));
+            [~,iStop] = min(abs(obj.CMC.PositionError.time-obj.GRF.CycleTime(2)));
+            meanRMSmaxData = zeros(3,length(kinProps));
+            for i = 1:length(kinProps)
+                meanRMSmaxData(1,i) = mean(obj.CMC.PositionError.(kinProps{i})(iStart:iStop));
+                meanRMSmaxData(2,i) = rms(obj.CMC.PositionError.(kinProps{i})(iStart:iStop));
+                meanRMSmaxData(3,i) = max(abs(obj.CMC.PositionError.(kinProps{i})(iStart:iStop)));                
+            end
+            eDataset = dataset({meanRMSmaxData,kinNames{:}});
+            eDataset = set(eDataset,'ObsNames',{'Mean','RMS','Max'});
+            obj.PosErrors = eDataset;
+            % -------------------------------------------------------------
             % Set up normalized muscle forces (to be added on subject construction)
             nForces = zeros(101,length(obj.Muscles));
             obj.NormMuscleForces = dataset({nForces,obj.Muscles{:}});

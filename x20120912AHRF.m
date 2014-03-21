@@ -4,7 +4,7 @@ classdef x20120912AHRF < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-03-17
+    % Last Modified 2014-03-20
 
 
     %% Properties
@@ -25,10 +25,10 @@ classdef x20120912AHRF < OpenSim.subject
 %         A_SD2F_02
         A_SD2F_03
         A_SD2F_04
-        A_SD2F_05
+%         A_SD2F_05       % Residuals
         U_SD2F_01
         U_SD2F_02
-        U_SD2F_03
+%         U_SD2F_03       % Residuals
         U_SD2F_04
 %         U_SD2F_05
         A_SD2S_01

@@ -4,7 +4,7 @@ classdef rraSuper < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-19
+    % Last Modified 2014-03-20
     
     
     %% Properties
@@ -14,7 +14,7 @@ classdef rraSuper < handle
         Actuation       % ... force, speed, power
 %         Controls        % ... sto, xml (same info - more time points in sto)
         Kinematics      % ... q (Coordinates), u (Speeds), dudt (Accelerations)
-%         PositionError   % ... has one fewer row than all other data
+        PositionError   % ... has one fewer row than all other data
 %         States
     end
     
@@ -42,7 +42,7 @@ classdef rraSuper < handle
 %                 obj.Kinematics.Speed = readData([rraPath,'_Kinematics_u.sto'],11);
 %                 obj.Kinematics.Acceleration = readData([rraPath,'_Kinematics_dudt.sto'],11);             
                 % Position Error
-%                 obj.PositionError = readData([rraPath,'_pErr.sto'],7);
+                obj.PositionError = readData([rraPath,'_pErr.sto'],7);
                 % States
 %                 obj.States = readData([rraPath,'_states.sto'],7);
             catch err
@@ -62,7 +62,15 @@ classdef rraSuper < handle
                 names = dataimport.colheaders;
                 names = regexprep(names,{'\.','\W'},'_');
                 % Data
-                data = dataset({dataimport.data,names{:}});
+                if strfind(filePath,'_pErr.sto')
+                    % Convert to degrees (columns 5 and beyond only -
+                    % column 1 is time, 2-4 are translational positions)
+                    newdata = dataimport.data;
+                    newdata(:,5:end) = newdata(:,5:end).*180/pi;
+                    data = dataset({newdata,names{:}});
+                else
+                    data = dataset({dataimport.data,names{:}});
+                end
             end
         end
     end

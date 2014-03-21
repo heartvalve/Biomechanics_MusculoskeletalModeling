@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-19
+    % Last Modified 2014-03-20
     
     
     %% Properties
@@ -70,6 +70,12 @@ classdef group < handle
                         cstruct.(cycleNames{k}).Weights = repmat(5/length(obj.(subjects{j}).Cycles.Simulations{k}),length(obj.(subjects{j}).Cycles.Simulations{k}),1);
                         % Subjects
                         cstruct.(cycleNames{k}).Subjects = {obj.(subjects{j}).SubID};
+                        % Residuals
+                        cstruct.(cycleNames{k}).Residuals = obj.(subjects{j}).Summary.Mean.Residuals{k};
+                        % Reserves
+                        cstruct.(cycleNames{k}).Reserves = obj.(subjects{j}).Summary.Mean.Reserves{k};
+                        % Position Errors
+                        cstruct.(cycleNames{k}).PosErrors = obj.(subjects{j}).Summary.Mean.PosErrors{k};
                     % If field exists, append new to existing
                     else
                         % Muscle forces
@@ -101,11 +107,35 @@ classdef group < handle
                         oldNames = cstruct.(cycleNames{k}).Subjects;
                         newName = {obj.(subjects{j}).SubID};
                         cstruct.(cycleNames{k}).Subjects = [oldNames; newName];
+                        % Residuals
+                        oldR = cstruct.(cycleNames{k}).Residuals;
+                        newR = obj.(subjects{j}).Summary.Mean.Residuals{k};
+                        rProps = newR.Properties.VarNames;
+                        for m = 1:length(rProps)
+                            newR.(rProps{m}) = [oldR.(rProps{m}) newR.(rProps{m})];
+                        end
+                        cstruct.(cycleNames{k}).Residuals = newR;
+                        % Reserves
+                        oldR = cstruct.(cycleNames{k}).Reserves;
+                        newR = obj.(subjects{j}).Summary.Mean.Reserves{k};
+                        rProps = newR.Properties.VarNames;
+                        for m = 1:length(rProps)
+                            newR.(rProps{m}) = [oldR.(rProps{m}) newR.(rProps{m})];
+                        end
+                        cstruct.(cycleNames{k}).Reserves = newR;                        
+                        % PosErrors
+                        oldP = cstruct.(cycleNames{k}).PosErrors;
+                        newP = obj.(subjects{j}).Summary.Mean.PosErrors{k};
+                        pProps = newP.Properties.VarNames;
+                        for m = 1:length(pProps)
+                            newP.(pProps{m}) = [oldP.(pProps{m}) newP.(pProps{m})];
+                        end
+                        cstruct.(cycleNames{k}).PosErrors = newP;                        
                     end
                 end
             end
             % Convert structure to dataset
-            varnames = {'Simulations','Weights','Forces','Subjects','AvgForces'};
+            varnames = {'Simulations','Weights','Forces','Subjects','AvgForces','Residuals','Reserves','PosErrors'};
             obsnames = fieldnames(cstruct);
             cdata = cell(length(obsnames),length(varnames));
             cdataset = dataset({cdata,varnames{:}});
@@ -122,8 +152,10 @@ classdef group < handle
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'Forces','AvgForces'};
+            varnames = {'Forces','AvgForces','Residuals','Reserves','PosErrors'};
             obsnames = get(cdataset,'ObsNames');
+            resObsNames = {'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'};
+            genObsNames = {'Mean','RMS','Max'};
             % Averages and standard deviations
             adata = cell(length(obsnames),length(varnames));
             sdata = cell(length(obsnames),length(varnames));
@@ -135,6 +167,12 @@ classdef group < handle
                 sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Forces'},cdataset{i,'Weights'});
                 adataset{i,'AvgForces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'AvgForces'},2);
                 sdataset{i,'AvgForces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'AvgForces'});
+                adataset{i,'Residuals'} = set(OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Residuals'},2),'ObsNames',resObsNames);
+                sdataset{i,'Residuals'} = set(OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Residuals'}),'ObsNames',resObsNames);
+                adataset{i,'Reserves'} = set(OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Reserves'},2),'ObsNames',genObsNames);
+                sdataset{i,'Reserves'} = set(OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Reserves'}),'ObsNames',genObsNames);
+                adataset{i,'PosErrors'} = set(OpenSim.getDatasetMean(obsnames{i},cdataset{i,'PosErrors'},2),'ObsNames',genObsNames);
+                sdataset{i,'PosErrors'} = set(OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'PosErrors'}),'ObsNames',genObsNames);
             end
             adataset = set(adataset,'ObsNames',obsnames);
             sdataset = set(sdataset,'ObsNames',obsnames);
@@ -258,7 +296,7 @@ classdef group < handle
                 % Labels
                 title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('Force (% BW)');
+                ylabel('Force (N/Fmax)');
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -341,7 +379,7 @@ classdef group < handle
                 % Labels
                 title(upper(Muscle),'FontWeight','bold');
                 xlabel({'% Cycle',''});
-                ylabel('Force (% BW)');
+                ylabel('Force (N/Fmax)');
             end            
         end
     end

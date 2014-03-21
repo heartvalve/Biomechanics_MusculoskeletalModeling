@@ -4,7 +4,7 @@ classdef x20130221CONF < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-03-17
+    % Last Modified 2014-03-20
 
 
     %% Properties
@@ -17,15 +17,15 @@ classdef x20130221CONF < OpenSim.subject
         A_Walk_04
         A_Walk_05
 %         U_Walk_01       % CMC
-        U_Walk_02
+%         U_Walk_02       % Residuals
         U_Walk_03
         U_Walk_04
         U_Walk_05
 %         A_SD2F_01
-        A_SD2F_02
+%         A_SD2F_02       % Residuals
         A_SD2F_03
-        A_SD2F_04
-        A_SD2F_05
+%         A_SD2F_04       % Residuals
+%         A_SD2F_05       % Residuals
         U_SD2F_01
 %         U_SD2F_02       % CMC
         U_SD2F_03

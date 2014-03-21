@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-19
+    % Last Modified 2014-03-20
     
     
     %% Properties
@@ -97,6 +97,10 @@ classdef subject < handle
                     cstruct.(cycleName).Forces = obj.(sims{i}).NormMuscleForces;
                     % Residuals
                     cstruct.(cycleName).Residuals = obj.(sims{i}).Residuals;
+                    % Reserves
+                    cstruct.(cycleName).Reserves = obj.(sims{i}).Reserves;
+                    % Position Errors
+                    cstruct.(cycleName).PosErrors = obj.(sims{i}).PosErrors;
                     % Simulation Name
                     cstruct.(cycleName).Simulations = {sims{i}};
                 % If the fieldname already exists, need to append existing to new
@@ -125,6 +129,22 @@ classdef subject < handle
                         newResiduals.(resProps{m}) = [oldResiduals.(resProps{m}) newResiduals.(resProps{m})];
                     end
                     cstruct.(cycleName).Residuals = newResiduals;
+                    % Reserves
+                    oldReserves = cstruct.(cycleName).Reserves;
+                    newReserves = obj.(sims{i}).Reserves;
+                    resProps = newReserves.Properties.VarNames;
+                    for m = 1:length(resProps)
+                        newReserves.(resProps{m}) = [oldReserves.(resProps{m}) newReserves.(resProps{m})];
+                    end
+                    cstruct.(cycleName).Reserves = newReserves;
+                    % Position Errors
+                    oldPosErrors = cstruct.(cycleName).PosErrors;
+                    newPosErrors = obj.(sims{i}).PosErrors;
+                    posProps = newPosErrors.Properties.VarNames;
+                    for m = 1:length(posProps)
+                        newPosErrors.(posProps{m}) = [oldPosErrors.(posProps{m}) newPosErrors.(posProps{m})];
+                    end
+                    cstruct.(cycleName).PosErrors = newPosErrors;
                     % Simulation Name
                     oldNames = cstruct.(cycleName).Simulations;
                     cstruct.(cycleName).Simulations = [oldNames; {sims{i}}];
@@ -132,7 +152,7 @@ classdef subject < handle
             end
             % Convert structure to dataset
             nrows = length(fieldnames(cstruct));
-            varnames = {'Simulations','EMG','Forces','Residuals'};
+            varnames = {'Simulations','EMG','Forces','Residuals','Reserves','PosErrors'};
             cdata = cell(nrows,length(varnames));
             cdataset = dataset({cdata,varnames{:}});
             obsnames = fieldnames(cstruct);
@@ -149,9 +169,10 @@ classdef subject < handle
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'EMG','Forces','Residuals'};
+            varnames = {'EMG','Forces','Residuals','Reserves','PosErrors'};
             obsnames = get(cdataset,'ObsNames');
             resObsNames = {'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'};
+            genObsNames = {'Mean','RMS','Max'};
             nrows = size(cdataset,1);
             adata = cell(nrows,length(varnames));
             sdata = cell(nrows,length(varnames));
@@ -168,6 +189,12 @@ classdef subject < handle
                 % Residuals
                 adataset{i,'Residuals'} = set(OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Residuals'},2),'ObsNames',resObsNames);
                 sdataset{i,'Residuals'} = set(OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Residuals'}),'ObsNames',resObsNames);
+                % Reserves
+                adataset{i,'Reserves'} = set(OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Reserves'},2),'ObsNames',genObsNames);
+                sdataset{i,'Reserves'} = set(OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Reserves'}),'ObsNames',genObsNames);
+                % Position Errors
+                adataset{i,'PosErrors'} = set(OpenSim.getDatasetMean(obsnames{i},cdataset{i,'PosErrors'},2),'ObsNames',genObsNames);
+                sdataset{i,'PosErrors'} = set(OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'PosErrors'}),'ObsNames',genObsNames);
             end
             adataset = set(adataset,'ObsNames',obsnames);
             sdataset = set(sdataset,'ObsNames',obsnames);

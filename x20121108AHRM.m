@@ -4,7 +4,7 @@ classdef x20121108AHRM < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-03-17
+    % Last Modified 2014-03-20
 
 
     %% Properties
@@ -14,7 +14,7 @@ classdef x20121108AHRM < OpenSim.subject
         A_Walk_01
         A_Walk_02
         A_Walk_03
-        A_Walk_04
+%         A_Walk_04       % Residuals
         A_Walk_05
         U_Walk_01
         U_Walk_02
@@ -29,13 +29,13 @@ classdef x20121108AHRM < OpenSim.subject
         U_SD2F_01
         U_SD2F_02
         U_SD2F_03
-        U_SD2F_04
+%         U_SD2F_04       % Residuals
         U_SD2F_05
         A_SD2S_01
 %         A_SD2S_02
 %         A_SD2S_03
         A_SD2S_04
-        A_SD2S_05
+%         A_SD2S_05       % Residuals
         U_SD2S_01
         U_SD2S_02
         U_SD2S_03
