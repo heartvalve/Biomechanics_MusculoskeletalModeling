@@ -4,7 +4,7 @@ function stats = getSummaryStatistics(obj,alpha)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-18
+    % Last Modified 2014-03-23
 
     
     %% Main
@@ -12,6 +12,7 @@ function stats = getSummaryStatistics(obj,alpha)
     
     if nargin == 1
         alpha = 0.05;
+%         alpha = 0.15;
     end
     allCycles = get(obj.Control.Cycles,'ObsNames');
     varnames = {'Forces'};

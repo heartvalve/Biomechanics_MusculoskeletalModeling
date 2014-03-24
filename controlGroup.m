@@ -4,7 +4,7 @@ classdef controlGroup < OpenSim.group
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-18
+    % Last Modified 2014-03-21
     
     
     %% Properties
@@ -41,7 +41,7 @@ classdef controlGroup < OpenSim.group
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'Simulations','Weights','Forces','Subjects','AvgForces'};
+            varnames = {'Simulations','Weights','Forces','Subjects','AvgForces','Residuals','Reserves','PosErrors'};
             uniqueCycles = {'Walk','SD2F','SD2S'};  
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             %       Cycle Aggregates            
@@ -69,6 +69,27 @@ classdef controlGroup < OpenSim.group
                 end 
                 % Subjects
                 cdataset{i,'Subjects'} = [obj.Cycles{['A_',uniqueCycles{i}],'Subjects'}; obj.Cycles{['U_',uniqueCycles{i}],'Subjects'}];
+                % Residuals
+                innerVarNames = obj.Cycles{['A_',uniqueCycles{i}],'Residuals'}.Properties.VarNames;
+                fdata = cell(length(obj.Cycles{['A_',uniqueCycles{i}],'Residuals'}),length(innerVarNames));
+                cdataset{i,'Residuals'} = dataset({fdata,innerVarNames{:}});
+                for k = 1:length(innerVarNames)
+                    cdataset{i,'Residuals'}.(innerVarNames{k}) = [obj.Cycles{['A_',uniqueCycles{i}],'Residuals'}.(innerVarNames{k}) obj.Cycles{['U_',uniqueCycles{i}],'Residuals'}.(innerVarNames{k})];
+                end
+                % Reserves
+                innerVarNames = obj.Cycles{['A_',uniqueCycles{i}],'Reserves'}.Properties.VarNames;
+                fdata = cell(length(obj.Cycles{['A_',uniqueCycles{i}],'Reserves'}),length(innerVarNames));
+                cdataset{i,'Reserves'} = dataset({fdata,innerVarNames{:}});
+                for k = 1:length(innerVarNames)
+                    cdataset{i,'Reserves'}.(innerVarNames{k}) = [obj.Cycles{['A_',uniqueCycles{i}],'Reserves'}.(innerVarNames{k}) obj.Cycles{['U_',uniqueCycles{i}],'Reserves'}.(innerVarNames{k})];
+                end
+                % Position Errors
+                innerVarNames = obj.Cycles{['A_',uniqueCycles{i}],'PosErrors'}.Properties.VarNames;
+                fdata = cell(length(obj.Cycles{['A_',uniqueCycles{i}],'PosErrors'}),length(innerVarNames));
+                cdataset{i,'PosErrors'} = dataset({fdata,innerVarNames{:}});
+                for k = 1:length(innerVarNames)
+                    cdataset{i,'PosErrors'}.(innerVarNames{k}) = [obj.Cycles{['A_',uniqueCycles{i}],'PosErrors'}.(innerVarNames{k}) obj.Cycles{['U_',uniqueCycles{i}],'PosErrors'}.(innerVarNames{k})];
+                end
             end
             cdataset = set(cdataset,'ObsNames',uniqueCycles);
             % Assign Property
@@ -76,7 +97,9 @@ classdef controlGroup < OpenSim.group
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             %       Averages & Standard Deviations
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
-            varnames = {'Forces','AvgForces'};
+            varnames = {'Forces','AvgForces','Residuals','Reserves','PosErrors'};
+            resObsNames = {'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'};
+            genObsNames = {'Mean','RMS','Max'};
             adata = cell(length(uniqueCycles),length(varnames));
             sdata = cell(length(uniqueCycles),length(varnames));            
             adataset = dataset({adata,varnames{:}});
@@ -89,6 +112,15 @@ classdef controlGroup < OpenSim.group
                 % Subject average forces
                 adataset{i,'AvgForces'} = OpenSim.getDatasetMean(uniqueCycles{i},cdataset{i,'AvgForces'},2);
                 sdataset{i,'AvgForces'} = OpenSim.getDatasetStdDev(uniqueCycles{i},cdataset{i,'AvgForces'});
+                % Residuals
+                adataset{i,'Residuals'} = set(OpenSim.getDatasetMean(uniqueCycles{i},cdataset{i,'Residuals'},2),'ObsNames',resObsNames);
+                sdataset{i,'Residuals'} = set(OpenSim.getDatasetStdDev(uniqueCycles{i},cdataset{i,'Residuals'}),'ObsNames',resObsNames);
+                % Reserves
+                adataset{i,'Reserves'} = set(OpenSim.getDatasetMean(uniqueCycles{i},cdataset{i,'Reserves'},2),'ObsNames',genObsNames);
+                sdataset{i,'Reserves'} = set(OpenSim.getDatasetStdDev(uniqueCycles{i},cdataset{i,'Reserves'}),'ObsNames',genObsNames);
+                % Position Errors
+                adataset{i,'PosErrors'} = set(OpenSim.getDatasetMean(uniqueCycles{i},cdataset{i,'PosErrors'},2),'ObsNames',genObsNames);
+                sdataset{i,'PosErrors'} = set(OpenSim.getDatasetStdDev(uniqueCycles{i},cdataset{i,'PosErrors'}),'ObsNames',genObsNames);
             end
             adataset = set(adataset,'ObsNames',uniqueCycles);
             sdataset = set(sdataset,'ObsNames',uniqueCycles);

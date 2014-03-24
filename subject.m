@@ -362,34 +362,36 @@ classdef subject < handle
                 % Plot
                 % X vector
                 x = (0:100)';
-                % Mean EMG
-                if ~strcmp(EMG,'')
-                    h = plot(x,obj.Summary.Mean{Cycle,'EMG'}.(EMG),'Color',ColorEMG,'LineWidth',3,'LineStyle','--'); hold on;
-                    set(h,'DisplayName','EMG');
-                end                
                 % Mean Force
-                h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorForce,'LineWidth',3); hold on;
-                set(h,'DisplayName','Force');
-                % Standard Deviation EMG
                 if ~strcmp(EMG,'')
-                    plusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)+obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
-                    minusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)-obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
-                    xx = [x' fliplr(x')];
-                    yy = [plusSD' fliplr(minusSD')];
-                    hFill = fill(xx,yy,ColorEMG);
-                    set(hFill,'EdgeColor','none');
-                    alpha(0.25);                    
+                    [ax,hF,hE] = plotyy(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),...
+                                        x,obj.Summary.Mean{Cycle,'EMG'}.(EMG)); hold on;
+                    set(hF,'Color',ColorForce,'LineWidth',3,'DisplayName','Force');
+                    set(hE,'Color',ColorEMG,'LineWidth',3,'LineStyle','--','DisplayName','EMG');
+                else
+                    h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorForce,'LineWidth',3); hold on;
+                    set(h,'DisplayName','Force');
                 end
-                % Standard Deviation Force
-                plusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
-                minusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
-                xx = [x' fliplr(x')];
-                yy = [plusSD' fliplr(minusSD')];
-                hFill = fill(xx,yy,ColorForce);
-                set(hFill,'EdgeColor','none');
-                alpha(0.25);                
-                % Reverse children order (so mean is on top and shaded region is in back)
-                set(gca,'Children',flipud(get(gca,'Children')));
+%                 % Standard Deviation EMG
+%                 if ~strcmp(EMG,'')
+%                     plusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)+obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
+%                     minusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)-obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
+%                     xx = [x' fliplr(x')];
+%                     yy = [plusSD' fliplr(minusSD')];
+%                     hFill = fill(xx,yy,ColorEMG);
+%                     set(hFill,'EdgeColor','none');
+%                     alpha(0.25);                    
+%                 end
+%                 % Standard Deviation Force
+%                 plusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+%                 minusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+%                 xx = [x' fliplr(x')];
+%                 yy = [plusSD' fliplr(minusSD')];
+%                 hFill = fill(xx,yy,ColorForce);
+%                 set(hFill,'EdgeColor','none');
+%                 alpha(0.25);                
+%                 % Reverse children order (so mean is on top and shaded region is in back)
+%                 set(gca,'Children',flipud(get(gca,'Children')));
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits

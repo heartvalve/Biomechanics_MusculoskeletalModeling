@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-20
+    % Last Modified 2014-03-21
     
     
     %% Properties

@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-20
+    % Last Modified 2014-03-23
     
     
     %% Properties
@@ -182,6 +182,7 @@ classdef simulation < handle
             kKIN = dataset({iKin,kinProps{:}});
             obj.KIN.Norm = kKIN;
             % --------------------------
+            % Kinematics from OpenSim
             leg = lower(obj.Leg);
             kinProps = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
                         'pelvis_tx','pelvis_ty','pelvis_tz',...
@@ -211,16 +212,20 @@ classdef simulation < handle
             % Interpolate RRA & CMC kinematics over normalized time window            
             iRRA = nan(101,length(kinProps));
             iCMC = nan(101,length(kinProps));
+%             nyquist = 0.5*1000;
+%             [b, a] = butter(order, cutoff/nyquist);
             for i = 1:length(kinProps)
                 iRRA(:,i) = interp1(obj.RRA.Kinematics.Coordinate.time,obj.RRA.Kinematics.Coordinate.(kinProps{i}),xi,'spline',NaN);
-                iCMC(:,i) = interp1(obj.CMC.Kinematics.Coordinate.time,obj.CMC.Kinematics.Coordinate.(kinProps{i}),xi,'spline',NaN);                
+%                 filtCMC = filtfilt(b, a, obj.CMC.Kinematics.Coordinate.(kinProps{i}));
+%                 iCMC(:,i) = interp1(obj.CMC.Kinematics.Coordinate.time,filtCMC,xi,'spline',NaN);  
+                iCMC(:,i) = interp1(obj.CMC.Kinematics.Coordinate.time,obj.CMC.Kinematics.Coordinate.(kinProps{i}),xi,'spline',NaN);
             end
             dsRRA = dataset({iRRA,kinNames{:}});
             dsCMC = dataset({iCMC,kinNames{:}});
             obj.RRA.NormKinematics = dsRRA;
             obj.CMC.NormKinematics = dsCMC;
             % --------------------------
-            % Interpolate CMC reserves over normalized time window
+            % Interpolate RRA & CMC reserves over normalized time window
             cmcProps = obj.CMC.Actuation.Force.Properties.VarNames;
             cellMatch = regexp(cmcProps,'_reserve');
             logMatch = false(size(cellMatch));
@@ -233,16 +238,23 @@ classdef simulation < handle
             end
             cmcProps(~logMatch) = [];            
             resProps = cellfun(@(x) x(1:end-8), cmcProps, 'UniformOutput', false);
-            iRes = nan(101,length(resProps));
+            iRRA = nan(101,length(resProps));
+            iCMC = nan(101,length(resProps));
             for i = 1:length(cmcProps)
-                iRes(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.(cmcProps{i}),xi,'spline',NaN);                
+                iRRA(:,i) = interp1(obj.RRA.Actuation.Force.time,obj.RRA.Actuation.Force.(cmcProps{i}),xi,'spline',NaN);
+                iCMC(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.(cmcProps{i}),xi,'spline',NaN);                
             end
-            dsRes = dataset({iRes,resProps{:}});
-            obj.CMC.NormReserves = dsRes;
-            % -------------------------------------------------------------
-            % RRA Residuals (focus on cycle region)
-            [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(1)));
-            [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-obj.GRF.CycleTime(2)));
+            dsRRA = dataset({iRRA,resProps{:}});
+            dsCMC = dataset({iCMC,resProps{:}});
+            obj.RRA.NormTorques = dsRRA;
+            obj.CMC.NormReserves = dsCMC;
+            % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+            % Summarize over cycle region -- ignore first 5 and last 5%
+            % --------------------------
+            % RRA Residuals 
+            perCycle = 0.05*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
+            [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(1)+perCycle)));
+            [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(2)-perCycle)));
             residualNames = {'FX','FY','FZ','MX','MY','MZ'};
             meanRMSmaxData = zeros(6,6);
             for i = 1:6
@@ -252,8 +264,8 @@ classdef simulation < handle
             end
             % --------------------------
             % CMC Residuals
-            [~,iStart] = min(abs(obj.CMC.Actuation.Force.time-obj.GRF.CycleTime(1)));
-            [~,iStop] = min(abs(obj.CMC.Actuation.Force.time-obj.GRF.CycleTime(2)));
+            [~,iStart] = min(abs(obj.CMC.Actuation.Force.time-(obj.GRF.CycleTime(1)+perCycle)));
+            [~,iStop] = min(abs(obj.CMC.Actuation.Force.time-(obj.GRF.CycleTime(2)-perCycle)));
             for i = 1:6
                 meanRMSmaxData(2,i) = mean(obj.CMC.Actuation.Force.(residualNames{i})(iStart:iStop));
                 meanRMSmaxData(4,i) = rms(obj.CMC.Actuation.Force.(residualNames{i})(iStart:iStop));
@@ -281,9 +293,9 @@ classdef simulation < handle
             rDataset = set(rDataset,'ObsNames',{'Mean','RMS','Max'});
             obj.Reserves = rDataset;
             % --------------------------
-            % CMC Errors
-            [~,iStart] = min(abs(obj.CMC.PositionError.time-obj.GRF.CycleTime(1)));
-            [~,iStop] = min(abs(obj.CMC.PositionError.time-obj.GRF.CycleTime(2)));
+            % CMC Position Errors
+            [~,iStart] = min(abs(obj.CMC.PositionError.time-(obj.GRF.CycleTime(1)+perCycle)));
+            [~,iStop] = min(abs(obj.CMC.PositionError.time-(obj.GRF.CycleTime(2)-perCycle)));
             meanRMSmaxData = zeros(3,length(kinProps));
             for i = 1:length(kinProps)
                 meanRMSmaxData(1,i) = mean(obj.CMC.PositionError.(kinProps{i})(iStart:iStop));
@@ -293,7 +305,7 @@ classdef simulation < handle
             eDataset = dataset({meanRMSmaxData,kinNames{:}});
             eDataset = set(eDataset,'ObsNames',{'Mean','RMS','Max'});
             obj.PosErrors = eDataset;
-            % -------------------------------------------------------------
+            % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             % Set up normalized muscle forces (to be added on subject construction)
             nForces = zeros(101,length(obj.Muscles));
             obj.NormMuscleForces = dataset({nForces,obj.Muscles{:}});
@@ -484,7 +496,7 @@ classdef simulation < handle
             % Shortcut references to input arguments (and updates)
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)                
-                set(fig_handle,'Name',[obj.SubID,'_',obj.SimName,' - Kinematics']);
+                set(fig_handle,'Name',[obj.SubID,'_',obj.SimName,' - IK, RRA, CMC Kinematics']);
                 axes_handles = zeros(1,11);
                 for k = 1:11
                     axes_handles(k) = subplot(4,3,k);
@@ -493,6 +505,7 @@ classdef simulation < handle
                 axes_handles = p.Results.axes_handles;
             end
             kinNames = obj.IK.Norm.Properties.VarNames;
+            kinNames = [kinNames(1:3) kinNames(7:end)];
             % Plot
             figure(fig_handle);
             for j = 1:length(kinNames)
@@ -507,11 +520,11 @@ classdef simulation < handle
                 %
                
                 % Plot IK
-                plot((0:100)',obj.IK.Norm.(Kin),'k','LineWidth',3); hold on;
+                plot((0:100)',obj.IK.Norm.(Kin),'Color',[0.15 0.15 0.15],'LineWidth',3); hold on;
                 % Plot RRA
-                plot((0:100)',obj.RRA.NormKinematics.(Kin),'Color',[0.67,0.67,0.67],'LineWidth',3,'LineStyle','--');
+                plot((0:100)',obj.RRA.NormKinematics.(Kin),'Color',[27,158,119]/255,'LineWidth',3,'LineStyle','--');
                 % Plot CMC
-                plot((0:100)',obj.CMC.NormKinematics.(Kin),'Color',[0.33,0.33,0.33],'LineWidth',3,'LineStyle',':');
+                plot((0:100)',obj.CMC.NormKinematics.(Kin),'Color',[117,112,179]/255,'LineWidth',3,'LineStyle',':');
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
@@ -524,9 +537,25 @@ classdef simulation < handle
                 % Labels
                 spaceInd = regexp(Kin,'_');
                 kinName = [upper(Kin(1)),Kin(2:spaceInd-1),' ',upper(Kin(spaceInd+1)),Kin(spaceInd+2:end)];
+                if strcmp(kinName,'Ankle Plantar')
+                    kinName = 'Ankle Plantarflexion';
+                elseif strcmp(kinName,'Pelvis Tx')
+                    kinName = 'Pelvis Ant-Post';
+                elseif strcmp(kinName,'Pelvis Ty')
+                    kinName = 'Pelvis Vertical';
+                elseif strcmp(kinName,'Pelvis Tz')
+                    kinName = 'Pelvis Med-Lat';                    
+                end
                 title(kinName,'FontWeight','bold');
-                xlabel({'% Cycle',''});
-                ylabel('Angle (deg)');            
+                if strcmp(Kin,'knee_flexion') || strcmp(Kin,'ankle_plantar') || strcmp(Kin,'hip_rotation')
+                    xlabel('% Stance');
+                end
+                if strcmp(Kin,'pelvis_tx')
+                    ylabel('Position (m)');
+                elseif strcmp(Kin,'lumbar_extension') || strcmp(Kin,'pelvis_tx') || ...
+                       strcmp(Kin,'pelvis_tilt') || strcmp(Kin,'hip_flexion') || strcmp(Kin,'knee_flexion')
+                    ylabel('Angle (deg)');
+                end
             end
         end
         % *****************************************************************

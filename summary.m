@@ -4,7 +4,7 @@ classdef summary < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-18
+    % Last Modified 2014-03-23
     
     
     %% Properties
@@ -17,6 +17,7 @@ classdef summary < handle
     end
     properties (SetAccess = public)
         Statistics          % Group comparison statistics
+        Tables              % Residuals, Reserves, Position Errors
     end
     
     
@@ -40,6 +41,7 @@ classdef summary < handle
             obj.PatellaACL = OpenSim.patellaGroup();
             % --------------------
             obj.Statistics = OpenSim.getSummaryStatistics(obj);
+            obj.Tables = OpenSim.getSummaryTables(obj);
             % --------------------
             % Elapsed time
             eTime = toc;
@@ -61,7 +63,7 @@ classdef summary < handle
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);            
-            p.addOptional('Cycle',defaultCycle,checkCycle)            
+            p.addOptional('Cycle',defaultCycle,checkCycle)
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
@@ -86,6 +88,17 @@ classdef summary < handle
                 set(fig_handle,'CurrentAxes',axes_handles(j));
                 XplotMuscleForces(obj,p.Results.Cycle,mNames{j});
             end
+            % Update y limits and plot statistics
+            for j = 1:length(mNames)
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                yLim = get(gca,'YLim');
+                yTick = get(gca,'YTick');
+                yNewMax = yLim(2)+0.9*(yTick(2)-yTick(1));
+                yNewMin = yLim(1)-0.5*(yTick(2)-yTick(1));
+                set(gca,'YLim',[yNewMin,yNewMax]);                    
+                XplotStatisticsMF(obj,[yLim(2) yNewMax],'Forces',p.Results.Cycle,mNames{j});
+                XlabelRegions([yNewMin yLim(1)]);                
+            end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
@@ -97,34 +110,41 @@ classdef summary < handle
                 x = (0:100)';
                 % Mean
                 % Plot all groups
-                plot(x,obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','k','LineWidth',3); hold on;
+                plot(x,obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',[0.15 0.15 0.15],'LineWidth',3); hold on;
                 plot(x,obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','m','LineWidth',3,'LineStyle','--');
-                plot(x,obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color','c','LineWidth',3,'LineStyle',':');
+                plot(x,obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',[0 0.5 1],'LineWidth',3,'LineStyle',':');
                 % Standard Deviation
                 plusSDC = obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Control.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 minusSDC = obj.Control.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Control.Summary.StdDev{Cycle,'Forces'}.(Muscle);
-                xx = [x' fliplr(x')];
-                yy = [plusSDC' fliplr(minusSDC')];
-                hFill = fill(xx,yy,[0 0 0]); 
-                set(hFill,'EdgeColor',[0 0 0],...
-                          'LineStyle','-');
-                alpha(0.25);
+                minusSDC(minusSDC < 0.001) = 0.001;
                 plusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.HamstringACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 minusSDH = obj.HamstringACL.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.HamstringACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
-                xx = [x' fliplr(x')];
-                yy = [plusSDH' fliplr(minusSDH')];
-                hFill = fill(xx,yy,[1 0 1]);
-                set(hFill,'EdgeColor',[1 0 1],...
-                          'LineStyle','--');
-                alpha(0.25);
+                minusSDH(minusSDH < 0.001) = 0.001;
                 plusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.PatellaACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
                 minusSDP = obj.PatellaACL.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.PatellaACL.Summary.StdDev{Cycle,'Forces'}.(Muscle);
+                minusSDP(minusSDP < 0.001) = 0.001;
+                % Standard Deviation Lines
+                plot(x,plusSDC,'Color',[0.15 0.15 0.15]);
+                plot(x,minusSDC,'Color',[0.15 0.15 0.15]);
+                plot(x,plusSDH,'m--');
+                plot(x,minusSDH,'m--');
+                plot(x,plusSDP,'Color',[0 0.5 1],'LineStyle',':');
+                plot(x,minusSDH,'Color',[0 0.5 1],'LineStyle',':');                
+                % Standard Deviation Fill
                 xx = [x' fliplr(x')];
-                yy = [plusSDP' fliplr(minusSDP')];
-                hFill = fill(xx,yy,[0 1 1]);
-                set(hFill,'EdgeColor',[0 1 1],...
-                          'LineStyle',':');
+                yyC = [plusSDC' fliplr(minusSDC')];
+                hFill = fill(xx,yyC,[0.15 0.15 0.15]); 
+                set(hFill,'EdgeColor','none');
                 alpha(0.25);
+                yyH = [plusSDH' fliplr(minusSDH')];
+                hFill = fill(xx,yyH,[1 0 1]);
+                set(hFill,'EdgeColor','none');
+                alpha(0.25);               
+                yyP = [plusSDP' fliplr(minusSDP')];
+                % hFill = fill(xx,yyP,[0 1 1]);  % cyan
+                hFill = fill(xx,yyP,[0 0.5 1]);
+                set(hFill,'EdgeColor','none');
+                alpha(0.25);                
                 % Reverse children order (so mean is on top and shaded region is in back)
                 set(gca,'Children',flipud(get(gca,'Children')));
                 % Axes properties
@@ -965,4 +985,86 @@ function XplotStatistics2(obj,yPos,Type,varType,Cycle,varargin)
     line(linspace(0,100,length(sig))',sig(:,1),'Color',Color1,'Tag','SignificanceLine');
     line(linspace(0,100,length(sig))',sig(:,2),'Color',Color2,'Tag','SignificanceLine');
     line(linspace(0,100,length(sig))',sig(:,3),'Color',Color3,'Tag','SignificanceLine');
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function XplotStatisticsMF(obj,yPos,varType,Cycle,varargin)
+    % XPLOTSTATISTICS
+    %
+
+    % Colors
+    ColorH = [1 0 1];
+    ColorP = [0 0.5 1];    
+    if nargin == 5
+        stats = [obj.Statistics.CtoH{Cycle,varType}.(varargin{1}), ...
+                 obj.Statistics.CtoP{Cycle,varType}.(varargin{1})];
+    elseif nargin == 6
+        stats = [obj.Statistics.CtoH{Cycle,varType}.(varargin{1}).(varargin{2}), ...
+                 obj.Statistics.CtoP{Cycle,varType}.(varargin{1}).(varargin{2})];
+    end
+    % Prepare line positions
+    yvalues = yPos(1)+(yPos(2)-yPos(1))*[0.6 0.3];
+    % Significant results are when 'stats' = 1
+    sig = stats;
+    sig(sig == 0) = NaN;
+    for i = 1:2
+        sig(sig(:,i) == 1,i) = yvalues(i);
+    end    
+    % Find endpoints of lines
+    endpoints = cell(size(stats));
+    endlines = NaN(size(stats));
+    for i = 1:2
+        diffV = diff([0; stats(:,i); 0]);
+        transitions = find(diffV);
+        for j = 1:length(transitions)
+            if diffV(transitions(j)) == 1
+                endpoints{transitions(j),i} = 'L';
+                endlines(transitions(j),i) = yvalues(i);
+            elseif diffV(transitions(j)) == -1
+                if ~isempty(endpoints{transitions(j)-1,i})
+                    % Get rid of single points...
+                    sig(transitions(j)-1,i) = NaN;
+                    stats(transitions(j)-1,i) = 0;
+                    endpoints{transitions(j)-1,i} = 'delete';
+                    endlines(transitions(j)-1,i) = NaN;
+                else
+                    endpoints{transitions(j)-1,i} = 'R';
+                    endlines(transitions(j)-1,i) = yvalues(i);
+                end
+            end
+        end
+        clear diffV transitions
+        % Determine if regions are larger than a threshold
+        diffV = diff([0; stats(:,i); 0]);
+        transitions = find(diffV);
+        diffT = diff(transitions);
+        pairDiff = diffT(1:2:end);
+        for j = 1:length(pairDiff)
+            if pairDiff(j) < 4
+                % Left
+                endpoints{transitions(j*2-1),i} = 'delete';
+                endlines(transitions(j*2-1),i) = NaN;
+                % Right
+                endpoints{transitions(j*2)-1,i} = 'delete';
+                endlines(transitions(j*2)-1,i) = NaN;
+                % In between
+                sig(transitions(j*2-1):transitions(j*2)-1,i) = NaN;
+            end
+        end
+    end
+    % Add labels over regions of significance
+    endX = repmat(linspace(0,100,length(stats))',1,2);
+    for i = 1:2
+        endX(isnan(endlines(:,i)),i) = NaN;
+    end
+    [labelX1,labelpoints1] = XgetStatLabels(endX(:,1),endpoints(:,1),yvalues(1));
+    [labelX2,labelpoints2] = XgetStatLabels(endX(:,2),endpoints(:,2),yvalues(2));
+    % Plot
+    text(labelX1,labelpoints1,'*','Color',ColorH,'FontSize',16,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel1');
+    text(labelX2,labelpoints2,'+','Color',ColorP,'FontSize',12,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel2');
+    % Plot endpoints as vertical lines    
+    text(endX(:,1),endlines(:,1),'I','Color',ColorH,'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd');
+    text(endX(:,2),endlines(:,2),'I','Color',ColorP,'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd');   
+    % Plot horizontal line
+    line(linspace(0,100,length(sig))',sig(:,1),'Color',ColorH,'Tag','SignificanceLine');
+    line(linspace(0,100,length(sig))',sig(:,2),'Color',ColorP,'Tag','SignificanceLine');
 end
