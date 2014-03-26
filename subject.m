@@ -318,37 +318,35 @@ classdef subject < handle
             validCycles = {'A_Walk','A_SD2F','A_SD2S','U_Walk','U_SD2F','U_SD2S'};
             defaultCycle = 'A_Walk';
             checkCycle = @(x) any(validatestring(x,validCycles));
-            subProps = properties(obj);
-            simObj = obj.(subProps{1});
-            validMuscles = [simObj.Muscles,{'All','Quads','Hamstrings','Gastrocs'}];
-            defaultMuscle = 'All';
-            checkMuscle = @(x) any(validatestring(x,validMuscles));
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);            
-            p.addOptional('Cycle',defaultCycle,checkCycle)            
-            p.addOptional('Muscle',defaultMuscle,checkMuscle);
+            p.addOptional('Cycle',defaultCycle,checkCycle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Muscle Forces and EMG (',p.Results.Muscle,') for ',p.Results.Cycle],'Visible','on');
-                [axes_handles,mNames,emgNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
+                set(fig_handle,'Name',['Muscle Forces and EMG ',p.Results.Cycle],'Visible','on');
+                axes_handles = zeros(1,9);
+                for i = 1:9
+                    axes_handles(i) = subplot(3,3,i);
+                end
+                removeInd = logical([0 0 0 0 0 1 0 0 1]);
+                set(axes_handles(removeInd),'Visible','Off');
+                axes_handles(removeInd) = [];
             else
                 axes_handles = p.Results.axes_handles;
-                [~,mNames,emgNames] = OpenSim.getAxesAndMuscles(simObj,p.Results.Muscle);
-            end
+            end            
+            mNames = {'vasmed','vaslat','recfem','semiten','bflh','gasmed','gaslat'};
+            emgNames = {'VastusMedialis','VastusLateralis','Rectus','MedialHam',...
+                        'LateralHam','MedialGast','LateralGast'};            
             % Plot
             figure(fig_handle);
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
                 XplotMuscleForcesEMG(obj,p.Results.Cycle,mNames{j},emgNames{j});
-            end
-            % Legend
-            if strcmp(p.Results.Muscle,'All')
-                OpenSim.createLegend(fig_handle,axes_handles(1));
             end
             % -------------------------------------------------------------
             %   Subfunction
@@ -357,31 +355,28 @@ classdef subject < handle
                 % XPLOTMUSCLEFORCESEMG - Worker function to plot muscle forces and EMG for a specific cycle and muscle
                 %
                
-                ColorEMG = [0.5 0.5 0.5];
-                ColorForce = [0 0 0];
+                ColorEMG = [0.6 0.6 0.6];
+                ColorForce = [0.15 0.15 0.15];
                 % Plot
                 % X vector
                 x = (0:100)';
                 % Mean Force
-                if ~strcmp(EMG,'')
-                    [ax,hF,hE] = plotyy(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),...
-                                        x,obj.Summary.Mean{Cycle,'EMG'}.(EMG)); hold on;
-                    set(hF,'Color',ColorForce,'LineWidth',3,'DisplayName','Force');
-                    set(hE,'Color',ColorEMG,'LineWidth',3,'LineStyle','--','DisplayName','EMG');
-                else
-                    h = plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorForce,'LineWidth',3); hold on;
-                    set(h,'DisplayName','Force');
-                end
-%                 % Standard Deviation EMG
-%                 if ~strcmp(EMG,'')
-%                     plusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)+obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
-%                     minusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)-obj.Summary.StdDev{Cycle,'EMG'}.(EMG);
-%                     xx = [x' fliplr(x')];
-%                     yy = [plusSD' fliplr(minusSD')];
-%                     hFill = fill(xx,yy,ColorEMG);
-%                     set(hFill,'EdgeColor','none');
-%                     alpha(0.25);                    
-%                 end
+% %                     [ax,hF,hE] = plotyy(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),...
+% %                                         x,obj.Summary.Mean{Cycle,'EMG'}.(EMG)); hold on;
+% %                     set(hF,'Color',ColorForce,'LineWidth',3,'DisplayName','Force');
+% %                     set(hE,'Color',ColorEMG,'LineWidth',3,'LineStyle','--','DisplayName','EMG');
+% %                     set(ax(1),'ylim',[0 1]);
+% %                     set(ax(2),'ylim',[0 100]);
+                plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorForce,'LineWidth',3,'DisplayName','Force'); hold on;
+%                 plot(x,obj.Summary.Mean{Cycle,'EMG'}.(EMG)/100,'Color',ColorEMG,'LineWidth',3,'LineStyle','--','DisplayName','EMG');                    
+                % Standard Deviation EMG                
+                plusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)/100+obj.Summary.StdDev{Cycle,'EMG'}.(EMG)/100;
+                minusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)/100-obj.Summary.StdDev{Cycle,'EMG'}.(EMG)/100;
+                xx = [x' fliplr(x')];
+                yy = [plusSD' fliplr(minusSD')];
+                hFill = fill(xx,yy,ColorEMG);
+                set(hFill,'EdgeColor','none');
+                alpha(0.25);                    
 %                 % Standard Deviation Force
 %                 plusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
 %                 minusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
@@ -390,18 +385,21 @@ classdef subject < handle
 %                 hFill = fill(xx,yy,ColorForce);
 %                 set(hFill,'EdgeColor','none');
 %                 alpha(0.25);                
-%                 % Reverse children order (so mean is on top and shaded region is in back)
-%                 set(gca,'Children',flipud(get(gca,'Children')));
+                % Reverse children order (so mean is on top and shaded region is in back)
+                set(gca,'Children',flipud(get(gca,'Children')));
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
                 xlim([0 100]);
-                ydefault = get(gca,'YLim');
-                ylim([0 ydefault(2)]);
+                ylim([0 1]);
                 % Labels
                 title(upper(Muscle),'FontWeight','bold');
-                xlabel({'% Cycle',''});
-                ylabel('% Max');
+                if regexp(Muscle,'gas')
+                    xlabel('% Stance');
+                end
+                if strcmp(Muscle,'vasmed') || strcmp(Muscle,'semiten') || strcmp(Muscle,'gasmed')
+                    ylabel('Force (N/Fmax)');   
+                end
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

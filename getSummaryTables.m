@@ -4,7 +4,7 @@ function tables = getSummaryTables(obj)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-21
+    % Last Modified 2014-03-25
     
     
     %% Main
@@ -45,7 +45,17 @@ function tables = getSummaryTables(obj)
                 meanData = obj.(group).Summary.Mean{['A_',cycle],'Reserves'}{'RMS',rvObsNames{i}};
                 sdData = obj.(group).Summary.StdDev{['A_',cycle],'Reserves'}{'RMS',rvObsNames{i}};             
             end
-            rvData(i,j) = {[num2str(meanData,'%8.3f'),' (',num2str(sdData,'%8.3f'),')']};
+            if meanData < 0.01
+                meanFormat = '%8.3f';
+            else
+                meanFormat = '%8.2f';
+            end
+            if sdData < 0.01
+                sdFormat = '%8.3f';
+            else
+                sdFormat = '%8.2f';
+            end
+            rvData(i,j) = {[num2str(meanData,meanFormat),' (',num2str(sdData,sdFormat),')']};
         end
     end
     rvDataset = set(dataset({rvData,varNames{:}}),'ObsNames',rvObsNames);
@@ -73,11 +83,52 @@ function tables = getSummaryTables(obj)
         end
     end
     pDataset = set(dataset({pData,varNames{:}}),'ObsNames',pObsNames);
+    % -------------------------
+    % Trial Variability    
+    tvObsNames = obj.Control.AvgSummary.Mean.AvgForces{1}.Properties.VarNames;
+    tvData = cell(length(tvObsNames),length(varNames));
+    for i = 1:length(tvObsNames)
+        for j = 1:length(varNames)
+            cycle = varNames{j}(1:strfind(varNames{j},'_')-1);
+            group = varNames{j}(strfind(varNames{j},'_')+1:end);
+            subjects = properties(obj.(group));
+            checkSubjects = @(x) isa(obj.(group).(x{1}),'OpenSim.subject');
+            subjects(~arrayfun(checkSubjects,subjects)) = [];
+            meanSDforSubject = zeros(length(subjects),1);
+            for k = 1:length(subjects)
+                meanSDforSubject(k) = nanmean(obj.(group).(subjects{k}).Summary.StdDev{['A_',cycle],'Forces'}.(tvObsNames{i}));
+            end
+            meanData = mean(meanSDforSubject);
+%             sdData = std(meanSDforSubject);
+%             tvData(i,j) = {[num2str(meanData,'%8.3f'),' (',num2str(sdData,'%8.3f'),')']};
+            tvData(i,j) = {num2str(meanData,'%8.3f')};
+        end
+    end
+    tvDataset = set(dataset({tvData,varNames{:}}),'ObsNames',tvObsNames);
+    % -------------------------
+    % Subject Variability
+    sObsNames = obj.Control.AvgSummary.Mean.AvgForces{1}.Properties.VarNames;
+    sData = cell(length(sObsNames),length(varNames));
+    for i = 1:length(sObsNames)
+        for j = 1:length(varNames)
+            cycle = varNames{j}(1:strfind(varNames{j},'_')-1);
+            group = varNames{j}(strfind(varNames{j},'_')+1:end);           
+            if strcmp(group,'Control')
+                meanData = nanmean(obj.(group).AvgSummary.StdDev{cycle,'AvgForces'}.(tvObsNames{i}));
+            else
+                meanData = nanmean(obj.(group).Summary.StdDev{['A_',cycle],'AvgForces'}.(tvObsNames{i})); 
+            end            
+            sData(i,j) = {num2str(meanData,'%8.3f')};
+        end
+    end
+    sDataset = set(dataset({sData,varNames{:}}),'ObsNames',sObsNames);
     % ~~~~~~~~~~~~~~~~~~~~~~~~~
     % Return
     tables = struct();
     tables.Residuals = rdDataset;
     tables.Reserves = rvDataset;
     tables.PosErrors = pDataset;
+    tables.TrialVariability = tvDataset;
+    tables.SubjectVariability = sDataset;
 
 end

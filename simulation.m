@@ -121,7 +121,8 @@ classdef simulation < handle
             cutoff = 15;
             [b, a] = butter(order, cutoff/nyquist);
             % Interpolate muscle forces over normalized time window
-            xi = (linspace(obj.GRF.CycleTime(1),obj.GRF.CycleTime(2),101))';
+            xi = (linspace(obj.GRF.CycleTime(1),obj.GRF.CycleTime(2),111))';
+            xi = xi(5:105);
             iForces = zeros(101,length(obj.Muscles));
             for i = 1:length(obj.Muscles)
                 try
@@ -249,10 +250,11 @@ classdef simulation < handle
             obj.RRA.NormTorques = dsRRA;
             obj.CMC.NormReserves = dsCMC;
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            % Summarize over cycle region -- ignore first 5 and last 5%
+            % Summarize over cycle region -- ignore first 25 and last 25%
+            % (look at single leg stance)
             % --------------------------
             % RRA Residuals 
-            perCycle = 0.05*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
+            perCycle = 0.25*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
             [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(1)+perCycle)));
             [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(2)-perCycle)));
             residualNames = {'FX','FY','FZ','MX','MY','MZ'};
@@ -294,6 +296,7 @@ classdef simulation < handle
             obj.Reserves = rDataset;
             % --------------------------
             % CMC Position Errors
+            perCycle = 0.0*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
             [~,iStart] = min(abs(obj.CMC.PositionError.time-(obj.GRF.CycleTime(1)+perCycle)));
             [~,iStop] = min(abs(obj.CMC.PositionError.time-(obj.GRF.CycleTime(2)-perCycle)));
             meanRMSmaxData = zeros(3,length(kinProps));
