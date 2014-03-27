@@ -4,15 +4,16 @@ classdef rra < OpenSim.rraSuper
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-23
+    % Last Modified 2014-03-26
     
     
     %% Properties
     % Properties for the rra class
     
     properties (SetAccess = public)
-        NormKinematics  % Normalized to % of cycle (added in 'simulation' class)
-        NormTorques    % Reserve actators, normalized to % of cycle (added in 'simulation' class)
+        NormKinematics  % Kinematics, normalized to % of cycle (added in 'simulation' class)
+        NormTorques     % Reserve actators, normalized to % of cycle (added in 'simulation' class)
+        NormResiduals   % Residual actuators, normalized to % of cycle (added in 'simulation' class)
     end
     
     

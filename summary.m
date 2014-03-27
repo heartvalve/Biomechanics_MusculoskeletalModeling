@@ -190,7 +190,7 @@ classdef summary < handle
             % Parse inputs
             p = inputParser;
             checkObj = @(x) isa(x,'OpenSim.summary');            
-            validMuscles = {'Quads','Hamstrings','Gastrocs'};
+            validMuscles = {'Quads','Hams','Gast'};
             defaultMuscle = 'Quads';
             checkMuscle = @(x) any(validatestring(x,validMuscles));
             validCycles = {'Walk','SD2F','SD2S'};
@@ -210,12 +210,12 @@ classdef summary < handle
 %                 muscleNames = {'vasmed','vaslat','vasint','recfem'};
                 numMuscles = 3;
                 muscleNames = {'vasmed','vaslat','recfem'};
-            elseif strcmp(p.Results.Muscle,'Hamstrings')
+            elseif strcmp(p.Results.Muscle,'Hams')
 %                 numMuscles = 4;
 %                 muscleNames = {'semimem','semiten','bflh','bfsh'};
                 numMuscles = 3;
                 muscleNames = {'semimem','semiten','bflh'};
-            elseif strcmp(p.Results.Muscle,'Gastrocs')
+            elseif strcmp(p.Results.Muscle,'Gast')
                 numMuscles = 2;
                 muscleNames = {'gasmed','gaslat'};
             end
@@ -285,34 +285,32 @@ classdef summary < handle
                 ylim([0 ydefault(2)]);
                 if strcmp(Muscle,'vasmed')
                     mLabel = 'Vastus Medialis';
-                    ylim([0 0.35]);
+%                     ylim([0 0.35]);
                 elseif strcmp(Muscle,'vaslat')
                     mLabel = 'Vastus Lateralis';
-                    ylim([0 0.45]);
-                elseif strcmp(Muscle,'vasint')
-                    mLabel = 'Vastus Int';
-%                     ylim([0 0.35]);
+%                     ylim([0 0.45]);
                 elseif strcmp(Muscle,'recfem')
                     mLabel = 'Rectus Femoris';
-                    ylim([0 0.9]);
+%                     ylim([0 0.9]);
                 elseif strcmp(Muscle,'semimem')
                     mLabel = 'Semimembranosus';
-                    ylim([0 0.4]);
+%                     ylim([0 0.4]);
                 elseif strcmp(Muscle,'semiten')
                     mLabel = 'Semitendinosus';
-                    ylim([0 0.35]);
+%                     ylim([0 0.35]);
                 elseif strcmp(Muscle,'bflh')
                     mLabel = 'Biceps Femoris';
-                    ylim([0 0.35]);
-                elseif strcmp(Muscle,'bfsh')
-                    mLabel = 'Biceps Fem SH';
-%                     ylim([0 0.45]);
+%                     ylim([0 0.35]);
                 elseif strcmp(Muscle,'gasmed')
                     mLabel = 'Medial Gastroc';
-                    ylim([0 0.8]);
+%                     ylim([0 0.8]);
                 elseif strcmp(Muscle,'gaslat')
                     mLabel = 'Lateral Gastroc';
-                    ylim([0 0.55]);
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.55]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.25]);
+                    end
                 end
                 % Labels
                 if strcmp(Graft,'Hamstring')

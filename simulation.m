@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-23
+    % Last Modified 2014-03-26
     
     
     %% Properties
@@ -226,7 +226,7 @@ classdef simulation < handle
             obj.RRA.NormKinematics = dsRRA;
             obj.CMC.NormKinematics = dsCMC;
             % --------------------------
-            % Interpolate RRA & CMC reserves over normalized time window
+            % Interpolate RRA torques & CMC reserves over normalized time window
             cmcProps = obj.CMC.Actuation.Force.Properties.VarNames;
             cellMatch = regexp(cmcProps,'_reserve');
             logMatch = false(size(cellMatch));
@@ -249,12 +249,25 @@ classdef simulation < handle
             dsCMC = dataset({iCMC,resProps{:}});
             obj.RRA.NormTorques = dsRRA;
             obj.CMC.NormReserves = dsCMC;
+            % --------------------------
+            % Interpolate RRA residuals & CMC residuals over normalized time window
+            resProps = {'FX','FY','FZ','MX','MY','MZ'};
+            iRRA = nan(101,length(resProps));
+            iCMC = nan(101,length(resProps));
+            for i = 1:length(resProps)
+                iRRA(:,i) = interp1(obj.RRA.Actuation.Force.time,obj.RRA.Actuation.Force.(resProps{i}),xi,'spline',NaN);
+                iCMC(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.(resProps{i}),xi,'spline',NaN);                
+            end
+            dsRRA = dataset({iRRA,resProps{:}});
+            dsCMC = dataset({iCMC,resProps{:}});
+            obj.RRA.NormResiduals = dsRRA;
+            obj.CMC.NormResiduals = dsCMC;
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            % Summarize over cycle region -- ignore first 25 and last 25%
-            % (look at single leg stance)
+            % Summarize over cycle region -- ignore first 5% and last 5%
+            % b/c of GRF threshold; use Raw data
             % --------------------------
             % RRA Residuals 
-            perCycle = 0.25*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
+            perCycle = 0.05*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
             [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(1)+perCycle)));
             [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(2)-perCycle)));
             residualNames = {'FX','FY','FZ','MX','MY','MZ'};
@@ -296,7 +309,6 @@ classdef simulation < handle
             obj.Reserves = rDataset;
             % --------------------------
             % CMC Position Errors
-            perCycle = 0.0*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
             [~,iStart] = min(abs(obj.CMC.PositionError.time-(obj.GRF.CycleTime(1)+perCycle)));
             [~,iStop] = min(abs(obj.CMC.PositionError.time-(obj.GRF.CycleTime(2)-perCycle)));
             meanRMSmaxData = zeros(3,length(kinProps));
@@ -316,66 +328,6 @@ classdef simulation < handle
         % *****************************************************************
         %       Plotting Methods
         % *****************************************************************
-        function plotResiduals(obj,varargin)
-            % PLOTRESIDUALS
-            %
-            
-            % Parse inputs
-            p = inputParser;
-            checkObj = @(x) isa(x,'OpenSim.simulation');
-            defaultFigHandle = figure('NumberTitle','off','Visible','off');
-            defaultAxesHandles = axes('Parent',defaultFigHandle);
-            p.addRequired('obj',checkObj);
-            p.addOptional('fig_handle',defaultFigHandle);
-            p.addOptional('axes_handles',defaultAxesHandles);
-            p.parse(obj,varargin{:});
-            % Residuals
-            rNames = {'FX','MX','FY','MY','FZ','MZ'};
-            % Shortcut references to input arguments
-            fig_handle = p.Results.fig_handle;
-            if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name','Residuals','Visible','on');
-                axes_handles = zeros(1,6);
-                for k = 1:6
-                    axes_handles(k) = subplot(3,2,k);
-                end
-            else
-                axes_handles = p.Results.axes_handles;
-            end
-            % Plot
-            figure(fig_handle);
-            for j = 1:6
-                set(fig_handle,'CurrentAxes',axes_handles(j));
-                XplotResiduals(obj,rNames{j});
-            end
-            % -------------------------------------------------------------
-            %   Subfunction
-            % -------------------------------------------------------------
-            function XplotResiduals(obj,Residual)
-                % XPLOTRESIDUALS
-                %
-                
-                % Plot
-                plot(obj.RRA.Actuation.Force.time,obj.RRA.Actuation.Force.(Residual),'Color','b','LineWidth',2); hold on;
-                % Average
-                plot(obj.GRF.CycleTime,[obj.Residuals{'Mean_RRA',Residual} obj.Residuals{'Mean_RRA',Residual}],...
-                    'Color','r','LineWidth',1,'LineStyle',':');
-                % RMS
-                plot(obj.GRF.CycleTime,[obj.Residuals{'RMS_RRA',Residual} obj.Residuals{'RMS_RRA',Residual}],...
-                    'Color','r','LineWidth',1,'LineStyle','-');
-                % Horizontal line at zero
-                plot(obj.GRF.CycleTime,[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
-                % Axes properties
-                set(gca,'box','off');
-                % Set axes limits
-                xlim(obj.GRF.CycleTime);
-                % Labels
-                title(Residual,'FontWeight','bold');
-                xlabel({'Time (s)',''});
-                ylabel('Magnitude (N or Nm)');
-            end
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         function plotMuscleForces(obj,varargin)
             % PLOTMUSCLEFORCES
             %
@@ -558,6 +510,164 @@ classdef simulation < handle
                 elseif strcmp(Kin,'lumbar_extension') || strcmp(Kin,'pelvis_tx') || ...
                        strcmp(Kin,'pelvis_tilt') || strcmp(Kin,'hip_flexion') || strcmp(Kin,'knee_flexion')
                     ylabel('Angle (deg)');
+                end
+            end
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotTorques(obj,varargin)
+            % PLOTTORQUES
+            %
+            
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.simulation');
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Shortcut references to input arguments (and updates)
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)                
+                set(fig_handle,'Name',[obj.SubID,'_',obj.SimName,' - RRA Torques vs CMC Reserves']);
+                axes_handles = zeros(1,8);
+                for k = 1:8
+                    axes_handles(k) = subplot(3,3,k);
+                end
+            else
+                axes_handles = p.Results.axes_handles;
+            end
+            leg = lower(obj.Leg);
+            torNames = {'lumbar_extension','lumbar_bending','lumbar_rotation',...
+                        ['hip_flexion_',leg],['hip_adduction_',leg],['hip_rotation_',leg],...
+                        ['knee_angle_',leg],['ankle_angle_',leg]};
+            % Plot
+            figure(fig_handle);
+            for j = 1:length(torNames)
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                XplotTorques(obj,torNames{j});
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function XplotTorques(obj,Tor)
+                % XPLOTTORQUES
+                %
+                
+                % Percent cycle
+                x = (0:100)';               
+%                 % Plot CMC Reserves
+%                 plot(x,obj.CMC.NormReserves.(Tor),'Color',[0.15 0.15 0.15],'LineWidth',3); hold on;
+                % Plot RRA
+                plot(x,obj.RRA.NormTorques.(Tor),'Color',[27,158,119]/255,'LineWidth',3,'LineStyle','--'); hold on;
+                % Plot CMC Muscles
+                plot(x,(obj.RRA.NormTorques.(Tor)-obj.CMC.NormReserves.(Tor)),'Color',[117,112,179]/255,'LineWidth',3,'LineStyle',':');
+%                 % Plot Reserves (fill)
+%                 xx = [x' fliplr(x')];
+%                 yy = [(obj.RRA.NormTorques.(Tor))' fliplr((obj.RRA.NormTorques.(Tor)-obj.CMC.NormReserves.(Tor))')];
+%                 hFill = fill(xx,yy,[0.15 0.15 0.15]); 
+%                 set(hFill,'EdgeColor','none');
+%                 alpha(0.25);
+                % Axes properties
+                set(gca,'box','off');
+                % Set axes limits
+                xlim([0 100]);
+                % Labels
+                spaceInd = regexp(Tor,'_');
+                if length(spaceInd) == 2
+                    torName = [upper(Tor(1)),Tor(2:spaceInd(1)-1),' ',upper(Tor(spaceInd(1)+1)),Tor(spaceInd(1)+2:spaceInd(2)-1)];
+                elseif length(spaceInd) == 1
+                    torName = [upper(Tor(1)),Tor(2:spaceInd-1),' ',upper(Tor(spaceInd+1)),Tor(spaceInd+2:end)];
+                end
+                if strcmp(torName,'Knee Angle')
+                    torName = 'Knee Flexion';
+                elseif strcmp(torName,'Ankle Angle')
+                    torName = 'Ankle Plantarflexion';
+                end
+                title(torName,'FontWeight','bold');
+                if strcmp(Tor(1:end-2),'knee_angle') || strcmp(Tor(1:end-2),'ankle_angle') || strcmp(Tor(1:end-2),'hip_rotation')
+                    xlabel('% Stance');
+                end
+                if strcmp(Tor,'lumbar_extension') || strcmp(Tor(1:end-2),'hip_flexion') || strcmp(Tor(1:end-2),'knee_angle')
+                    ylabel('Torque (Nm)');
+                end
+            end
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotResiduals(obj,varargin)
+            % PLOTRESIDUALS
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.simulation');
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Residuals
+            rNames = {'FX','FY','FZ','MX','MY','MZ'};
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)          
+                set(fig_handle,'Name',[obj.SubID,'_',obj.SimName,' - CMC Residuals']);
+                axes_handles = zeros(1,6);
+                for k = 1:6
+                    axes_handles(k) = subplot(2,3,k);
+                end
+            else
+                axes_handles = p.Results.axes_handles;
+            end
+            % Plot
+            figure(fig_handle);
+            for j = 1:6
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                XplotResiduals(obj,rNames{j});
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function XplotResiduals(obj,Residual)
+                % XPLOTRESIDUALS
+                %
+                
+                % Plot
+                x = (0:100)';
+                % Plot CMC
+                plot(x,obj.CMC.NormResiduals.(Residual),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+%                 % Average
+%                 plot([0 100],[obj.Residuals{'Mean_CMC',Residual} obj.Residuals{'Mean_CMC',Residual}],...
+%                      'Color',[0.15 0.15 0.15],'LineWidth',1.5,'LineStyle',':');
+%                 % RMS
+%                 plot([0 100],[obj.Residuals{'RMS_CMC',Residual} obj.Residuals{'RMS_CMC',Residual}],...
+%                      'Color',[0.15 0.15 0.15],'LineWidth',1.5,'LineStyle','--');
+                fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual},'%8.1f'),'\n']);
+                % Horizontal line at zero
+                plot(obj.GRF.CycleTime,[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
+                % Axes properties
+                set(gca,'box','off');
+                % Set axes limits
+                xlim([0 100]);
+                % Labels
+                if strcmp(Residual,'FX')
+                    title('Anterior/Posterior','FontWeight','bold');  
+                    ylabel('Force (N)');
+                elseif strcmp(Residual,'FY')
+                    title('Vertical','FontWeight','bold');   
+                elseif strcmp(Residual,'FZ')
+                    title('Medial/Lateral','FontWeight','bold');   
+                elseif strcmp(Residual,'MX')
+                    title('Frontal Plane','FontWeight','bold'); 
+                    ylabel('Torque (Nm)');
+                elseif strcmp(Residual,'MY')
+                    title('Transverse Plane','FontWeight','bold');   
+                elseif strcmp(Residual,'MZ')
+                    title('Sagittal Plane','FontWeight','bold');   
+                end                
+                if strncmp(Residual,'M',1)
+                    xlabel('% Cycle');
                 end
             end
         end

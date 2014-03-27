@@ -11,8 +11,9 @@ classdef cmc < OpenSim.rraSuper
     % Properties for the cmc class
     
     properties (SetAccess = public)
-        NormKinematics  % Normalized to % of cycle (added in 'simulation' class)
+        NormKinematics  % Kinematics, normalized to % of cycle (added in 'simulation' class)
         NormReserves    % Reserve actators, normalized to % of cycle (added in 'simulation' class)
+        NormResiduals   % Residual actuators, normalized to % of cycle (added in 'simulation' class)
     end
     
     
