@@ -4,7 +4,7 @@ classdef rraSuper < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-20
+    % Last Modified 2014-03-27
     
     
     %% Properties
@@ -15,7 +15,7 @@ classdef rraSuper < handle
 %         Controls        % ... sto, xml (same info - more time points in sto)
         Kinematics      % ... q (Coordinates), u (Speeds), dudt (Accelerations)
         PositionError   % ... has one fewer row than all other data
-%         States
+        States
     end
     
     
@@ -44,7 +44,7 @@ classdef rraSuper < handle
                 % Position Error
                 obj.PositionError = readData([rraPath,'_pErr.sto'],7);
                 % States
-%                 obj.States = readData([rraPath,'_states.sto'],7);
+                obj.States = readData([rraPath,'_states.sto'],7);
             catch err
                 [~,name,~] = fileparts(rraPath);
                 disp(['Problem with ',name]);

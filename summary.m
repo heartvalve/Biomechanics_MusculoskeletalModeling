@@ -302,10 +302,10 @@ classdef summary < handle
                     mLabel = 'Biceps Femoris';
 %                     ylim([0 0.35]);
                 elseif strcmp(Muscle,'gasmed')
-                    mLabel = 'Medial Gastroc';
+                    mLabel = 'Medial Gastrocnemius';
 %                     ylim([0 0.8]);
                 elseif strcmp(Muscle,'gaslat')
-                    mLabel = 'Lateral Gastroc';
+                    mLabel = 'Lateral Gastrocnemius';
                     if strcmp(Cycle,'Walk')
                         ylim([0 0.55]);
                     elseif strcmp(Cycle,'SD2S')

@@ -476,6 +476,220 @@ classdef subject < handle
                 ylabel('% Max Isometric Force');
             end
         end
+        % *****************************************************************
+        %       Export for Abaqus
+        % *****************************************************************
+        function exportAbaqus(obj)
+            % EXPORTABAQUS
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.subject');
+            p.addRequired('obj',checkObj);
+            p.parse(obj);
+            % Specify export folder path
+            wpath = regexp(obj.SubDir,'Northwestern-RIC','split');
+            ABQdir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
+                         filesep,'Subjects',filesep,obj.SubID,filesep];
+%             ABQdir = [wpath{1},'Northwestern-RIC',filesep,'SVN',filesep,'Working',...
+%                       filesep,'FiniteElement',filesep,'Subjects',filesep,obj.SubID,filesep];
+            % Create the folder if not already there
+            if ~isdir(ABQdir)
+                mkdir(ABQdir(1:end-1));
+                export = true;
+            else
+                % Check if the file exists
+                if ~exist([ABQdir,obj.SubID,'_Walk.inp'],'file')
+                    export = true;
+                else
+                    choice = questdlg(['Would you like to overwrite the existing files for ',obj.SubID,'?'],'Overwrite','Yes','No','No');
+                    if strcmp(choice,'Yes')
+                        export = true;
+                    else
+                        disp(['Skipping export for ',obj.SubID]);
+                        export = false;
+                    end                    
+                end
+            end
+            if export
+                cycleNames = {'Walk','SD2S'};
+                for c = 1:2
+                    % Open file
+                    fid = fopen([ABQdir,obj.SubID,'_',cycleNames{c},'_TEMP.inp'],'w');
+                    % Write common elements
+                    fprintf(fid,['*Heading\n',...
+                                 obj.SubID,'_',cycleNames{c},'\n',...
+                                '*Preprint, echo=NO, model=NO, history=NO, contact=NO\n',...
+                                '**\n',...
+                                '*Parameter\n',...
+                                'time_step = 0.2\n',...
+                                '**\n',...
+                                '*Include, input=../../GenericFiles/Parts.inp\n',...
+                                '*Include, input=../../GenericFiles/Assembly__Instances.inp\n',...
+                                '*Include, input=../../GenericFiles/Assembly__Connectors.inp\n',...
+                                '*Include, input=../../GenericFiles/Assembly__Constraints.inp\n',...
+                                '*Include, input=../../GenericFiles/Model.inp\n',...
+                                '**\n',...
+                                '** AMPLITUDES\n',...
+                                '**\n']);
+                    % Write amplitudes
+    %                 % -----------------------
+    % % %                 % Local Coordinate System
+    % % %                 % Flexion
+    % % %                 time_step = 0.02;
+    % % %                 time = (time_step:(time_step/20):6*time_step)';
+    % % %                 fprintf(fid,'*Amplitude, name=FLEXION, time=TOTAL TIME, definition=SMOOTH STEP\n0., 0., ');
+    % % %                 flexion = -1*(pi/180)*double(obj.KneeKin(:,1));
+    % % %                 timeflex = reshape([time'; flexion'],1,[]);
+    % % %                 fprintf(fid,'%6.6f, ',timeflex(1:6));
+    % % %                 fprintf(fid,'\n');
+    % % %                 iAmp = (7:8:202)';
+    % % %                 for n = 1:(length(iAmp)-1)
+    % % %                     fprintf(fid,'%6.6f, ',timeflex(iAmp(n):(iAmp(n)+7)));
+    % % %                     fprintf(fid,'\n');                            
+    % % %                 end
+    % % %                 lastLine = sprintf('%6.6f, ',timeflex(iAmp(end):202));
+    % % %                 lastLine = [lastLine(1:end-2),'\n'];
+    % % %                 fprintf(fid,lastLine);
+    % % %                 % Adduction - not accurate b/c need to use floating axis
+    % % %                 fprintf(fid,'*Amplitude, name=ADDUCTION, time=TOTAL TIME, definition=SMOOTH STEP\n0., 0., ');
+    % % %                 adduction = -1*(pi/180)*double(obj.KneeKin(:,2));
+    % % %                 timeAdd = reshape([time'; adduction'],1,[]);
+    % % %                 fprintf(fid,'%6.6f, ',timeAdd(1:6));
+    % % %                 fprintf(fid,'\n');
+    % % %                 iAmp = (7:8:202)';
+    % % %                 for n = 1:(length(iAmp)-1)
+    % % %                     fprintf(fid,'%6.6f, ',timeAdd(iAmp(n):(iAmp(n)+7)));
+    % % %                     fprintf(fid,'\n');
+    % % %                 end
+    % % %                 lastLine = sprintf('%6.6f, ',timeAdd(iAmp(end):202));
+    % % %                 lastLine = [lastLine(1:end-2),'\n'];
+    % % %                 fprintf(fid,lastLine);
+    % % %                 % External rotation
+    % % %                 fprintf(fid,'*Amplitude, name=EXTERNAL, time=TOTAL TIME, definition=SMOOTH STEP\n0., 0., ');
+    % % %                 external = -1*(pi/180)*double(obj.KneeKin(:,3));
+    % % %                 timeExt = reshape([time'; external'],1,[]);
+    % % %                 fprintf(fid,'%6.6f, ',timeExt(1:6));
+    % % %                 fprintf(fid,'\n');
+    % % %                 iAmp = (7:8:202)';
+    % % %                 for n = 1:(length(iAmp)-1)
+    % % %                     fprintf(fid,'%6.6f, ',timeExt(iAmp(n):(iAmp(n)+7)));
+    % % %                     fprintf(fid,'\n');                            
+    % % %                 end
+    % % %                 lastLine = sprintf('%6.6f, ',timeExt(iAmp(end):202));
+    % % %                 lastLine = [lastLine(1:end-2),'\n'];
+    % % %                 fprintf(fid,lastLine);
+                    % -----------------------
+                    % Boundary conditions
+    % %                 % Global - Flexion only
+    % %                 time_step = 0.02;
+    % %                 time = (time_step:(time_step/20):6*time_step)';
+    % %                 femur_eX = [0.0664602840401836,0.291756293626927,0.954180955466193]; 
+    % %                 flexion = -1*(pi/180)*double(obj.KneeKin(:,1));
+    % %                 for m = 1:3
+    % %                     fprintf(fid,['*Amplitude, name=FLEXION_UR',num2str(m),', time=TOTAL TIME, definition=SMOOTH STEP\n0., 0., ']);
+    % %                     flexionGlobal = flexion*femur_eX(m);
+    % %                     timeFG = reshape([time'; flexionGlobal'],1,[]);
+    % %                     fprintf(fid,'%6.6f, ',timeFG(1:6));
+    % %                     fprintf(fid,'\n');
+    % %                     iAmp = (7:8:202)';
+    % %                     for n = 1:(length(iAmp)-1)
+    % %                         fprintf(fid,'%6.6f, ',timeFG(iAmp(n):(iAmp(n)+7)));
+    % %                         fprintf(fid,'\n');                            
+    % %                     end
+    % %                     lastLine = sprintf('%6.6f, ',timeFG(iAmp(end):202));
+    % %                     lastLine = [lastLine(1:end-2),'\n'];
+    % %                     fprintf(fid,lastLine);                    
+    % %                 end
+    % % %                 % Global -- Flexion, Adduction, External
+    % % %                 time_step = 0.02;
+    % % %                 time = (time_step:(time_step/20):6*time_step)';
+    % % %                 rotations_inGlobal = evalin('base','rotations_inGlobal');
+    % % %                 for m = 1:3
+    % % %                     fprintf(fid,['*Amplitude, name=TIBIA_UR',num2str(m),', time=TOTAL TIME, definition=SMOOTH STEP\n0., 0., ']);                    
+    % % %                     timeUR = reshape([time'; reshape(rotations_inGlobal(m,1,:),1,101)],1,[]);
+    % % %                     fprintf(fid,'%6.6f, ',timeUR(1:6));
+    % % %                     fprintf(fid,'\n');
+    % % %                     iAmp = (7:8:202)';
+    % % %                     for n = 1:(length(iAmp)-1)
+    % % %                         fprintf(fid,'%6.6f, ',timeUR(iAmp(n):(iAmp(n)+7)));
+    % % %                         fprintf(fid,'\n');                            
+    % % %                     end
+    % % %                     lastLine = sprintf('%6.6f, ',timeUR(iAmp(end):202));
+    % % %                     lastLine = [lastLine(1:end-2),'\n'];
+    % % %                     fprintf(fid,lastLine);                    
+    % % %                 end
+    %                 ------------------
+    %                 for i = 1:length(obj.Muscles)
+    %                     mName = obj.Muscles{i};
+    %                     if strncmp(mName,'vas',3)
+    %                         ampNames = {['VASTUS',upper(mName(4:end))]};
+    %                     elseif strcmp(mName,'recfem')
+    %                         ampNames = {'RECTUSFEM'};
+    %                     elseif strncmp(mName,'bf',2)
+    %                         ampNames = {['BICEPSFEMORIS',upper(obj.Muscles{i}(3:4))]};
+    %                     elseif strcmp(mName,'semimem')
+    %                         ampNames = {'SEMIMEMBRANOSUS_WRAP','SEMIMEMBRANOSUS'};
+    %                     elseif strcmp(mName,'semiten')
+    %                         ampNames = {'SEMITENDINOSUS_WRAP','SEMITENDINOSUS'};
+    %                     elseif strncmp(mName,'gas',3)
+    %                         angles = {'0-5','5-10','10-15','15-20','20-25','25-30','30-35','35-40','40-45','45-50'};
+    %                         ampNames = cell(1,length(angles)+1);
+    %                         for j = 1:length(angles)
+    %                             ampNames{j} = [upper(mName(4)),'GASTROCNEMIUS_WRAP_',angles{j}];
+    %                         end
+    %                         ampNames{end} = [upper(mName(4)),'GASTROCNEMIUS'];
+    %                     end
+    %                     for k = 1:length(ampNames)
+    %                         fprintf(fid,['*Amplitude, name=',ampNames{k},', time=TOTAL TIME, definition=USER, properties=102\n',...
+    %                                      '<time_step>, ']);
+    %                         fprintf(fid,'%2.2f, ',obj.MuscleForces.(mName)(1:7));
+    %                         fprintf(fid,'\n');
+    %                         iAmp = (8:8:101)';
+    %                         for m = 1:(length(iAmp)-1)
+    %                             fprintf(fid,'%2.2f, ',obj.MuscleForces.(mName)(iAmp(m):(iAmp(m)+7)));
+    %                             fprintf(fid,'\n');                            
+    %                         end
+    %                         lastLine = sprintf('%2.2f, ',obj.MuscleForces.(mName)(iAmp(end):101));
+    %                         lastLine = [lastLine(1:end-2),'\n'];
+    %                         fprintf(fid,lastLine);
+    %                     end
+    %                 end
+    %                 % Ground reaction force and moment amplitudes
+    %                 grfNames = {'KNEEJC_F','KNEEJC_M'};
+    %                 dofs = {'X','Y','Z'};
+    %                 for k = 1:2
+    %                     for m = 1:3
+    %                         fprintf(fid,['*Amplitude, name=',grfNames{k},dofs{m},', time=TOTAL TIME, definition=USER, properties=304\n',...
+    %                                      '<time_step>, ']);
+    %                         % Forces, in Newtons
+    %                         if k == 1
+    %                             concatGRF = reshape(double(obj.KneeKin(:,(3*(k+1)-2):3*(k+1)))',1,[]);
+    %                         % Moments, in Newton-millimeters
+    %                         elseif k == 2
+    %                             concatGRF = 1000*reshape(double(obj.KneeKin(:,(3*(k+1)-2):3*(k+1)))',1,[]);    
+    %                         end
+    %                         fprintf(fid,'%2.2f, ',concatGRF(1:7));
+    %                         fprintf(fid,'\n');
+    %                         iAmp = (8:8:303)';
+    %                         for n = 1:(length(iAmp)-1)
+    %                             fprintf(fid,'%2.2f, ',concatGRF(iAmp(n):(iAmp(n)+7)));
+    %                             fprintf(fid,'\n');                            
+    %                         end
+    %                         lastLine = sprintf('%2.2f, ',concatGRF(iAmp(end):303));
+    %                         lastLine = [lastLine(1:end-2),'\n'];
+    %                         fprintf(fid,lastLine);
+    %                     end
+    %                 end
+                    % Final common elements
+                    fprintf(fid,['**\n',...
+                                 '*Include, input=../../GenericFiles/History.inp\n']);                
+                    % Close file
+                    fclose(fid); 
+                end
+            end            
+        end
     end
     
 end

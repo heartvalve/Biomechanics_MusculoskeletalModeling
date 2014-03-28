@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-26
+    % Last Modified 2014-03-28
     
     
     %% Properties
@@ -31,6 +31,8 @@ classdef simulation < handle
         Model               % Generic model
         Muscles             % Muscle names
         Leg                 % Cycle leg
+        WeightN             % Weight of subject in Newtons
+        Height              % Height of subject in meters
         ScaleFactor         % Sum of masses for subject / sum of masses for generic model
     end
     properties (Hidden = true)
@@ -109,9 +111,18 @@ classdef simulation < handle
             for i = 1:massNodeList.getLength                
                 subMass = subMass + str2double(char(massNodeList.item(i-1).getFirstChild.getData));               
             end
+            obj.WeightN = subMass*9.81;
             % Total mass of generic model
             genMass = 75.337;
             obj.ScaleFactor = subMass/genMass;
+            % ----------------------
+            % Height of subject
+            xmlFile = [obj.SubDir,filesep,obj.SubID,'__PersonalInformation.xml'];
+            domNode = xmlread(xmlFile);
+            hNodeList = domNode.getElementsByTagName('height');
+            height = str2double(char(hNodeList.item(0).getFirstChild.getData));
+            % Convert mm to meters
+            obj.Height = height/1000;
             % --------------------------
             % Muscle forces
             % Calculate Nyquist frequency
@@ -159,6 +170,8 @@ classdef simulation < handle
                 if strncmp(emgMuscles{i},obj.Leg,1)
                     emgLegMuscles{j} = emgMuscles{i}(2:end);
                     iEMG(:,j) = interp1(obj.EMG.SampleTime,obj.EMG.Data.(emgMuscles{i}),xi,'spline');
+                    % Normalize to max during window
+                    iEMG(:,j) = iEMG(:,j)/max(iEMG(:,j));
                     j = j+1;
                 end
             end
@@ -262,6 +275,27 @@ classdef simulation < handle
             dsCMC = dataset({iCMC,resProps{:}});
             obj.RRA.NormResiduals = dsRRA;
             obj.CMC.NormResiduals = dsCMC;
+            % --------------------------
+            % Interpolate CMC activations over normalized time window
+            cmcProps = obj.CMC.States.Properties.VarNames;
+            regex = ['(vasmed|vaslat|recfem|semiten|bflh|gasmed|gaslat)_',lower(obj.Leg),'_activation'];
+            cellMatch = regexp(cmcProps,regex);
+            logMatch = false(size(cellMatch));
+            for k = 1:length(cellMatch)
+                if ~isempty(cellMatch{k})
+                    logMatch(k) = true;
+                else
+                    logMatch(k) = false;
+                end
+            end
+            cmcProps(~logMatch) = [];            
+            actProps = cellfun(@(x) x(1:end-13), cmcProps, 'UniformOutput', false);
+            iCMC = nan(101,length(actProps));
+            for i = 1:length(cmcProps)               
+                iCMC(:,i) = interp1(obj.CMC.States.time,obj.CMC.States.(cmcProps{i}),xi,'nearest',NaN);                
+            end
+            dsCMC = dataset({iCMC,actProps{:}});
+            obj.CMC.NormActivations = dsCMC;
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             % Summarize over cycle region -- ignore first 5% and last 5%
             % b/c of GRF threshold; use Raw data
@@ -608,7 +642,7 @@ classdef simulation < handle
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
             % Residuals
-            rNames = {'FX','FY','FZ','MX','MY','MZ'};
+            rNames = {'FY','FX','FZ','MY','MX','MZ'};
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
@@ -636,33 +670,39 @@ classdef simulation < handle
                 % Plot
                 x = (0:100)';
                 % Plot CMC
-                plot(x,obj.CMC.NormResiduals.(Residual),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                if strncmp(Residual,'F',1)
+                    plot(x,(obj.CMC.NormResiduals.(Residual)/obj.WeightN*100),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                    fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual}/obj.WeightN*100,'%8.2f'),'\n']);
+                else
+                    plot(x,(obj.CMC.NormResiduals.(Residual)/(obj.WeightN*obj.Height)*100),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                    fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual}/(obj.WeightN*obj.Height)*100,'%8.2f'),'\n']);
+                end
 %                 % Average
 %                 plot([0 100],[obj.Residuals{'Mean_CMC',Residual} obj.Residuals{'Mean_CMC',Residual}],...
 %                      'Color',[0.15 0.15 0.15],'LineWidth',1.5,'LineStyle',':');
 %                 % RMS
 %                 plot([0 100],[obj.Residuals{'RMS_CMC',Residual} obj.Residuals{'RMS_CMC',Residual}],...
 %                      'Color',[0.15 0.15 0.15],'LineWidth',1.5,'LineStyle','--');
-                fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual},'%8.1f'),'\n']);
+                
                 % Horizontal line at zero
-                plot(obj.GRF.CycleTime,[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
+                plot([0 100],[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
                 xlim([0 100]);
                 % Labels
                 if strcmp(Residual,'FX')
-                    title('Anterior/Posterior','FontWeight','bold');  
-                    ylabel('Force (N)');
+                    title('Anterior/Posterior','FontWeight','bold');                      
                 elseif strcmp(Residual,'FY')
-                    title('Vertical','FontWeight','bold');   
+                    title('Vertical','FontWeight','bold'); 
+                    ylabel('Force (% BW)');
                 elseif strcmp(Residual,'FZ')
                     title('Medial/Lateral','FontWeight','bold');   
                 elseif strcmp(Residual,'MX')
-                    title('Frontal Plane','FontWeight','bold'); 
-                    ylabel('Torque (Nm)');
+                    title('Frontal Plane','FontWeight','bold');                     
                 elseif strcmp(Residual,'MY')
-                    title('Transverse Plane','FontWeight','bold');   
+                    title('Transverse Plane','FontWeight','bold');
+                    ylabel('Torque (% BW*H)');
                 elseif strcmp(Residual,'MZ')
                     title('Sagittal Plane','FontWeight','bold');   
                 end                
@@ -670,6 +710,96 @@ classdef simulation < handle
                     xlabel('% Cycle');
                 end
             end
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotEMGvsCMC(obj,varargin)
+            % PLOTEMGvsCMC
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.simulation');
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % EMG Names
+            emgNames = {'VastusMedialis','VastusLateralis','Rectus',...
+                        'MedialHam','LateralHam',...
+                        'MedialGast','LateralGast'};
+            % CMC Names
+            cmcNames = {'vasmed','vaslat','recfem',...
+                        'semiten','bflh',...
+                        'gasmed','gaslat'};
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)          
+                set(fig_handle,'Name',[obj.SubID,'_',obj.SimName,' - EMG vs CMC']);
+                axes_handles = zeros(1,7);
+                for k = 1:5
+                    axes_handles(k) = subplot(3,3,k);
+                end
+                axes_handles(6) = subplot(3,3,7);
+                axes_handles(7) = subplot(3,3,8);
+            else
+                axes_handles = p.Results.axes_handles;
+            end
+            % Plot
+            figure(fig_handle);
+            for j = 1:7
+                set(fig_handle,'CurrentAxes',axes_handles(j));
+                XplotEMGvsCMC(obj,emgNames{j},cmcNames{j});
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function XplotEMGvsCMC(obj,emgName,cmcName)
+                % XPLOTEMGVSCMC
+                %
+                
+                % Plot
+                x = (0:100)';
+                % Plot CMC
+                plot(x,obj.CMC.NormActivations.(cmcName),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                % Plot EMG
+                plot(x,obj.EMG.Norm.(emgName)*max(obj.CMC.NormActivations.(cmcName)),'Color',[0.7 0.7 0.7],'LineWidth',3,'LineStyle','--');                               
+                % Axes properties
+                set(gca,'box','off');
+                % Set axes limits
+                xlim([0 100]);
+                curYlim = get(gca,'YLim');
+                newYmax = curYlim(2)+0.05*(curYlim(2)-curYlim(1));
+                if newYmax > 1
+                    newYmax = 1.05;
+                elseif newYmax < 0.2
+                    newYmax = 0.2;
+                end
+                set(gca,'YLim',[0 newYmax]);
+                % Labels
+                if strcmp(cmcName,'vasmed') || strcmp(cmcName,'semiten') || strcmp(cmcName,'gasmed')
+                    ylabel('Norm Activity');
+                end
+                if strcmp(cmcName,'gasmed') || strcmp(cmcName,'gaslat') || strcmp(cmcName,'recfem')
+                    xlabel('% Cycle');
+                end
+                if strcmp(cmcName,'vasmed')
+                    title('Vastus Medialis','FontWeight','bold');
+                elseif strcmp(cmcName,'vaslat')
+                    title('Vastus Lateralis','FontWeight','bold');
+                elseif strcmp(cmcName,'recfem')
+                    title('Rectus Femoris','FontWeight','bold');
+                elseif strcmp(cmcName,'semiten')
+                    title('Semitendinosus','FontWeight','bold');                    
+                elseif strcmp(cmcName,'bflh')
+                    title('Biceps Femoris','FontWeight','bold');
+                elseif strcmp(cmcName,'gasmed')
+                    title('Medial Gastrocnemius','FontWeight','bold');    
+                elseif strcmp(cmcName,'gaslat')
+                    title('Lateral Gastrocnemius','FontWeight','bold');        
+                end
+            end            
         end
         % *****************************************************************
         %       Export for Abaqus

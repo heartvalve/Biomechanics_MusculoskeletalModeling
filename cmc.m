@@ -4,7 +4,7 @@ classdef cmc < OpenSim.rraSuper
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-19
+    % Last Modified 2014-03-27
     
     
     %% Properties
@@ -14,6 +14,7 @@ classdef cmc < OpenSim.rraSuper
         NormKinematics  % Kinematics, normalized to % of cycle (added in 'simulation' class)
         NormReserves    % Reserve actators, normalized to % of cycle (added in 'simulation' class)
         NormResiduals   % Residual actuators, normalized to % of cycle (added in 'simulation' class)
+        NormActivations % CMC muscle activations, normalized to % of cycle (added in 'simulation' class)
     end
     
     

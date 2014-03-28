@@ -4,7 +4,7 @@ classdef emg < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-23
+    % Last Modified 2014-03-27
     
     
     %% Properties
