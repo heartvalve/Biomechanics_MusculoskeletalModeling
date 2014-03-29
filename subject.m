@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-20
+    % Last Modified 2014-03-28
     
     
     %% Properties
@@ -93,6 +93,8 @@ classdef subject < handle
                     cstruct.(cycleName) = struct();
                     % EMG
                     cstruct.(cycleName).EMG = obj.(sims{i}).EMG.Norm;
+                    % Activations
+                    cstruct.(cycleName).Activations = obj.(sims{i}).CMC.NormActivations;
                     % Muscle Forces (normalized)
                     cstruct.(cycleName).Forces = obj.(sims{i}).NormMuscleForces;
                     % Residuals
@@ -100,7 +102,7 @@ classdef subject < handle
                     % Reserves
                     cstruct.(cycleName).Reserves = obj.(sims{i}).Reserves;
                     % Position Errors
-                    cstruct.(cycleName).PosErrors = obj.(sims{i}).PosErrors;
+                    cstruct.(cycleName).PosErrors = obj.(sims{i}).PosErrors;                    
                     % Simulation Name
                     cstruct.(cycleName).Simulations = {sims{i}};
                 % If the fieldname already exists, need to append existing to new
@@ -113,6 +115,14 @@ classdef subject < handle
                         newEMG.(emgprops{m}) = [oldEMG.(emgprops{m}) newEMG.(emgprops{m})];
                     end
                     cstruct.(cycleName).EMG = newEMG;
+                    % Activations
+                    oldAct = cstruct.(cycleName).Activations;
+                    newAct = obj.(sims{i}).CMC.NormActivations;
+                    actprops = newAct.Properties.VarNames;
+                    for m = 1:length(actprops)
+                        newAct.(actprops{m}) = [oldAct.(actprops{m}) newAct.(actprops{m})];
+                    end
+                    cstruct.(cycleName).Activations = newAct;
                     % Muscle Forces
                     oldForces = cstruct.(cycleName).Forces;
                     newForces = obj.(sims{i}).NormMuscleForces;
@@ -152,7 +162,7 @@ classdef subject < handle
             end
             % Convert structure to dataset
             nrows = length(fieldnames(cstruct));
-            varnames = {'Simulations','EMG','Forces','Residuals','Reserves','PosErrors'};
+            varnames = {'Simulations','EMG','Activations','Forces','Residuals','Reserves','PosErrors'};
             cdata = cell(nrows,length(varnames));
             cdataset = dataset({cdata,varnames{:}});
             obsnames = fieldnames(cstruct);
@@ -169,7 +179,7 @@ classdef subject < handle
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'EMG','Forces','Residuals','Reserves','PosErrors'};
+            varnames = {'EMG','Activations','Forces','Residuals','Reserves','PosErrors'};
             obsnames = get(cdataset,'ObsNames');
             resObsNames = {'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'};
             genObsNames = {'Mean','RMS','Max'};
@@ -183,6 +193,9 @@ classdef subject < handle
                 % EMG
                 adataset{i,'EMG'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'EMG'},2);
                 sdataset{i,'EMG'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'EMG'});
+                % Activations
+                adataset{i,'Activations'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Activations'},2);
+                sdataset{i,'Activations'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Activations'});
                 % Forces
                 adataset{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Forces'},2);
                 sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Forces'});
@@ -308,14 +321,14 @@ classdef subject < handle
             end
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function plotMuscleForcesEMG(obj,varargin)
-            % PLOTMUSCLEFORCESEMG
+        function plotEMGvsCMC(obj,varargin)
+            % PLOTEMGVSCMC
             %
             
             % Parse inputs
             p = inputParser;
-            checkObj = @(x) isa(x,'OpenSim.subject');            
-            validCycles = {'A_Walk','A_SD2F','A_SD2S','U_Walk','U_SD2F','U_SD2S'};
+            checkObj = @(x) isa(x,'OpenSim.subject');
+            validCycles = {'A_Walk','A_SD2S'};
             defaultCycle = 'A_Walk';
             checkCycle = @(x) any(validatestring(x,validCycles));
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
@@ -325,80 +338,85 @@ classdef subject < handle
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
             p.parse(obj,varargin{:});
+            % Muscle names
+            mNames = {'Quadriceps','Hamstring','Gastrocnemius'};
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',['Muscle Forces and EMG ',p.Results.Cycle],'Visible','on');
-                axes_handles = zeros(1,9);
-                for i = 1:9
-                    axes_handles(i) = subplot(3,3,i);
+                set(fig_handle,'Name',[obj.SubID,'_',p.Results.Cycle,' EMG vs CMC']);
+                axes_handles = zeros(1,3);
+                for k = 1:3
+                    axes_handles(k) = subplot(1,3,k);
                 end
-                removeInd = logical([0 0 0 0 0 1 0 0 1]);
-                set(axes_handles(removeInd),'Visible','Off');
-                axes_handles(removeInd) = [];
             else
                 axes_handles = p.Results.axes_handles;
-            end            
-            mNames = {'vasmed','vaslat','recfem','semiten','bflh','gasmed','gaslat'};
-            emgNames = {'VastusMedialis','VastusLateralis','Rectus','MedialHam',...
-                        'LateralHam','MedialGast','LateralGast'};            
+            end                       
             % Plot
             figure(fig_handle);
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
-                XplotMuscleForcesEMG(obj,p.Results.Cycle,mNames{j},emgNames{j});
+                XplotEMGvsCMC(obj,p.Results.Cycle,mNames{j});
             end
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XplotMuscleForcesEMG(obj,Cycle,Muscle,EMG)
-                % XPLOTMUSCLEFORCESEMG - Worker function to plot muscle forces and EMG for a specific cycle and muscle
+            function XplotEMGvsCMC(obj,Cycle,mName)
+                % XPLOTEMGVSCMC
                 %
                
-                ColorEMG = [0.6 0.6 0.6];
-                ColorForce = [0.15 0.15 0.15];
+                % Muscles
+                if strcmp(mName,'Quadriceps')
+                    cmcNames = {'vasmed','vaslat'};
+                    emgNames = {'VastusMedialis','VastusLateralis'};                    
+                elseif strcmp(mName,'Hamstring')
+                    cmcNames = {'semiten','bflh'};       
+                    emgNames = {'MedialHam','LateralHam'};                                 
+                elseif strcmp(mName,'Gastrocnemius')
+                    cmcNames = {'gasmed','gaslat'};
+                    emgNames = {'MedialGast','LateralGast'};                    
+                end
+                % CMC activtiy
+%                 cmcAll = zeros(101,length(cmcNames));
+%                 for m = 1:length(cmcNames)
+%                     cmcAll(:,m) = obj.(Trial).CMC.NormActivations.(cmcNames{m});
+%                     cmcAll(cmcAll(:,m) <= 0.02,m) = 0;
+%                     cmcAll(:,m) = cmcAll(:,m)/max(cmcAll(:,m));
+%                 end
+%                 cmcMean = mean(cmcAll,2);
+                % EMG activity
+                emgMeanAll = zeros(101,length(emgNames));
+                emgSdAll = zeros(101,length(emgNames));
+                for m = 1:length(emgNames)
+                    emgMeanAll(:,m) = obj.Summary.Mean{Cycle,'EMG'}.(emgNames{m})/max(obj.Summary.Mean{Cycle,'EMG'}.(emgNames{m}));
+                    emgSdAll(:,m) = obj.Summary.StdDev{Cycle,'EMG'}.(emgNames{m})/max(obj.Summary.Mean{Cycle,'EMG'}.(emgNames{m}));
+                end
+                emgMean = mean(emgMeanAll,2);
+                emgSD = mean(emgSdAll,2);                
+                % ----------------------
                 % Plot
-                % X vector
                 x = (0:100)';
-                % Mean Force
-% %                     [ax,hF,hE] = plotyy(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),...
-% %                                         x,obj.Summary.Mean{Cycle,'EMG'}.(EMG)); hold on;
-% %                     set(hF,'Color',ColorForce,'LineWidth',3,'DisplayName','Force');
-% %                     set(hE,'Color',ColorEMG,'LineWidth',3,'LineStyle','--','DisplayName','EMG');
-% %                     set(ax(1),'ylim',[0 1]);
-% %                     set(ax(2),'ylim',[0 100]);
-                plot(x,obj.Summary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorForce,'LineWidth',3,'DisplayName','Force'); hold on;
-%                 plot(x,obj.Summary.Mean{Cycle,'EMG'}.(EMG)/100,'Color',ColorEMG,'LineWidth',3,'LineStyle','--','DisplayName','EMG');                    
-                % Standard Deviation EMG                
-                plusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)/100+obj.Summary.StdDev{Cycle,'EMG'}.(EMG)/100;
-                minusSD = obj.Summary.Mean{Cycle,'EMG'}.(EMG)/100-obj.Summary.StdDev{Cycle,'EMG'}.(EMG)/100;
+                % Plot CMC 
+%                 plot(x,cmcMean,'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                % Plot EMG (+/- Standard Deviation for cycle)
+                plusSD = emgMean+emgSD;
+                minusSD = emgMean-emgSD;
                 xx = [x' fliplr(x')];
                 yy = [plusSD' fliplr(minusSD')];
-                hFill = fill(xx,yy,ColorEMG);
+                hFill = fill(xx,yy,[0.5 0.5 0.5]);
                 set(hFill,'EdgeColor','none');
-                alpha(0.25);                    
-%                 % Standard Deviation Force
-%                 plusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)+obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
-%                 minusSD = obj.Summary.Mean{Cycle,'Forces'}.(Muscle)-obj.Summary.StdDev{Cycle,'Forces'}.(Muscle);
-%                 xx = [x' fliplr(x')];
-%                 yy = [plusSD' fliplr(minusSD')];
-%                 hFill = fill(xx,yy,ColorForce);
-%                 set(hFill,'EdgeColor','none');
-%                 alpha(0.25);                
+                alpha(0.25);              
                 % Reverse children order (so mean is on top and shaded region is in back)
                 set(gca,'Children',flipud(get(gca,'Children')));
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
                 xlim([0 100]);
-                ylim([0 1]);
+                ylim([0 1.05]);
                 % Labels
-                title(upper(Muscle),'FontWeight','bold');
-                if regexp(Muscle,'gas')
-                    xlabel('% Stance');
-                end
-                if strcmp(Muscle,'vasmed') || strcmp(Muscle,'semiten') || strcmp(Muscle,'gasmed')
-                    ylabel('Force (N/Fmax)');   
+                title(mName,'FontWeight','bold');
+                xlabel('% Stance');
+                if strcmp(mName,'Quadriceps')
+                    ylabel('Norm Activity');   
                 end
             end
         end

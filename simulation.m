@@ -161,15 +161,23 @@ classdef simulation < handle
             end
             obj.MuscleForces = mForces;
             % --------------------------
-            % Interpolate EMG over normalized time window
+            % Interpolate EMG over normalized time window (SHIFTED -- but not enough, only 33 milliseconds to beginning of data)
             emgMuscles = obj.EMG.Data.Properties.VarNames;
             emgLegMuscles = cell(1,length(emgMuscles)/2);
             iEMG = zeros(101,length(emgMuscles)/2);
+            xiTime = xi(end)-xi(1);
+            % ~~~~~~~
+            % PATCH
+            if strcmp(obj.SubID,'20121110AHRM') && regexp(obj.SimName,'A_Walk')
+                
+            end
+            % ~~~~~~~
+            xiEMG = (linspace(obj.EMG.SampleTime(1),(obj.EMG.SampleTime(1)+xiTime),101))';
             j = 1;
             for i = 1:length(emgMuscles)
                 if strncmp(emgMuscles{i},obj.Leg,1)
                     emgLegMuscles{j} = emgMuscles{i}(2:end);
-                    iEMG(:,j) = interp1(obj.EMG.SampleTime,obj.EMG.Data.(emgMuscles{i}),xi,'spline');
+                    iEMG(:,j) = interp1(obj.EMG.SampleTime,obj.EMG.Data.(emgMuscles{i}),xiEMG,'spline');
                     % Normalize to max during window
                     iEMG(:,j) = iEMG(:,j)/max(iEMG(:,j));
                     j = j+1;
@@ -291,8 +299,10 @@ classdef simulation < handle
             cmcProps(~logMatch) = [];            
             actProps = cellfun(@(x) x(1:end-13), cmcProps, 'UniformOutput', false);
             iCMC = nan(101,length(actProps));
-            for i = 1:length(cmcProps)               
-                iCMC(:,i) = interp1(obj.CMC.States.time,obj.CMC.States.(cmcProps{i}),xi,'nearest',NaN);                
+            for i = 1:length(cmcProps)
+                states = obj.CMC.States.(cmcProps{i});
+                states(states == 0.02) = 0;
+                iCMC(:,i) = interp1(obj.CMC.States.time,states,xi,'nearest',NaN);                
             end
             dsCMC = dataset({iCMC,actProps{:}});
             obj.CMC.NormActivations = dsCMC;
@@ -590,18 +600,10 @@ classdef simulation < handle
                 
                 % Percent cycle
                 x = (0:100)';               
-%                 % Plot CMC Reserves
-%                 plot(x,obj.CMC.NormReserves.(Tor),'Color',[0.15 0.15 0.15],'LineWidth',3); hold on;
                 % Plot RRA
-                plot(x,obj.RRA.NormTorques.(Tor),'Color',[27,158,119]/255,'LineWidth',3,'LineStyle','--'); hold on;
+                plot(x,(obj.RRA.NormTorques.(Tor)/(obj.WeightN*obj.Height)*100),'Color',[27,158,119]/255,'LineWidth',3,'LineStyle','--'); hold on;
                 % Plot CMC Muscles
-                plot(x,(obj.RRA.NormTorques.(Tor)-obj.CMC.NormReserves.(Tor)),'Color',[117,112,179]/255,'LineWidth',3,'LineStyle',':');
-%                 % Plot Reserves (fill)
-%                 xx = [x' fliplr(x')];
-%                 yy = [(obj.RRA.NormTorques.(Tor))' fliplr((obj.RRA.NormTorques.(Tor)-obj.CMC.NormReserves.(Tor))')];
-%                 hFill = fill(xx,yy,[0.15 0.15 0.15]); 
-%                 set(hFill,'EdgeColor','none');
-%                 alpha(0.25);
+                plot(x,((obj.RRA.NormTorques.(Tor)-obj.CMC.NormReserves.(Tor))/(obj.WeightN*obj.Height)*100),'Color',[117,112,179]/255,'LineWidth',3,'LineStyle',':');
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
@@ -623,7 +625,7 @@ classdef simulation < handle
                     xlabel('% Stance');
                 end
                 if strcmp(Tor,'lumbar_extension') || strcmp(Tor(1:end-2),'hip_flexion') || strcmp(Tor(1:end-2),'knee_angle')
-                    ylabel('Torque (Nm)');
+                    ylabel('Torque (% BW*H)');
                 end
             end
         end
@@ -685,7 +687,12 @@ classdef simulation < handle
 %                      'Color',[0.15 0.15 0.15],'LineWidth',1.5,'LineStyle','--');
                 
                 % Horizontal line at zero
-                plot([0 100],[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
+                curYLim = get(gca,'yLim');
+                if curYLim(1) ~= 0 && curYLim(2) ~= 0
+                    plot([0 100],[0 0],'Color',[0.5 0.5 0.5],'LineWidth',0.5);                
+                end
+                % Reverse children order
+                set(gca,'Children',flipud(get(gca,'Children')));
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits

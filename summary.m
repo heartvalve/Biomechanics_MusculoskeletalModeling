@@ -4,7 +4,7 @@ classdef summary < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-24
+    % Last Modified 2014-03-28
     
     
     %% Properties
@@ -51,7 +51,150 @@ classdef summary < handle
         %       Plotting Methods
         % *****************************************************************
         function plotMuscleForces(obj,varargin)
-            % PLOTMUSCLEFORCES - Compare between groups for a leg-specific cycle
+            % PLOTMUSCLEFORCES
+            %
+            
+            % Parse inputs
+            p = inputParser;
+            checkObj = @(x) isa(x,'OpenSim.summary');            
+            validMuscles = {'Quads','Hams','Gast'};
+            defaultMuscle = 'Quads';
+            checkMuscle = @(x) any(validatestring(x,validMuscles));
+            validCycles = {'Walk','SD2F','SD2S'};
+            defaultCycle = 'Walk';
+            checkCycle = @(x) any(validatestring(x,validCycles));
+            defaultFigHandle = figure('NumberTitle','off','Visible','off');
+            defaultAxesHandles = axes('Parent',defaultFigHandle);
+            p.addRequired('obj',checkObj);            
+            p.addOptional('Muscle',defaultMuscle,checkMuscle);
+            p.addOptional('Cycle',defaultCycle,checkCycle);
+            p.addOptional('fig_handle',defaultFigHandle);
+            p.addOptional('axes_handles',defaultAxesHandles);
+            p.parse(obj,varargin{:});
+            % Muscles
+            if strcmp(p.Results.Muscle,'Quads')
+%                 numMuscles = 4;
+%                 muscleNames = {'vasmed','vaslat','vasint','recfem'};
+                numMuscles = 3;
+                muscleNames = {'vasmed','vaslat','recfem'};
+            elseif strcmp(p.Results.Muscle,'Hams')
+%                 numMuscles = 4;
+%                 muscleNames = {'semimem','semiten','bflh','bfsh'};
+                numMuscles = 3;
+                muscleNames = {'semimem','semiten','bflh'};
+            elseif strcmp(p.Results.Muscle,'Gast')
+                numMuscles = 2;
+                muscleNames = {'gasmed','gaslat'};
+            end
+            % Shortcut references to input arguments
+            fig_handle = p.Results.fig_handle;
+            if ~isempty(p.UsingDefaults)  
+                set(fig_handle,'Name',['Muscle Forces Group ',p.Results.Muscle,' ',p.Results.Cycle],'Visible','on');                
+                axes_handles = zeros(1,numMuscles*2);
+                for k = 1:numMuscles*2
+                    axes_handles(k) = subplot(2,numMuscles,k);
+                end
+            else
+                axes_handles = p.Results.axes_handles;
+            end
+            % Plot
+            figure(fig_handle);
+            typeNames = {'Patella','Hamstring'};
+            for k = 1:2
+                for j = 1:numMuscles
+                    set(fig_handle,'CurrentAxes',axes_handles(numMuscles*(k-1)+j));
+                    XplotMuscleForces(obj,p.Results.Cycle,muscleNames{j},typeNames{k});
+                end
+            end
+            % Update y limits and plot statistics
+            for j = 1:numMuscles
+                set(fig_handle,'CurrentAxes',axes_handles(numMuscles*(k-1)+j));
+                yLim = get(gca,'YLim');
+                yTick = get(gca,'YTick');
+                yNewMax = yLim(2)+0.9*(yTick(2)-yTick(1));
+                yNewMin = yLim(1)-0.5*(yTick(2)-yTick(1));
+                for k = 1:2
+                    set(fig_handle,'CurrentAxes',axes_handles(numMuscles*(k-1)+j));
+                    set(gca,'YLim',[yNewMin,yNewMax]);
+                    XplotStatistics(obj,[yLim(2) yNewMax],typeNames{k},'Forces',p.Results.Cycle,muscleNames{j});
+                    XlabelRegions([yNewMin yLim(1)]);
+                end
+            end
+            % -------------------------------------------------------------
+            %   Subfunction
+            % -------------------------------------------------------------
+            function XplotMuscleForces(obj,Cycle,Muscle,Graft)
+                % XPLOTMUSCLEFORCES
+                %
+
+                % Colors
+                if strcmp(Graft,'Hamstring')
+                    ColorA = [237 17 100]/255;
+                    ColorU = [47 180 74]/255;
+                elseif strcmp(Graft,'Patella')
+                    ColorA = [228 70 37]/255;
+                    ColorU = [34 189 189]/255;
+                end
+                ColorC = [0.15 0.15 0.15];
+                % X vector
+                x = (0:100)';
+                % Plot                    
+                plot(x,obj.([Graft,'ACL']).Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorU,'LineWidth',3,'LineStyle',':'); hold on;
+                plot(x,obj.([Graft,'ACL']).Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorA,'LineWidth',3,'LineStyle','--');
+                plot(x,obj.Control.AvgSummary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorC,'LineWidth',3);                
+                % Reverse children order (so mean is on top and shaded region is in back)
+                set(gca,'Children',flipud(get(gca,'Children')));
+                % Axes properties
+                set(gca,'Box','off');
+                % Set axes limits
+                xlim([0 100]);
+                ydefault = get(gca,'YLim');
+                ylim([0 ydefault(2)]);
+                if strcmp(Muscle,'vasmed')
+                    mLabel = 'Vastus Medialis';
+%                     ylim([0 0.35]);
+                elseif strcmp(Muscle,'vaslat')
+                    mLabel = 'Vastus Lateralis';
+%                     ylim([0 0.45]);
+                elseif strcmp(Muscle,'recfem')
+                    mLabel = 'Rectus Femoris';
+%                     ylim([0 0.9]);
+                elseif strcmp(Muscle,'semimem')
+                    mLabel = 'Semimembranosus';
+%                     ylim([0 0.4]);
+                elseif strcmp(Muscle,'semiten')
+                    mLabel = 'Semitendinosus';
+%                     ylim([0 0.35]);
+                elseif strcmp(Muscle,'bflh')
+                    mLabel = 'Biceps Femoris';
+%                     ylim([0 0.35]);
+                elseif strcmp(Muscle,'gasmed')
+                    mLabel = 'Medial Gastrocnemius';
+%                     ylim([0 0.8]);
+                elseif strcmp(Muscle,'gaslat')
+                    mLabel = 'Lateral Gastrocnemius';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.55]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.25]);
+                    end
+                end
+                % Labels
+%                 if strcmp(Graft,'Hamstring')
+                    xlabel('% Stance');
+%                 end               
+                if strcmp(Muscle,'vasmed') || strcmp(Muscle,'semimem') || strcmp(Muscle,'gasmed')
+                    ylabel('Force (N/Fmax)');
+                end
+                % Title
+%                 if strcmp(Graft,'Patella')
+                    title(mLabel,'FontWeight','bold');
+%                 end
+            end            
+        end
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        function plotMuscleForces_AllMuscles(obj,varargin)
+            % PLOTMUSCLEFORCESALL - Compare between groups for a leg-specific cycle
             %
             
             % Parse inputs
@@ -86,7 +229,7 @@ classdef summary < handle
             figure(fig_handle);
             for j = 1:length(mNames)
                 set(fig_handle,'CurrentAxes',axes_handles(j));
-                XplotMuscleForces(obj,p.Results.Cycle,mNames{j});
+                XplotMuscleForcesAll(obj,p.Results.Cycle,mNames{j});
             end
 %             % Update y limits and plot statistics
 %             for j = 1:length(mNames)
@@ -102,8 +245,8 @@ classdef summary < handle
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XplotMuscleForces(obj,Cycle,Muscle)
-                % XPLOTMUSCLEFORCES - Worker function to plot muscle forces for a specific cycle and muscle
+            function XplotMuscleForcesAll(obj,Cycle,Muscle)
+                % XPLOTMUSCLEFORCESALL - Worker function to plot muscle forces for a specific cycle and muscle
                 %
                
                 % Percent cycle
@@ -182,152 +325,9 @@ classdef summary < handle
                 end
             end            
         end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function plotSummaryForces(obj,varargin)
-            % PLOTSUMMARYFORCES
-            %
-            
-            % Parse inputs
-            p = inputParser;
-            checkObj = @(x) isa(x,'OpenSim.summary');            
-            validMuscles = {'Quads','Hams','Gast'};
-            defaultMuscle = 'Quads';
-            checkMuscle = @(x) any(validatestring(x,validMuscles));
-            validCycles = {'Walk','SD2F','SD2S'};
-            defaultCycle = 'Walk';
-            checkCycle = @(x) any(validatestring(x,validCycles));
-            defaultFigHandle = figure('NumberTitle','off','Visible','off');
-            defaultAxesHandles = axes('Parent',defaultFigHandle);
-            p.addRequired('obj',checkObj);            
-            p.addOptional('Muscle',defaultMuscle,checkMuscle);
-            p.addOptional('Cycle',defaultCycle,checkCycle);
-            p.addOptional('fig_handle',defaultFigHandle);
-            p.addOptional('axes_handles',defaultAxesHandles);
-            p.parse(obj,varargin{:});
-            % Muscles
-            if strcmp(p.Results.Muscle,'Quads')
-%                 numMuscles = 4;
-%                 muscleNames = {'vasmed','vaslat','vasint','recfem'};
-                numMuscles = 3;
-                muscleNames = {'vasmed','vaslat','recfem'};
-            elseif strcmp(p.Results.Muscle,'Hams')
-%                 numMuscles = 4;
-%                 muscleNames = {'semimem','semiten','bflh','bfsh'};
-                numMuscles = 3;
-                muscleNames = {'semimem','semiten','bflh'};
-            elseif strcmp(p.Results.Muscle,'Gast')
-                numMuscles = 2;
-                muscleNames = {'gasmed','gaslat'};
-            end
-            % Shortcut references to input arguments
-            fig_handle = p.Results.fig_handle;
-            if ~isempty(p.UsingDefaults)  
-                set(fig_handle,'Name',['Muscle Forces Group ',p.Results.Muscle,' ',p.Results.Cycle],'Visible','on');                
-                axes_handles = zeros(1,numMuscles*2);
-                for k = 1:numMuscles*2
-                    axes_handles(k) = subplot(2,numMuscles,k);
-                end
-            else
-                axes_handles = p.Results.axes_handles;
-            end
-            % Plot
-            figure(fig_handle);
-            typeNames = {'Patella','Hamstring'};
-            for k = 1:2
-                for j = 1:numMuscles
-                    set(fig_handle,'CurrentAxes',axes_handles(numMuscles*(k-1)+j));
-                    XplotSummaryForces(obj,p.Results.Cycle,muscleNames{j},typeNames{k});
-                end
-            end
-            % Update y limits and plot statistics
-            for j = 1:numMuscles
-                set(fig_handle,'CurrentAxes',axes_handles(numMuscles*(k-1)+j));
-                yLim = get(gca,'YLim');
-                yTick = get(gca,'YTick');
-                yNewMax = yLim(2)+0.9*(yTick(2)-yTick(1));
-                yNewMin = yLim(1)-0.5*(yTick(2)-yTick(1));
-                for k = 1:2
-                    set(fig_handle,'CurrentAxes',axes_handles(numMuscles*(k-1)+j));
-                    set(gca,'YLim',[yNewMin,yNewMax]);
-                    XplotStatistics(obj,[yLim(2) yNewMax],typeNames{k},'Forces',p.Results.Cycle,muscleNames{j});
-                    XlabelRegions([yNewMin yLim(1)]);
-                end
-            end
-            % -------------------------------------------------------------
-            %   Subfunction
-            % -------------------------------------------------------------
-            function XplotSummaryForces(obj,Cycle,Muscle,Graft)
-                % XPLOTSUMMARYFORCES
-                %
-
-                % Colors
-                if strcmp(Graft,'Hamstring')
-                    ColorA = [237 17 100]/255;
-                    ColorU = [47 180 74]/255;
-                elseif strcmp(Graft,'Patella')
-                    ColorA = [228 70 37]/255;
-                    ColorU = [34 189 189]/255;
-                end
-                ColorC = [0.15 0.15 0.15];
-                % X vector
-                x = (0:100)';
-                % Plot                    
-                plot(x,obj.([Graft,'ACL']).Summary.Mean{['U_',Cycle],'Forces'}.(Muscle),'Color',ColorU,'LineWidth',3,'LineStyle',':'); hold on;
-                plot(x,obj.([Graft,'ACL']).Summary.Mean{['A_',Cycle],'Forces'}.(Muscle),'Color',ColorA,'LineWidth',3,'LineStyle','--');
-                plot(x,obj.Control.AvgSummary.Mean{Cycle,'Forces'}.(Muscle),'Color',ColorC,'LineWidth',3);                
-                % Reverse children order (so mean is on top and shaded region is in back)
-                set(gca,'Children',flipud(get(gca,'Children')));
-                % Axes properties
-                set(gca,'Box','off');
-                % Set axes limits
-                xlim([0 100]);
-                ydefault = get(gca,'YLim');
-                ylim([0 ydefault(2)]);
-                if strcmp(Muscle,'vasmed')
-                    mLabel = 'Vastus Medialis';
-%                     ylim([0 0.35]);
-                elseif strcmp(Muscle,'vaslat')
-                    mLabel = 'Vastus Lateralis';
-%                     ylim([0 0.45]);
-                elseif strcmp(Muscle,'recfem')
-                    mLabel = 'Rectus Femoris';
-%                     ylim([0 0.9]);
-                elseif strcmp(Muscle,'semimem')
-                    mLabel = 'Semimembranosus';
-%                     ylim([0 0.4]);
-                elseif strcmp(Muscle,'semiten')
-                    mLabel = 'Semitendinosus';
-%                     ylim([0 0.35]);
-                elseif strcmp(Muscle,'bflh')
-                    mLabel = 'Biceps Femoris';
-%                     ylim([0 0.35]);
-                elseif strcmp(Muscle,'gasmed')
-                    mLabel = 'Medial Gastrocnemius';
-%                     ylim([0 0.8]);
-                elseif strcmp(Muscle,'gaslat')
-                    mLabel = 'Lateral Gastrocnemius';
-                    if strcmp(Cycle,'Walk')
-                        ylim([0 0.55]);
-                    elseif strcmp(Cycle,'SD2S')
-                        ylim([0 0.25]);
-                    end
-                end
-                % Labels
-                if strcmp(Graft,'Hamstring')
-                    xlabel('% Stance');
-                end               
-                if strcmp(Muscle,'vasmed') || strcmp(Muscle,'semimem') || strcmp(Muscle,'gasmed')
-                    ylabel('Force (N/Fmax)');
-                end
-                % Title
-                if strcmp(Graft,'Patella')
-                    title(mLabel,'FontWeight','bold');
-                end
-            end            
-        end
-        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        function plotGraftForces(obj,varargin)
-            % PLOTGRAFTFORCES
+        %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%        
+        function plotMuscleForces_SingleMuscle(obj,varargin)
+            % PLOTMUSCLEFORCESSINGLE
             %
             
             % Parse inputs
@@ -384,7 +384,7 @@ classdef summary < handle
             for k = 1:3
                 for j = 1:2
                     set(fig_handle,'CurrentAxes',axes_handles(3*(j-1)+k));
-                    XplotGraftForces(obj,cycleNames{k},typeNames{j},p.Results.Muscle);
+                    xPlotMuscleForcesSingle(obj,cycleNames{k},typeNames{j},p.Results.Muscle);
                 end
             end
             % Update y limits and plot statistics
@@ -404,8 +404,8 @@ classdef summary < handle
             % -------------------------------------------------------------
             %   Subfunction
             % -------------------------------------------------------------
-            function XplotGraftForces(obj,Cycle,Type,Muscle)
-                % XPLOTSUMMARYFORCES
+            function xPlotMuscleForcesSingle(obj,Cycle,Type,Muscle)
+                % XPLOTMUSCLEFORCESSINGLE
                 %
 
                 % Colors
@@ -681,42 +681,6 @@ end
 %% Subfunctions
 % Subfunctions called from the main class definition
 
-function [labelX,labelpoints] = XgetStatLabels(endX,endpoints,yvalues)
-    % XGETSTATLABELS
-    %
-
-    % Get rid of NaNs
-    endpoints(isnan(endX)) = [];
-    endX(isnan(endX)) = [];
-    % Preallocate
-    labelX = NaN(size(endX));   
-    labelpoints = yvalues*ones(size(endX));
-    % Add values    
-    if ~isempty(endX)
-        % Midpoints of pairs
-        if ~isempty(endX)
-            midX = endX(1:end-1)+diff(endX)/2;
-            midX = midX(1:2:end);
-            labelX(strcmp('L',endpoints)) = midX;
-        end
-    end
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function XlabelRegions(yPos)
-    % XLABELREGIONS
-
-    % Plot region dividers as vertical lines    
-    text(23,yPos(1),'I','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionDiv');
-    text(50,yPos(1),'I','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionDiv');
-    text(77,yPos(1),'I','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionDiv');
-    % Label regions
-    labelPos = yPos(1)+0.25*(yPos(2)-yPos(1));
-    text(11.5,labelPos,'LR','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
-    text(36.5,labelPos,'MS','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
-    text(63.5,labelPos,'TS','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
-    text(88.5,labelPos,'PS','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
-end
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function XplotStatistics(obj,yPos,Type,varType,Cycle,varargin)
     % XPLOTSTATISTICS
     %
@@ -811,84 +775,38 @@ function XplotStatistics(obj,yPos,Type,varType,Cycle,varargin)
     line(linspace(0,100,length(sig))',sig(:,3),'Color',Color3,'Tag','SignificanceLine');
 end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-function XplotStatisticsMF(obj,yPos,varType,Cycle,varargin)
-    % XPLOTSTATISTICS
+function [labelX,labelpoints] = XgetStatLabels(endX,endpoints,yvalues)
+    % XGETSTATLABELS
     %
 
-    % Colors
-    ColorH = [1 0 1];
-    ColorP = [0 0.5 1];    
-    if nargin == 5
-        stats = [obj.Statistics.CtoH{Cycle,varType}.(varargin{1}), ...
-                 obj.Statistics.CtoP{Cycle,varType}.(varargin{1})];
-    elseif nargin == 6
-        stats = [obj.Statistics.CtoH{Cycle,varType}.(varargin{1}).(varargin{2}), ...
-                 obj.Statistics.CtoP{Cycle,varType}.(varargin{1}).(varargin{2})];
-    end
-    % Prepare line positions
-    yvalues = yPos(1)+(yPos(2)-yPos(1))*[0.6 0.3];
-    % Significant results are when 'stats' = 1
-    sig = stats;
-    sig(sig == 0) = NaN;
-    for i = 1:2
-        sig(sig(:,i) == 1,i) = yvalues(i);
-    end    
-    % Find endpoints of lines
-    endpoints = cell(size(stats));
-    endlines = NaN(size(stats));
-    for i = 1:2
-        diffV = diff([0; stats(:,i); 0]);
-        transitions = find(diffV);
-        for j = 1:length(transitions)
-            if diffV(transitions(j)) == 1
-                endpoints{transitions(j),i} = 'L';
-                endlines(transitions(j),i) = yvalues(i);
-            elseif diffV(transitions(j)) == -1
-                if ~isempty(endpoints{transitions(j)-1,i})
-                    % Get rid of single points...
-                    sig(transitions(j)-1,i) = NaN;
-                    stats(transitions(j)-1,i) = 0;
-                    endpoints{transitions(j)-1,i} = 'delete';
-                    endlines(transitions(j)-1,i) = NaN;
-                else
-                    endpoints{transitions(j)-1,i} = 'R';
-                    endlines(transitions(j)-1,i) = yvalues(i);
-                end
-            end
-        end
-        clear diffV transitions
-        % Determine if regions are larger than a threshold
-        diffV = diff([0; stats(:,i); 0]);
-        transitions = find(diffV);
-        diffT = diff(transitions);
-        pairDiff = diffT(1:2:end);
-        for j = 1:length(pairDiff)
-            if pairDiff(j) < 4
-                % Left
-                endpoints{transitions(j*2-1),i} = 'delete';
-                endlines(transitions(j*2-1),i) = NaN;
-                % Right
-                endpoints{transitions(j*2)-1,i} = 'delete';
-                endlines(transitions(j*2)-1,i) = NaN;
-                % In between
-                sig(transitions(j*2-1):transitions(j*2)-1,i) = NaN;
-            end
+    % Get rid of NaNs
+    endpoints(isnan(endX)) = [];
+    endX(isnan(endX)) = [];
+    % Preallocate
+    labelX = NaN(size(endX));   
+    labelpoints = yvalues*ones(size(endX));
+    % Add values    
+    if ~isempty(endX)
+        % Midpoints of pairs
+        if ~isempty(endX)
+            midX = endX(1:end-1)+diff(endX)/2;
+            midX = midX(1:2:end);
+            labelX(strcmp('L',endpoints)) = midX;
         end
     end
-    % Add labels over regions of significance
-    endX = repmat(linspace(0,100,length(stats))',1,2);
-    for i = 1:2
-        endX(isnan(endlines(:,i)),i) = NaN;
-    end
-    [labelX1,labelpoints1] = XgetStatLabels(endX(:,1),endpoints(:,1),yvalues(1));
-    [labelX2,labelpoints2] = XgetStatLabels(endX(:,2),endpoints(:,2),yvalues(2));
-    % Plot
-    text(labelX1,labelpoints1,'*','Color',ColorH,'FontSize',16,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel1');
-    text(labelX2,labelpoints2,'+','Color',ColorP,'FontSize',12,'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','SignificanceLabel2');
-    % Plot endpoints as vertical lines    
-    text(endX(:,1),endlines(:,1),'I','Color',ColorH,'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd');
-    text(endX(:,2),endlines(:,2),'I','Color',ColorP,'FontSize',14,'HorizontalAlignment','center','Tag','SignificanceEnd');   
-    % Plot horizontal line
-    line(linspace(0,100,length(sig))',sig(:,1),'Color',ColorH,'Tag','SignificanceLine');
-    line(linspace(0,100,length(sig))',sig(:,2),'Color',ColorP,'Tag','SignificanceLine');
+end
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+function XlabelRegions(yPos)
+    % XLABELREGIONS
+
+    % Plot region dividers as vertical lines    
+    text(23,yPos(1),'I','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionDiv');
+    text(50,yPos(1),'I','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionDiv');
+    text(77,yPos(1),'I','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionDiv');
+    % Label regions
+    labelPos = yPos(1)+0.25*(yPos(2)-yPos(1));
+    text(11.5,labelPos,'LR','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
+    text(36.5,labelPos,'MS','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
+    text(63.5,labelPos,'TS','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
+    text(88.5,labelPos,'PS','Color',[0 0 0],'HorizontalAlignment','center','VerticalAlignment','baseline','Tag','RegionLabel');
 end

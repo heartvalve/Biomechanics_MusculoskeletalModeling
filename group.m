@@ -4,7 +4,7 @@ classdef group < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-21
+    % Last Modified 2014-03-28
     
     
     %% Properties
@@ -130,7 +130,7 @@ classdef group < handle
                         for m = 1:length(pProps)
                             newP.(pProps{m}) = [oldP.(pProps{m}) newP.(pProps{m})];
                         end
-                        cstruct.(cycleNames{k}).PosErrors = newP;                        
+                        cstruct.(cycleNames{k}).PosErrors = newP;  
                     end
                 end
             end
