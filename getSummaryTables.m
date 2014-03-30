@@ -4,7 +4,7 @@ function tables = getSummaryTables(obj)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-25
+    % Last Modified 2014-03-29
     
     
     %% Main
@@ -26,7 +26,7 @@ function tables = getSummaryTables(obj)
                 meanData = obj.(group).Summary.Mean{['A_',cycle],'Residuals'}{'RMS_CMC',rdObsNames{i}};
                 sdData = obj.(group).Summary.StdDev{['A_',cycle],'Residuals'}{'RMS_CMC',rdObsNames{i}};             
             end
-            rdData(i,j) = {[num2str(meanData,'%8.1f'),' (',num2str(sdData,'%8.1f'),')']};
+            rdData(i,j) = {[num2str(meanData,'%8.2f'),' (',num2str(sdData,'%8.2f'),')']};
         end
     end
     rdDataset = set(dataset({rdData,varNames{:}}),'ObsNames',rdObsNames);
@@ -45,17 +45,21 @@ function tables = getSummaryTables(obj)
                 meanData = obj.(group).Summary.Mean{['A_',cycle],'Reserves'}{'RMS',rvObsNames{i}};
                 sdData = obj.(group).Summary.StdDev{['A_',cycle],'Reserves'}{'RMS',rvObsNames{i}};             
             end
-            if meanData < 0.01
+%             if meanData < 0.01
                 meanFormat = '%8.3f';
-            else
-                meanFormat = '%8.2f';
-            end
-            if sdData < 0.01
+%             else
+%                 meanFormat = '%8.2f';
+%             end
+%             if sdData < 0.01
                 sdFormat = '%8.3f';
+%             else
+%                 sdFormat = '%8.2f';
+%             end
+            if meanData > 0.001
+                rvData(i,j) = {[num2str(meanData,meanFormat),' (',num2str(sdData,sdFormat),')']};
             else
-                sdFormat = '%8.2f';
+                rvData(i,j) = {'< 0.001'};
             end
-            rvData(i,j) = {[num2str(meanData,meanFormat),' (',num2str(sdData,sdFormat),')']};
         end
     end
     rvDataset = set(dataset({rvData,varNames{:}}),'ObsNames',rvObsNames);

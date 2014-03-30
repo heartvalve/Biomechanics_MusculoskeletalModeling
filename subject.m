@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-28
+    % Last Modified 2014-03-29
     
     
     %% Properties
@@ -28,10 +28,16 @@ classdef subject < handle
         % *****************************************************************
         %       Constructor Method
         % *****************************************************************
-        function obj = subject(subID)
+        function obj = subject(subID,varargin)
             % SUBJECT - Construct instance of class
             %
             
+            % Check input (for reading CMC states)
+            if nargin == 2
+                readCMCstate = true;
+            else
+                readCMCstate = false;
+            end
             % Subject ID
             obj.SubID = subID;
             % Subject directory
@@ -43,7 +49,7 @@ classdef subject < handle
             tempData = cell(length(simNames),1);
             parfor i = 1:length(simNames)
                 % Create simulation object
-                tempData{i} = OpenSim.simulation(subID,simNames{i});                
+                tempData{i} = OpenSim.simulation(subID,simNames{i},readCMCstate);                
             end
             % Assign properties
             for i = 1:length(simNames)
@@ -94,7 +100,9 @@ classdef subject < handle
                     % EMG
                     cstruct.(cycleName).EMG = obj.(sims{i}).EMG.Norm;
                     % Activations
-                    cstruct.(cycleName).Activations = obj.(sims{i}).CMC.NormActivations;
+                    if readCMCstate
+                        cstruct.(cycleName).Activations = obj.(sims{i}).CMC.NormActivations;
+                    end
                     % Muscle Forces (normalized)
                     cstruct.(cycleName).Forces = obj.(sims{i}).NormMuscleForces;
                     % Residuals
@@ -115,14 +123,16 @@ classdef subject < handle
                         newEMG.(emgprops{m}) = [oldEMG.(emgprops{m}) newEMG.(emgprops{m})];
                     end
                     cstruct.(cycleName).EMG = newEMG;
-                    % Activations
-                    oldAct = cstruct.(cycleName).Activations;
-                    newAct = obj.(sims{i}).CMC.NormActivations;
-                    actprops = newAct.Properties.VarNames;
-                    for m = 1:length(actprops)
-                        newAct.(actprops{m}) = [oldAct.(actprops{m}) newAct.(actprops{m})];
+                    if readCMCstate
+                        % Activations
+                        oldAct = cstruct.(cycleName).Activations;
+                        newAct = obj.(sims{i}).CMC.NormActivations;
+                        actprops = newAct.Properties.VarNames;
+                        for m = 1:length(actprops)
+                            newAct.(actprops{m}) = [oldAct.(actprops{m}) newAct.(actprops{m})];
+                        end
+                        cstruct.(cycleName).Activations = newAct;
                     end
-                    cstruct.(cycleName).Activations = newAct;
                     % Muscle Forces
                     oldForces = cstruct.(cycleName).Forces;
                     newForces = obj.(sims{i}).NormMuscleForces;
@@ -162,7 +172,11 @@ classdef subject < handle
             end
             % Convert structure to dataset
             nrows = length(fieldnames(cstruct));
-            varnames = {'Simulations','EMG','Activations','Forces','Residuals','Reserves','PosErrors'};
+            if readCMCstate
+                varnames = {'Simulations','EMG','Activations','Forces','Residuals','Reserves','PosErrors'};
+            else
+                varnames = {'Simulations','EMG','Forces','Residuals','Reserves','PosErrors'};
+            end
             cdata = cell(nrows,length(varnames));
             cdataset = dataset({cdata,varnames{:}});
             obsnames = fieldnames(cstruct);
@@ -179,7 +193,11 @@ classdef subject < handle
             % -------------------------------------------------------------
             % Set up struct
             sumStruct = struct();
-            varnames = {'EMG','Activations','Forces','Residuals','Reserves','PosErrors'};
+            if readCMCstate
+                varnames = {'EMG','Activations','Forces','Residuals','Reserves','PosErrors'};
+            else
+                varnames = {'EMG','Forces','Residuals','Reserves','PosErrors'};
+            end            
             obsnames = get(cdataset,'ObsNames');
             resObsNames = {'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'};
             genObsNames = {'Mean','RMS','Max'};
@@ -193,9 +211,11 @@ classdef subject < handle
                 % EMG
                 adataset{i,'EMG'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'EMG'},2);
                 sdataset{i,'EMG'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'EMG'});
-                % Activations
-                adataset{i,'Activations'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Activations'},2);
-                sdataset{i,'Activations'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Activations'});
+                if readCMCstate
+                    % Activations
+                    adataset{i,'Activations'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Activations'},2);
+                    sdataset{i,'Activations'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Activations'});
+                end
                 % Forces
                 adataset{i,'Forces'} = OpenSim.getDatasetMean(obsnames{i},cdataset{i,'Forces'},2);
                 sdataset{i,'Forces'} = OpenSim.getDatasetStdDev(obsnames{i},cdataset{i,'Forces'});

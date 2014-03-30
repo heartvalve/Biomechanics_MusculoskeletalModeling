@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-28
+    % Last Modified 2014-03-29
     
     
     %% Properties
@@ -47,10 +47,16 @@ classdef simulation < handle
         % *****************************************************************
         %       Constructor Method
         % *****************************************************************
-        function obj = simulation(subID,simName)
+        function obj = simulation(subID,simName,varargin)
             % SIMULATION - Construct instance of class
             %
             
+            % Check inputs
+            if nargin == 3
+                readCMCstate = varargin{1};
+            else
+                readCMCstate = false;
+            end            
             % Subject ID
             obj.SubID = subID;
             % Simulation name (without subject ID)
@@ -101,7 +107,7 @@ classdef simulation < handle
             % RRA
             obj.RRA = OpenSim.rra(subID,simName);
             % CMC
-            obj.CMC = OpenSim.cmc(subID,simName);            
+            obj.CMC = OpenSim.cmc(subID,simName,readCMCstate);
             % -------------------------------------------------------------
             % Total mass of model used (subject specific)
             modelFile = [obj.SubDir,filesep,obj.SubID,'_',obj.SimName,'.osim'];
@@ -167,10 +173,10 @@ classdef simulation < handle
             iEMG = zeros(101,length(emgMuscles)/2);
             xiTime = xi(end)-xi(1);
             % ~~~~~~~
-            % PATCH
-            if strcmp(obj.SubID,'20121110AHRM') && regexp(obj.SimName,'A_Walk')
-                
-            end
+%             % PATCH
+%             if strcmp(obj.SubID,'20121110AHRM') && regexp(obj.SimName,'A_Walk')
+%                 
+%             end
             % ~~~~~~~
             xiEMG = (linspace(obj.EMG.SampleTime(1),(obj.EMG.SampleTime(1)+xiTime),101))';
             j = 1;
@@ -265,7 +271,10 @@ classdef simulation < handle
             for i = 1:length(cmcProps)
                 iRRA(:,i) = interp1(obj.RRA.Actuation.Force.time,obj.RRA.Actuation.Force.(cmcProps{i}),xi,'spline',NaN);
                 iCMC(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.(cmcProps{i}),xi,'spline',NaN);                
-            end
+            end  
+            % Normalize to % BW*H
+            iRRA = iRRA/(obj.WeightN*obj.Height)*100;
+            iCMC = iCMC/(obj.WeightN*obj.Height)*100;
             dsRRA = dataset({iRRA,resProps{:}});
             dsCMC = dataset({iCMC,resProps{:}});
             obj.RRA.NormTorques = dsRRA;
@@ -279,33 +288,42 @@ classdef simulation < handle
                 iRRA(:,i) = interp1(obj.RRA.Actuation.Force.time,obj.RRA.Actuation.Force.(resProps{i}),xi,'spline',NaN);
                 iCMC(:,i) = interp1(obj.CMC.Actuation.Force.time,obj.CMC.Actuation.Force.(resProps{i}),xi,'spline',NaN);                
             end
+            % Normalize to % BW or % BW*H
+            iRRA(:,strncmp(resProps,'F',1)) = iRRA(:,strncmp(resProps,'F',1))/obj.WeightN*100;
+            iRRA(:,strncmp(resProps,'M',1)) = iRRA(:,strncmp(resProps,'M',1))/(obj.WeightN*obj.Height)*100;
+            iCMC(:,strncmp(resProps,'F',1)) = iCMC(:,strncmp(resProps,'F',1))/obj.WeightN*100;
+            iCMC(:,strncmp(resProps,'M',1)) = iCMC(:,strncmp(resProps,'M',1))/(obj.WeightN*obj.Height)*100;
             dsRRA = dataset({iRRA,resProps{:}});
             dsCMC = dataset({iCMC,resProps{:}});
             obj.RRA.NormResiduals = dsRRA;
             obj.CMC.NormResiduals = dsCMC;
             % --------------------------
             % Interpolate CMC activations over normalized time window
-            cmcProps = obj.CMC.States.Properties.VarNames;
-            regex = ['(vasmed|vaslat|recfem|semiten|bflh|gasmed|gaslat)_',lower(obj.Leg),'_activation'];
-            cellMatch = regexp(cmcProps,regex);
-            logMatch = false(size(cellMatch));
-            for k = 1:length(cellMatch)
-                if ~isempty(cellMatch{k})
-                    logMatch(k) = true;
-                else
-                    logMatch(k) = false;
+            if readCMCstate
+                cmcProps = obj.CMC.States.Properties.VarNames;
+                regex = ['(vasmed|vaslat|recfem|semiten|bflh|gasmed|gaslat)_',lower(obj.Leg),'_activation'];
+                cellMatch = regexp(cmcProps,regex);
+                logMatch = false(size(cellMatch));
+                for k = 1:length(cellMatch)
+                    if ~isempty(cellMatch{k})
+                        logMatch(k) = true;
+                    else
+                        logMatch(k) = false;
+                    end
                 end
+                cmcProps(~logMatch) = [];            
+                actProps = cellfun(@(x) x(1:end-13), cmcProps, 'UniformOutput', false);
+                iCMC = nan(101,length(actProps));
+                for i = 1:length(cmcProps)
+                    states = obj.CMC.States.(cmcProps{i});
+                    states(states == 0.02) = 0;
+                    iCMC(:,i) = interp1(obj.CMC.States.time,states,xi,'nearest',NaN);                
+                end
+                dsCMC = dataset({iCMC,actProps{:}});
+                obj.CMC.NormActivations = dsCMC;
+            else
+                obj.CMC.NormActivations = [];
             end
-            cmcProps(~logMatch) = [];            
-            actProps = cellfun(@(x) x(1:end-13), cmcProps, 'UniformOutput', false);
-            iCMC = nan(101,length(actProps));
-            for i = 1:length(cmcProps)
-                states = obj.CMC.States.(cmcProps{i});
-                states(states == 0.02) = 0;
-                iCMC(:,i) = interp1(obj.CMC.States.time,states,xi,'nearest',NaN);                
-            end
-            dsCMC = dataset({iCMC,actProps{:}});
-            obj.CMC.NormActivations = dsCMC;
             % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
             % Summarize over cycle region -- ignore first 5% and last 5%
             % b/c of GRF threshold; use Raw data
@@ -314,7 +332,7 @@ classdef simulation < handle
             perCycle = 0.05*(obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1));
             [~,iStart] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(1)+perCycle)));
             [~,iStop] = min(abs(obj.RRA.Actuation.Force.time-(obj.GRF.CycleTime(2)-perCycle)));
-            residualNames = {'FX','FY','FZ','MX','MY','MZ'};
+            residualNames = {'FY','FX','FZ','MY','MX','MZ'};
             meanRMSmaxData = zeros(6,6);
             for i = 1:6
                 meanRMSmaxData(1,i) = mean(obj.RRA.Actuation.Force.(residualNames{i})(iStart:iStop));
@@ -330,6 +348,9 @@ classdef simulation < handle
                 meanRMSmaxData(4,i) = rms(obj.CMC.Actuation.Force.(residualNames{i})(iStart:iStop));
                 meanRMSmaxData(6,i) = max(abs(obj.CMC.Actuation.Force.(residualNames{i})(iStart:iStop)));
             end
+            % Normalize to % BW or % BW*H
+            meanRMSmaxData(:,strncmp(residualNames,'F',1)) = meanRMSmaxData(:,strncmp(residualNames,'F',1))/obj.WeightN*100;
+            meanRMSmaxData(:,strncmp(residualNames,'M',1)) = meanRMSmaxData(:,strncmp(residualNames,'M',1))/(obj.WeightN*obj.Height)*100;
             rDataset = dataset({meanRMSmaxData,residualNames{:}});
             rDataset = set(rDataset,'ObsNames',{'Mean_RRA','Mean_CMC','RMS_RRA','RMS_CMC','Max_RRA','Max_CMC'});
             obj.Residuals = rDataset;
@@ -346,8 +367,10 @@ classdef simulation < handle
             for i = 1:length(resProps)
                 meanRMSmaxData(1,i) = mean(obj.CMC.Actuation.Force.(resProps{i})(iStart:iStop));
                 meanRMSmaxData(2,i) = rms(obj.CMC.Actuation.Force.(resProps{i})(iStart:iStop));
-                meanRMSmaxData(3,i) = max(abs(obj.CMC.Actuation.Force.(resProps{i})(iStart:iStop)));                
+                meanRMSmaxData(3,i) = max(abs(obj.CMC.Actuation.Force.(resProps{i})(iStart:iStop)));
             end
+            % Normalize to % BW*H
+            meanRMSmaxData = meanRMSmaxData/(obj.WeightN*obj.Height)*100;
             rDataset = dataset({meanRMSmaxData,resNames{:}});
             rDataset = set(rDataset,'ObsNames',{'Mean','RMS','Max'});
             obj.Reserves = rDataset;
@@ -601,9 +624,9 @@ classdef simulation < handle
                 % Percent cycle
                 x = (0:100)';               
                 % Plot RRA
-                plot(x,(obj.RRA.NormTorques.(Tor)/(obj.WeightN*obj.Height)*100),'Color',[27,158,119]/255,'LineWidth',3,'LineStyle','--'); hold on;
+                plot(x,obj.RRA.NormTorques.(Tor),'Color',[27,158,119]/255,'LineWidth',3,'LineStyle','--'); hold on;
                 % Plot CMC Muscles
-                plot(x,((obj.RRA.NormTorques.(Tor)-obj.CMC.NormReserves.(Tor))/(obj.WeightN*obj.Height)*100),'Color',[117,112,179]/255,'LineWidth',3,'LineStyle',':');
+                plot(x,(obj.RRA.NormTorques.(Tor)-obj.CMC.NormReserves.(Tor)),'Color',[117,112,179]/255,'LineWidth',3,'LineStyle',':');
                 % Axes properties
                 set(gca,'box','off');
                 % Set axes limits
@@ -673,11 +696,11 @@ classdef simulation < handle
                 x = (0:100)';
                 % Plot CMC
                 if strncmp(Residual,'F',1)
-                    plot(x,(obj.CMC.NormResiduals.(Residual)/obj.WeightN*100),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
-                    fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual}/obj.WeightN*100,'%8.2f'),'\n']);
+                    plot(x,obj.CMC.NormResiduals.(Residual),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                    fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual},'%8.2f'),'\n']);
                 else
-                    plot(x,(obj.CMC.NormResiduals.(Residual)/(obj.WeightN*obj.Height)*100),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
-                    fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual}/(obj.WeightN*obj.Height)*100,'%8.2f'),'\n']);
+                    plot(x,obj.CMC.NormResiduals.(Residual),'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                    fprintf(['RMS Residual for ',Residual,' is ',num2str(obj.Residuals{'RMS_CMC',Residual},'%8.2f'),'\n']);
                 end
 %                 % Average
 %                 plot([0 100],[obj.Residuals{'Mean_CMC',Residual} obj.Residuals{'Mean_CMC',Residual}],...
@@ -714,7 +737,7 @@ classdef simulation < handle
                     title('Sagittal Plane','FontWeight','bold');   
                 end                
                 if strncmp(Residual,'M',1)
-                    xlabel('% Cycle');
+                    xlabel('% Stance');
                 end
             end
         end

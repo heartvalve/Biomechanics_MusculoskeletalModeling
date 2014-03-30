@@ -4,7 +4,7 @@ classdef rraSuper < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-27
+    % Last Modified 2014-03-29
     
     
     %% Properties
@@ -26,7 +26,7 @@ classdef rraSuper < handle
         % *****************************************************************
         %       Constructor Method
         % *****************************************************************
-        function obj = rraSuper(rraPath)
+        function obj = rraSuper(rraPath,readCMCstate)
             % RRASUPER - Construct instance of class
             %
             
@@ -44,7 +44,11 @@ classdef rraSuper < handle
                 % Position Error
                 obj.PositionError = readData([rraPath,'_pErr.sto'],7);
                 % States
-                obj.States = readData([rraPath,'_states.sto'],7);
+                if readCMCstate
+                    obj.States = readData([rraPath,'_states.sto'],7);
+                else
+                    obj.States = [];
+                end
             catch err
                 [~,name,~] = fileparts(rraPath);
                 disp(['Problem with ',name]);

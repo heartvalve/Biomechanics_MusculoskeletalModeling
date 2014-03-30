@@ -4,7 +4,7 @@ classdef x20121110AHRM < OpenSim.subject
     %
 
     % Created by Megan Schroeder
-    % Last Modified 2014-03-20
+    % Last Modified 2014-03-29
 
 
     %% Properties
@@ -53,7 +53,8 @@ classdef x20121110AHRM < OpenSim.subject
             %
 
             % Create instance of class from superclass
-            obj = obj@OpenSim.subject('20121110AHRM');
+            readCMCstate = true;
+            obj = obj@OpenSim.subject('20121110AHRM',readCMCstate);
         end
     end
 

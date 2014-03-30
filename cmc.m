@@ -25,14 +25,14 @@ classdef cmc < OpenSim.rraSuper
         % *****************************************************************
         %       Constructor Method
         % *****************************************************************
-        function obj = cmc(subID,simName)
+        function obj = cmc(subID,simName,readCMCstate)
             % CMC - Construct instance of class
             %
          
             % CMC path
             cmcPath = [OpenSim.getSubjectDir(subID),subID,'_',simName,'_CMC'];
             % Create instance of class from superclass
-            obj = obj@OpenSim.rraSuper(cmcPath);            
+            obj = obj@OpenSim.rraSuper(cmcPath,readCMCstate);            
         end        
     end
     

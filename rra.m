@@ -4,7 +4,7 @@ classdef rra < OpenSim.rraSuper
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-26
+    % Last Modified 2014-03-29
     
     
     %% Properties
@@ -31,7 +31,8 @@ classdef rra < OpenSim.rraSuper
             % RRA path
             rraPath = [OpenSim.getSubjectDir(subID),subID,'_',simName,'_RRA'];
             % Create instance of class from superclass
-            obj = obj@OpenSim.rraSuper(rraPath);
+            readCMCstate = false;
+            obj = obj@OpenSim.rraSuper(rraPath,readCMCstate);
         end
     end
     
