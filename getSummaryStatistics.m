@@ -4,7 +4,7 @@ function stats = getSummaryStatistics(obj,alpha)
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-23
+    % Last Modified 2014-03-30
 
     
     %% Main
@@ -124,10 +124,10 @@ function [CtoG_A,CtoG_U] = XrunIndANOVA(obj,alpha,cycle,graft,varType)
     % Eliminate areas where forces are small
     if strcmp(varType,'Forces') || strcmp(varType,'AvgForces')
         for j = 1:length(varNames)
-            CtoG_Adata((((nanmean(control.(varNames{j}),2) < 0.025) & (nanmean(graft_A.(varNames{j}),2) < 0.025)) | ...
-                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_A.(varNames{j}),2)) < 0.01)),j) = 0;
-            CtoG_Udata((((nanmean(control.(varNames{j}),2) < 0.025) & (nanmean(graft_U.(varNames{j}),2) < 0.025)) | ...
-                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_U.(varNames{j}),2)) < 0.01)),j) = 0;            
+            CtoG_Adata((((nanmean(control.(varNames{j}),2) < 0.021) & (nanmean(graft_A.(varNames{j}),2) < 0.021)) | ...
+                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_A.(varNames{j}),2)) < 0.005)),j) = 0;
+            CtoG_Udata((((nanmean(control.(varNames{j}),2) < 0.021) & (nanmean(graft_U.(varNames{j}),2) < 0.021)) | ...
+                         (abs(nanmean(control.(varNames{j}),2)-nanmean(graft_U.(varNames{j}),2)) < 0.005)),j) = 0;            
         end
     end
     % Datasets

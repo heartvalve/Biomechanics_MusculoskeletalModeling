@@ -4,7 +4,7 @@ classdef summary < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-28
+    % Last Modified 2014-03-30
     
     
     %% Properties
@@ -112,12 +112,12 @@ classdef summary < handle
                 yLim = get(gca,'YLim');
                 yTick = get(gca,'YTick');
                 yNewMax = yLim(2)+0.9*(yTick(2)-yTick(1));
-                yNewMin = yLim(1)-0.5*(yTick(2)-yTick(1));
+                yNewMin = yLim(1)-0.25*(yTick(2)-yTick(1));
                 for k = 1:2
                     set(fig_handle,'CurrentAxes',axes_handles(numMuscles*(k-1)+j));
                     set(gca,'YLim',[yNewMin,yNewMax]);
                     XplotStatistics(obj,[yLim(2) yNewMax],typeNames{k},'Forces',p.Results.Cycle,muscleNames{j});
-                    XlabelRegions([yNewMin yLim(1)]);
+%                     XlabelRegions([yNewMin yLim(1)]);
                 end
             end
             % -------------------------------------------------------------
@@ -152,31 +152,66 @@ classdef summary < handle
                 ylim([0 ydefault(2)]);
                 if strcmp(Muscle,'vasmed')
                     mLabel = 'Vastus Medialis';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.3]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.45]);
+                    end
 %                     ylim([0 0.35]);
                 elseif strcmp(Muscle,'vaslat')
                     mLabel = 'Vastus Lateralis';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.3]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.45]);
+                    end
 %                     ylim([0 0.45]);
                 elseif strcmp(Muscle,'recfem')
                     mLabel = 'Rectus Femoris';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.8]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 1]);
+                    end
 %                     ylim([0 0.9]);
                 elseif strcmp(Muscle,'semimem')
                     mLabel = 'Semimembranosus';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.4]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.3]);
+                    end
 %                     ylim([0 0.4]);
                 elseif strcmp(Muscle,'semiten')
                     mLabel = 'Semitendinosus';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.4]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.3]);
+                    end
 %                     ylim([0 0.35]);
                 elseif strcmp(Muscle,'bflh')
                     mLabel = 'Biceps Femoris';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.4]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.3]);
+                    end
 %                     ylim([0 0.35]);
                 elseif strcmp(Muscle,'gasmed')
                     mLabel = 'Medial Gastrocnemius';
+                    if strcmp(Cycle,'Walk')
+                        ylim([0 0.7]);
+                    elseif strcmp(Cycle,'SD2S')
+                        ylim([0 0.4]);
+                    end
 %                     ylim([0 0.8]);
                 elseif strcmp(Muscle,'gaslat')
                     mLabel = 'Lateral Gastrocnemius';
                     if strcmp(Cycle,'Walk')
-                        ylim([0 0.55]);
+                        ylim([0 0.7]);
                     elseif strcmp(Cycle,'SD2S')
-                        ylim([0 0.25]);
+                        ylim([0 0.4]);
                     end
                 end
                 % Labels

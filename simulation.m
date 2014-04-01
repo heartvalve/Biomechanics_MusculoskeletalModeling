@@ -4,7 +4,7 @@ classdef simulation < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-03-29
+    % Last Modified 2014-03-30
     
     
     %% Properties
@@ -170,19 +170,27 @@ classdef simulation < handle
             % Interpolate EMG over normalized time window (SHIFTED -- but not enough, only 33 milliseconds to beginning of data)
             emgMuscles = obj.EMG.Data.Properties.VarNames;
             emgLegMuscles = cell(1,length(emgMuscles)/2);
-            iEMG = zeros(101,length(emgMuscles)/2);
-            xiTime = xi(end)-xi(1);
-            % ~~~~~~~
-%             % PATCH
-%             if strcmp(obj.SubID,'20121110AHRM') && regexp(obj.SimName,'A_Walk')
-%                 
-%             end
-            % ~~~~~~~
-            xiEMG = (linspace(obj.EMG.SampleTime(1),(obj.EMG.SampleTime(1)+xiTime),101))';
+            iEMG = zeros(101,length(emgMuscles)/2);            
             j = 1;
             for i = 1:length(emgMuscles)
                 if strncmp(emgMuscles{i},obj.Leg,1)
                     emgLegMuscles{j} = emgMuscles{i}(2:end);
+                    % ~~~~~~ PATCH ~~~~~~
+                    if strcmp(obj.SubID,'20121110AHRM') && strncmp(obj.SimName,'A_Walk',6)
+                        if strcmp(emgLegMuscles{j},'VastusMedialis') || strcmp(emgLegMuscles{j},'VastusLateralis')
+                            xiTime = 0.8*(xi(end)-xi(1));
+                        elseif strcmp(emgLegMuscles{j},'MedialHam') || strcmp(emgLegMuscles{j},'LateralHam')
+                            xiTime = 0.95*(xi(end)-xi(1));
+                        elseif strcmp(emgLegMuscles{j},'MedialGast') || strcmp(emgLegMuscles{j},'LateralGast')
+                            xiTime = 0.9*(xi(end)-xi(1));
+                        else
+                            xiTime = xi(end)-xi(1);
+                        end                        
+                    else
+                        xiTime = xi(end)-xi(1);
+                    end                    
+                    % ~~~~~~~~~~~~~~~~~~~
+                    xiEMG = (linspace(obj.EMG.SampleTime(1),(obj.EMG.SampleTime(1)+xiTime),101))';
                     iEMG(:,j) = interp1(obj.EMG.SampleTime,obj.EMG.Data.(emgMuscles{i}),xiEMG,'spline');
                     % Normalize to max during window
                     iEMG(:,j) = iEMG(:,j)/max(iEMG(:,j));
@@ -316,8 +324,10 @@ classdef simulation < handle
                 iCMC = nan(101,length(actProps));
                 for i = 1:length(cmcProps)
                     states = obj.CMC.States.(cmcProps{i});
-                    states(states == 0.02) = 0;
-                    iCMC(:,i) = interp1(obj.CMC.States.time,states,xi,'nearest',NaN);                
+                    tempCMC = interp1(obj.CMC.States.time,states,xi,'spline',NaN);
+                    normCMC = tempCMC/max(tempCMC);
+                    normCMC(tempCMC < 0.021) = 0;
+                    iCMC(:,i) = normCMC;
                 end
                 dsCMC = dataset({iCMC,actProps{:}});
                 obj.CMC.NormActivations = dsCMC;

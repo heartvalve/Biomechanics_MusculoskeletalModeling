@@ -363,7 +363,7 @@ classdef subject < handle
             % Shortcut references to input arguments
             fig_handle = p.Results.fig_handle;
             if ~isempty(p.UsingDefaults)          
-                set(fig_handle,'Name',[obj.SubID,'_',p.Results.Cycle,' EMG vs CMC']);
+                set(fig_handle,'Name',[obj.SubID,'_',p.Results.Cycle,' - EMG vs CMC']);
                 axes_handles = zeros(1,3);
                 for k = 1:3
                     axes_handles(k) = subplot(1,3,k);
@@ -396,33 +396,53 @@ classdef subject < handle
                     emgNames = {'MedialGast','LateralGast'};                    
                 end
                 % CMC activtiy
-%                 cmcAll = zeros(101,length(cmcNames));
-%                 for m = 1:length(cmcNames)
-%                     cmcAll(:,m) = obj.(Trial).CMC.NormActivations.(cmcNames{m});
-%                     cmcAll(cmcAll(:,m) <= 0.02,m) = 0;
-%                     cmcAll(:,m) = cmcAll(:,m)/max(cmcAll(:,m));
-%                 end
-%                 cmcMean = mean(cmcAll,2);
+                cmcMeanAll = zeros(101,length(cmcNames));
+                cmcSdAll = zeros(101,length(cmcNames));
+                for m = 1:length(cmcNames)
+                    cmcMeanAll(:,m) = obj.Summary.Mean{Cycle,'Activations'}.(cmcNames{m});
+                    cmcSdAll(:,m) = obj.Summary.StdDev{Cycle,'Activations'}.(cmcNames{m});
+                end
+                cmcMean = mean(cmcMeanAll,2);
+                cmcSD = mean(cmcSdAll,2);
+% %                 sims = properties(obj);
+% %                 cycleSims = sims(strncmp(sims,Cycle,length(Cycle)));                
+% %                 cmcMeanAll = zeros(101,length(cmcNames));
+% % %                 cmcSdAll = zeros(101,length(cmcNames));
+% %                 for m = 1:length(cmcNames)
+% %                     tempCMC = zeros(101,length(cycleSims));
+% %                     for c = 1:length(cycleSims)
+% %                         tempCMC(:,c) = obj.(cycleSims{c}).CMC.NormActivations.(cmcNames{m});
+% %                     end
+% %                     meanCMC = nanmean(tempCMC,2);
+% % %                     sdCMC = nanstd(tempCMC,0,2);
+% %                     cmcMeanAll(:,m) = meanCMC;
+% % %                     cmcSdAll(:,m) = sdCMC;
+% %                 end
+% %                 cmcMean = nanmean(cmcMeanAll,2);
+% %                 xi = (0:100)';
+% %                 cmcMean = interp1(xi(~isnan(cmcMean)),cmcMean(~isnan(cmcMean)),xi,'spline');
+% %                 cmcMean(cmcMean<0) = 0;
+% % %                 cmcSD = nanmean(cmcSdAll,2);
                 % EMG activity
                 emgMeanAll = zeros(101,length(emgNames));
                 emgSdAll = zeros(101,length(emgNames));
                 for m = 1:length(emgNames)
-                    emgMeanAll(:,m) = obj.Summary.Mean{Cycle,'EMG'}.(emgNames{m})/max(obj.Summary.Mean{Cycle,'EMG'}.(emgNames{m}));
-                    emgSdAll(:,m) = obj.Summary.StdDev{Cycle,'EMG'}.(emgNames{m})/max(obj.Summary.Mean{Cycle,'EMG'}.(emgNames{m}));
+                    emgMeanAll(:,m) = obj.Summary.Mean{Cycle,'EMG'}.(emgNames{m});
+                    emgSdAll(:,m) = obj.Summary.StdDev{Cycle,'EMG'}.(emgNames{m});
                 end
                 emgMean = mean(emgMeanAll,2);
-                emgSD = mean(emgSdAll,2);                
+                emgSD = mean(emgSdAll,2);
                 % ----------------------
                 % Plot
                 x = (0:100)';
-                % Plot CMC 
-%                 plot(x,cmcMean,'Color',[0.3 0.3 0.3],'LineWidth',3); hold on;
+                plot(x,cmcMean,'Color',[0.15 0.15 0.15],'LineWidth',3); hold on;                
                 % Plot EMG (+/- Standard Deviation for cycle)
                 plusSD = emgMean+emgSD;
                 minusSD = emgMean-emgSD;
+                minusSD(minusSD < 0) = 0;
                 xx = [x' fliplr(x')];
                 yy = [plusSD' fliplr(minusSD')];
-                hFill = fill(xx,yy,[0.5 0.5 0.5]);
+                hFill = fill(xx,yy,[0.15 0.15 0.15]);
                 set(hFill,'EdgeColor','none');
                 alpha(0.25);              
                 % Reverse children order (so mean is on top and shaded region is in back)
