@@ -497,10 +497,15 @@ classdef simulation < handle
                
                 % Plot
                 plot((0:100)',obj.MuscleForces.(Muscle),'Color',[0.75 0 0.25],'LineWidth',2); hold on;
-                simPercentCycle = (obj.CMC.Actuation.Force.time-obj.GRF.CycleTime(1))/ ...
-                                  (obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1))*100;
-%                 ind = (simPercentCycle > 0 | simPercentCycle < 100);
-%                 plot(simPercentCycle(ind),obj.CMC.Actuation.Force.([Muscle,'_',lower(obj.Leg)])(ind),'c--','LineWidth',1.5);
+                % Raw
+                xi = (linspace(obj.GRF.CycleTime(1),obj.GRF.CycleTime(2),111))';
+                xi = xi(5:105);
+%                 simPercentCycle = (obj.CMC.Actuation.Force.time-obj.GRF.CycleTime(1))/ ...
+%                                   (obj.GRF.CycleTime(2)-obj.GRF.CycleTime(1))*100;
+                simPercentCycle = (obj.CMC.Actuation.Force.time-xi(1))/ ...
+                                  (xi(end)-xi(1))*100;
+% %                 ind = (simPercentCycle > 0 | simPercentCycle < 100);
+% %                 plot(simPercentCycle(ind),obj.CMC.Actuation.Force.([Muscle,'_',lower(obj.Leg)])(ind),'c--','LineWidth',1.5);
                 plot(simPercentCycle,obj.CMC.Actuation.Force.([Muscle,'_',lower(obj.Leg)]),'c--','LineWidth',1.5);
                 % Axes properties
                 set(gca,'box','off');
