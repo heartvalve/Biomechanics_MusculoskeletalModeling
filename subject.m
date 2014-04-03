@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-01
+    % Last Modified 2014-04-02
     
     
     %% Properties
@@ -17,6 +17,7 @@ classdef subject < handle
     properties (Hidden = true, SetAccess = protected)
         SubID           % Subject ID
         SubDir          % Directory where files are stored
+        Group           % Group
         MaxIsometric    % Maximum isometric muscle forces
         ScaleFactor     % Mass of subject in kg (from personal information file) / Mass of generic model (75.337 kg)
     end
@@ -42,7 +43,15 @@ classdef subject < handle
             % Subject ID
             obj.SubID = subID;
             % Subject directory
-            obj.SubDir = OpenSim.getSubjectDir(subID);            
+            obj.SubDir = OpenSim.getSubjectDir(subID);
+            % Group
+            if strcmp(subID(9),'C')
+                obj.Group = 'Control';
+            elseif strcmp(subID(10),'H')
+                obj.Group = 'HamstringACL';
+            elseif strcmp(subID(10),'P')
+                obj.Group = 'PatellaACL';
+            end
             % Identify simulation names
             allProps = properties(obj);
             simNames = allProps(1:end-2);
@@ -569,10 +578,10 @@ classdef subject < handle
             p.parse(obj);
             % Specify export folder path
             wpath = regexp(obj.SubDir,'Northwestern-RIC','split');
-            ABQdir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
-                         filesep,'Subjects',filesep,obj.SubID,filesep];
-%             ABQdir = [wpath{1},'Northwestern-RIC',filesep,'SVN',filesep,'Working',...
-%                       filesep,'FiniteElement',filesep,'Subjects',filesep,obj.SubID,filesep];
+%             ABQdir = [wpath{1},'Northwestern-RIC',filesep,'Modeling',filesep,'Abaqus',...
+%                          filesep,'Subjects',filesep,obj.SubID,filesep];
+            ABQdir = [wpath{1},'Northwestern-RIC',filesep,'SVN',filesep,'Working',...
+                      filesep,'FiniteElement',filesep,'Subjects',filesep,obj.SubID,filesep];
             % Create the folder if not already there
             if ~isdir(ABQdir)
                 mkdir(ABQdir(1:end-1));
@@ -592,10 +601,35 @@ classdef subject < handle
                 end
             end
             if export
-                cycleNames = {'Walk','SD2S'};
+                % ACL material model properties
+                if strcmp(obj.Group,'Control')
+%                     aclProps = '0.5, 0.01, 2.0, 12.4';
+                    aclProps = '1.95, 0.00683, 0.0139, 116.22';
+                else
+                    aclProps = '2.75, 0.00484, 0.065, 115.89';
+                end 
+                % Number of connector elements
+%                 n_vastusmed = 30-1+1;
+%                 n_vastuslat = 52-31+1;
+%                 n_vastusint = 128-53+1;
+%                 n_rectusfem = 204-129+1;
+%                 n_bicepsfemorislh = 255-205+1;
+%                 n_bicepsfemorissh = 306-256+1;
+%                 n_semimembranosus = 554-307+1;
+%                 n_semitendinosus = 1050-803+1;
+%                 n_mgastrocnemius = 1340-1299+1;
+%                 n_lgastrocnemius = 1799-1761+1;
+%                 numConnsData = [n_vastusmed n_vastuslat n_vastusint n_rectusfem n_semimembranosus ...
+%                                 n_semitendinosus n_bicepsfemorislh n_bicepsfemorissh ...
+%                                 n_mgastrocnemius n_lgastrocnemius];
+                numConnsData = ones(1,10);
+                mNames = obj.Summary.Mean.Forces{1}.Properties.VarNames;
+                numConns = dataset({numConnsData,mNames{:}});                                
+                % Loop through cycles
+                cycleNames = {'Walk','SD2S'};                                
                 for c = 1:2
                     % Open file
-                    fid = fopen([ABQdir,obj.SubID,'_',cycleNames{c},'.inp'],'w');
+                    fid = fopen([ABQdir,obj.SubID,'_',cycleNames{c},'_TEMP.inp'],'w');
                     % Write common elements
                     fprintf(fid,['*Heading\n',...
                                  obj.SubID,'_',cycleNames{c},'\n',...
@@ -616,7 +650,7 @@ classdef subject < handle
                                 '*Density\n',...
                                 '1e-09,\n',...
                                 '*User Material, constants=8\n',...
-                                '0.5, 0.01, 2.0, 12.4, 1., 0., 0., 1.\n',...
+                                aclProps,', 1., 0., 0., 1.\n',...
                                 '**\n',...
                                 '** AMPLITUDES\n',...
                                 '**\n']);
@@ -665,9 +699,13 @@ classdef subject < handle
                         for k = 1:length(ampNames)
                             fprintf(fid,['*Amplitude, name=',ampNames{k},', time=TOTAL TIME, definition=SMOOTH STEP\n']);
                             outFormat = '%4.2f, %7.2f, ';
+%                             outFormat = '%4.2f, %7.4f, ';
                             fprintf(fid,outFormat,[0 0]);
                             normMusAmp = obj.Summary.Mean{['A_',cycleNames{c}],'Forces'}.(mName);
+                            % Multiply by scale factor and maximum isometric force to convert to Newtons
                             musAmp = normMusAmp*obj.ScaleFactor*obj.MaxIsometric.(mName);
+                            % Divide by number of connector elements
+                            musAmp = musAmp/(numConns.(mName));
                             timeM = reshape([time'; musAmp'],1,[]);
                             fprintf(fid,outFormat,timeM(1:6));
                             fprintf(fid,'\n');
