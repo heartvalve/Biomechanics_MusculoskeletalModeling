@@ -612,7 +612,7 @@ classdef subject < handle
                 cycleNames = {'Walk','SD2S'};                                
                 for c = 1:2
                     % Open file
-                    fid = fopen([ABQdir,obj.SubID,'_',cycleNames{c},'_AllBC.inp'],'w');
+                    fid = fopen([ABQdir,obj.SubID,'_',cycleNames{c},'_Test_AllBC.inp'],'w');
                     % Write common elements
                     time_step = 0.025;
                     fprintf(fid,['*Heading\n',...

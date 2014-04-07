@@ -699,12 +699,7 @@ classdef summary < handle
                 checkSubjects = @(x) isa(obj.(groups{i}).(x{1}),'OpenSim.subject');
                 subjects(~arrayfun(checkSubjects,subjects)) = [];
                 for j = 1:length(subjects)
-                    simulations = properties(obj.(groups{i}).(subjects{j}));
-                    checkSimulations = @(x) isa(obj.(groups{i}).(subjects{j}).(x{1}),'OpenSim.simulation');
-                    simulations(~arrayfun(checkSimulations,simulations)) = [];
-                    for k = 1:length(simulations)
-                        obj.(groups{i}).(subjects{j}).(simulations{k}).exportOpenSim();                    
-                    end
+                    obj.(groups{i}).(subjects{j}).exportAbaqus();
                 end
             end
         end
