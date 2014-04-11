@@ -219,7 +219,7 @@ classdef group < handle
             defaultFigHandle = figure('NumberTitle','off','Visible','off');
             defaultAxesHandles = axes('Parent',defaultFigHandle);
             p.addRequired('obj',checkObj);            
-            p.addOptional('Cycle',defaultCycle,checkCycle)            
+            p.addOptional('Cycle',defaultCycle,checkCycle);
             p.addOptional('Muscle',defaultMuscle,checkMuscle);
             p.addOptional('fig_handle',defaultFigHandle);
             p.addOptional('axes_handles',defaultAxesHandles);
