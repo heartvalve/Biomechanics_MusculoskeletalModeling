@@ -4,7 +4,7 @@ classdef subject < handle
     %
     
     % Created by Megan Schroeder
-    % Last Modified 2014-04-07
+    % Last Modified 2014-04-11
     
     
     %% Properties
@@ -615,241 +615,198 @@ classdef subject < handle
 %                                 '57.8, 0.001\n'];
                 end                              
                 % Loop through cycles
-                cycleNames = {'Walk','SD2S'};                                
+                cycleNames = {'A_Walk','A_SD2S'};                                
                 for c = 1:2
-                    % Open file
-                    fid = fopen([ABQdir,obj.SubID,'_',cycleNames{c},'.inp'],'w');
-                    % Write common elements
-                    time_step = 0.025;
-                    fprintf(fid,['*Heading\n',...
-                                 obj.SubID,'_',cycleNames{c},'\n',...
-                                '*Preprint, echo=NO, model=NO, history=NO, contact=NO\n',...
-                                '**\n',...
-                                '*Parameter\n',...
-                                'time_step = ',num2str(time_step),'\n',...
-                                '**\n',...
-                                '*Include, input=../../GenericFiles/Parts.inp\n',...
-                                '*Include, input=../../GenericFiles/Assembly__Instances.inp\n',...
-                                '*Include, input=../../GenericFiles/Assembly__Constraints.inp\n',...
-                                '*Include, input=../../GenericFiles/Model.inp\n',...
-                                '**\n',...
-                                '** MATERIALS\n',...
-                                '**\n',...
-                                '*Material, name=ACL\n',...
-                                '*Density\n',...
-                                '1e-09,\n',...
-                                aclProps,...
-                                '**\n',...
-                                '** AMPLITUDES\n',...
-                                '**\n']);
-                    % Write amplitudes                    
-                    time = (time_step:(time_step/25):2*time_step)';
-                    % -----------------------------------------------------
-                    %   Boundary Conditions
-                    % -----------------------------------------------------
-                    % Flexion (local coordinate system)                    
-                    fprintf(fid,'*Amplitude, name=TIBIA_RX, time=TOTAL TIME, definition=SMOOTH STEP\n');
-                    outFormat = '%5.3f, %9.6f, ';
-                    fprintf(fid,outFormat,[0 0]);
-                    flexion = -1*(pi/180)*obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.RX(1:26);
-                    timeflex = reshape([time'; flexion'],1,[]);
-                    fprintf(fid,outFormat,timeflex(1:6));
-                    fprintf(fid,'\n');
-                    iAmp = (7:8:52)';
-                    for n = 1:(length(iAmp)-1)
-                        fprintf(fid,outFormat,timeflex(iAmp(n):(iAmp(n)+7)));
-                        fprintf(fid,'\n');                            
-                    end
-                    lastLine = sprintf(outFormat,timeflex(iAmp(end):52));
-                    lastLine = [lastLine(1:end-2),'\n'];
-                    fprintf(fid,lastLine);
-%                     dofs = {'RX','RY','RZ'};
-%                     for i = 1:3
-%                         fprintf(fid,['*Amplitude, name=TIBIA_',dofs{i},', time=TOTAL TIME, definition=SMOOTH STEP\n']);
-%                         outFormat = '%5.3f, %9.6f, ';
-%                         fprintf(fid,outFormat,[0 0]);
-%                         bc = (pi/180)*double(obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.(dofs{i})(1:26));
-%                         % Recall that the frontal plane and the transverse
-%                         % plane are influenced (mainly) by the flexion
-%                         % angle, given that our coordinate system doesn't
-%                         % rotate with the body.
-%                         % Therefore, if we have a RHS where Flexion X is
-%                         % positive, Adduction Y is positive, and External
-%                         % Z is positive (e.g. axes points medially (in a
-%                         % right knee), forward, and down).
-%                         % A positive rotation about the flexion axis will
-%                         % give the following transformation matrix:
-%                         % [ X' ]    [ 1    0    0  ][ X ]
-%                         % [ Y' ]  = [ 0   cos  sin ][ Y ]
-%                         % [ Z' ]    [ 0  -sin  cos ][ Z ]
-%                         if ~strcmp(dofs{i},'RX')
-%                             flex = (pi/180)*double(obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.RX(1:26));
-%                             add = (pi/180)*double(obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.RY(1:26));
-%                             ext = (pi/180)*double(obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.RZ(1:26));
-%                             if strcmp(dofs{i},'RY')
-%                                 bc = cos(flex).*add + sin(flex).*ext;
-%                             elseif strcmp(dofs{i},'RZ')
-%                                 bc = -sin(flex).*add + cos(flex).*ext;
-%                             end                        
-%                         end                        
-%                         % Abaqus coordinate system has Extension + and
-%                         % Internal rotation + 
-%                         if strcmp(dofs{i},'RX') || strcmp(dofs{i},'RZ')
-%                             bc = -1*bc;
-%                         end
-%                         timeBC = reshape([time'; bc'],1,[]);
-%                         fprintf(fid,outFormat,timeBC(1:6));
-%                         fprintf(fid,'\n');
-%                         iAmp = (7:8:52)';
-%                         for n = 1:(length(iAmp)-1)
-%                             fprintf(fid,outFormat,timeBC(iAmp(n):(iAmp(n)+7)));
-%                             fprintf(fid,'\n');                            
-%                         end
-%                         lastLine = sprintf(outFormat,timeBC(iAmp(end):52));
-%                         lastLine = [lastLine(1:end-2),'\n'];
-%                         fprintf(fid,lastLine);
-%                     end                    
-                    % -----------------------------------------------------
-                    %   Loading Conditions
-                    % -----------------------------------------------------
-                    % Muscles
-                    mNames = obj.Summary.Mean.Forces{1}.Properties.VarNames;
-                    % Surface areas
-                    areaData = [43.361 59.135 121.633 121.633 367.361 367.361 133.955 133.955 0 0];
-                    areaMusc = dataset({areaData,mNames{:}});
-                    for i = 1:length(mNames)
-                        mName = mNames{i};
-                        if strncmp(mName,'vas',3)
-                            ampNames = {['VASTUS',upper(mName(4:end))]};
-                        elseif strcmp(mName,'recfem')
-                            ampNames = {'RECTUSFEM'};
-                        elseif strncmp(mName,'bf',2)
-                            ampNames = {['BICEPSFEMORIS',upper(mName(3:4))]};
-                        elseif strcmp(mName,'semimem')
-                            ampNames = {'SEMIMEMBRANOSUS'};
-                        elseif strcmp(mName,'semiten')
-                            ampNames = {'SEMITENDINOSUS'};
-                        elseif strncmp(mName,'gas',3)
-                            ampNames = {[upper(mName(4)),'GASTROCNEMIUS']};
-                        end
-                        for k = 1:length(ampNames)
-                            if ~strncmp(mName,'gas',3)
-                                fprintf(fid,['*Amplitude, name=',ampNames{k},', time=TOTAL TIME, definition=SMOOTH STEP\n']);
-                                outFormat = '%5.3f, %8.6f, ';
-    %                             outFormat = '%4.2f, %7.4f, ';
-                                fprintf(fid,outFormat,[0 0]);
-                                normMusAmp = obj.Summary.Mean{['A_',cycleNames{c}],'Forces'}.(mName)(1:26);
-                                % Multiply by scale factor and maximum isometric force to convert to Newtons
-                                musAmp = normMusAmp*obj.ScaleFactor*obj.MaxIsometric.(mName);
-                                % Divide by area (traction)
-                                musAmp = musAmp/areaMusc.(mName);
-                                % Concatenate
-                                timeM = reshape([time'; musAmp'],1,[]);
-                                fprintf(fid,outFormat,timeM(1:6));
-                                fprintf(fid,'\n');
-                                iAmp = (7:8:52)';
-                                for n = 1:(length(iAmp)-1)
-                                    fprintf(fid,outFormat,timeM(iAmp(n):(iAmp(n)+7)));
-                                    fprintf(fid,'\n');                            
-                                end
-                                lastLine = sprintf(outFormat,timeM(iAmp(end):52));
-                                lastLine = [lastLine(1:end-2),'\n'];
-                                fprintf(fid,lastLine);
-                            end
-                        end
-                    end
-                    % Gastrocnemius - converted to knee center
-                    grfNames = {'FX','FY','FZ','MX','MY','MZ'};
-                    GastL = obj.Summary.Mean{['A_',cycleNames{c}],'Forces'}.gaslat(1:26);
-                    GastL = GastL*obj.ScaleFactor*obj.MaxIsometric.gaslat;
-                    GastM = obj.Summary.Mean{['A_',cycleNames{c}],'Forces'}.gasmed(1:26);
-                    GastM = GastM*obj.ScaleFactor*obj.MaxIsometric.gasmed;
-                    sumGast = GastL+GastM;
-                    gastData = zeros(26,6);
-                    Gastrocs = dataset({gastData,grfNames{:}});
-                    % Force is posterior
-                    Gastrocs.FY = -1*sumGast*sind(2.75);
-                    % Force is up on the tibia
-                    Gastrocs.FZ = sumGast*cosd(2.75);
-                    % Torque is flexion
-                    Gastrocs.MX = -1*sumGast*sind(2.75)*(375);                    
-                    % Forces and moments at knee due to GRF (local coordinate system)
-                    % Experimental Sign Conventions:     Abaqus Model Sign Conventions:                    
-                    %   FX: Lateral +                      FX: Lateral +
-                    %   FY: Anterior +                     FY: Anterior + 
-                    %   FZ: Up +                           FZ: Up +
-                    %   MX: Flexion +          !~~~!       MX: Extension +
-                    %   MY: Adduction +                    MY: Adduction +
-                    %   MZ: External +         !~~~!       MZ: Internal +
-                    for k = 1:length(grfNames)
-                        fprintf(fid,['*Amplitude, name=TIBIA_',grfNames{k},', time=TOTAL TIME, definition=SMOOTH STEP\n']);
-                        if regexp(grfNames{k},'F[XYZ]')
-                            outFormat = '%5.3f, %7.2f, ';
-                        elseif regexp(grfNames{k},'M[XYZ]')
-                            outFormat = '%5.3f, %9.2f, ';
-                        end
+                    simNames = obj.Cycles{cycleNames{c},'Simulations'};
+                    for s = 1:length(simNames)
+                        % Open file
+                        fid = fopen([ABQdir,obj.SubID,'_',simNames{s},'.inp'],'w');
+                        % Write common elements
+                        time_step = 0.025;
+                        fprintf(fid,['*Heading\n',...
+                                     obj.SubID,'_',simNames{s},'\n',...
+                                    '*Preprint, echo=NO, model=NO, history=NO, contact=NO\n',...
+                                    '**\n',...
+                                    '*Parameter\n',...
+                                    'time_step = ',num2str(time_step),'\n',...
+                                    '**\n',...
+                                    '*Include, input=../../GenericFiles/Parts.inp\n',...
+                                    '*Include, input=../../GenericFiles/Assembly__Instances.inp\n',...
+                                    '*Include, input=../../GenericFiles/Assembly__Constraints.inp\n',...
+                                    '*Include, input=../../GenericFiles/Model.inp\n',...
+                                    '**\n',...
+                                    '** MATERIALS\n',...
+                                    '**\n',...
+                                    '*Material, name=ACL\n',...
+                                    '*Density\n',...
+                                    '1e-09,\n',...
+                                    aclProps,...
+                                    '**\n',...
+                                    '** AMPLITUDES\n',...
+                                    '**\n']);
+                        % Write amplitudes                    
+                        time = (time_step:(time_step/25):2*time_step)';
+                        % -----------------------------------------------------
+                        %   Boundary Conditions
+                        % -----------------------------------------------------
+                        % Flexion (local coordinate system)                    
+                        fprintf(fid,'*Amplitude, name=TIBIA_RX, time=TOTAL TIME, definition=SMOOTH STEP\n');
+                        outFormat = '%5.3f, %9.6f, ';
                         fprintf(fid,outFormat,[0 0]);
-                        % Forces, in Newtons
-                        if regexp(grfNames{k},'F[XYZ]')
-                            GRF = obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.(grfNames{k})(1:26);
-                        % Moments, in Newton-millimeters
-                        elseif regexp(grfNames{k},'M[XYZ]')                       
-                            GRF = 1000*obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.(grfNames{k})(1:26);                                   
-                            if regexp(grfNames{k},'M[XZ]')
-                                GRF = -1*GRF;
-                            end
-                        end
-                        % Adjust out of plane based on flexion angle (see notes above)
-                        if regexp(grfNames{k},'[FM][YZ]')
-                            flexAngle = (pi/180)*obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.RX(1:26);
-                            % Therefore, if we have a RHS where Flexion X is
-%                           % positive, Adduction Y is positive, and External
-%                           % Z is positive (e.g. axes points medially (in a
-%                           % right knee), forward, and down).
-                            FY = obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.FY(1:26);
-                            FZ = -1*obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.FZ(1:26); % so down is positive
-                            MY = 1000*obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.MY(1:26);
-                            MZ = 1000*obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'}.MZ(1:26);
-                            if strcmp(grfNames{k},'FY')
-                                GRF = cos(flexAngle).*FY+sin(flexAngle).*FZ;                                
-                            elseif strcmp(grfNames{k},'FZ')
-                                GRF = -1*(-sin(flexAngle).*FY+cos(flexAngle).*FZ);
-                            elseif strcmp(grfNames{k},'MY')    
-                                GRF = cos(flexAngle).*MY+sin(flexAngle).*MZ;
-                            elseif strcmp(grfNames{k},'MZ')
-                                GRF = -1*(-sin(flexAngle).*MY+cos(flexAngle).*MZ);
-                            end
-                        end
-                        % Add to Gastrocs
-                        Gast = Gastrocs.(grfNames{k});
-                        GRFplusGast = GRF+Gast;
-                        timeTibia = reshape([time'; GRFplusGast'],1,[]);
-                        fprintf(fid,outFormat,timeTibia(1:6));
+                        flexion = -1*(pi/180)*obj.Cycles{cycleNames{c},'ExpKnee'}.RX(1:26,s);
+                        timeflex = reshape([time'; flexion'],1,[]);
+                        fprintf(fid,outFormat,timeflex(1:6));
                         fprintf(fid,'\n');
                         iAmp = (7:8:52)';
                         for n = 1:(length(iAmp)-1)
-                            fprintf(fid,outFormat,timeTibia(iAmp(n):(iAmp(n)+7)));
+                            fprintf(fid,outFormat,timeflex(iAmp(n):(iAmp(n)+7)));
                             fprintf(fid,'\n');                            
                         end
-                        lastLine = sprintf(outFormat,timeTibia(iAmp(end):52));
+                        lastLine = sprintf(outFormat,timeflex(iAmp(end):52));
                         lastLine = [lastLine(1:end-2),'\n'];
-                        fprintf(fid,lastLine);
+                        fprintf(fid,lastLine);              
+                        % -----------------------------------------------------
+                        %   Loading Conditions
+                        % -----------------------------------------------------
+                        % Muscles
+                        mNames = obj.Summary.Mean.Forces{1}.Properties.VarNames;
+                        % Surface areas
+                        areaData = [43.361 59.135 121.633 121.633 367.361 367.361 133.955 133.955 0 0];
+                        areaMusc = dataset({areaData,mNames{:}});
+                        for i = 1:length(mNames)
+                            mName = mNames{i};
+                            if strncmp(mName,'vas',3)
+                                ampNames = {['VASTUS',upper(mName(4:end))]};
+                            elseif strcmp(mName,'recfem')
+                                ampNames = {'RECTUSFEM'};
+                            elseif strncmp(mName,'bf',2)
+                                ampNames = {['BICEPSFEMORIS',upper(mName(3:4))]};
+                            elseif strcmp(mName,'semimem')
+                                ampNames = {'SEMIMEMBRANOSUS'};
+                            elseif strcmp(mName,'semiten')
+                                ampNames = {'SEMITENDINOSUS'};
+                            elseif strncmp(mName,'gas',3)
+                                ampNames = {[upper(mName(4)),'GASTROCNEMIUS']};
+                            end
+                            for k = 1:length(ampNames)
+                                if ~strncmp(mName,'gas',3)
+                                    fprintf(fid,['*Amplitude, name=',ampNames{k},', time=TOTAL TIME, definition=SMOOTH STEP\n']);
+                                    outFormat = '%5.3f, %8.6f, ';
+        %                             outFormat = '%4.2f, %7.4f, ';
+                                    fprintf(fid,outFormat,[0 0]);
+                                    normMusAmp = obj.Cycles{cycleNames{c},'Forces'}.(mName)(1:26,s);
+                                    % Multiply by scale factor and maximum isometric force to convert to Newtons
+                                    musAmp = normMusAmp*obj.ScaleFactor*obj.MaxIsometric.(mName);
+                                    % Divide by area (traction)
+                                    musAmp = musAmp/areaMusc.(mName);
+                                    % Concatenate
+                                    timeM = reshape([time'; musAmp'],1,[]);
+                                    fprintf(fid,outFormat,timeM(1:6));
+                                    fprintf(fid,'\n');
+                                    iAmp = (7:8:52)';
+                                    for n = 1:(length(iAmp)-1)
+                                        fprintf(fid,outFormat,timeM(iAmp(n):(iAmp(n)+7)));
+                                        fprintf(fid,'\n');                            
+                                    end
+                                    lastLine = sprintf(outFormat,timeM(iAmp(end):52));
+                                    lastLine = [lastLine(1:end-2),'\n'];
+                                    fprintf(fid,lastLine);
+                                end
+                            end
+                        end
+                        % Gastrocnemius - converted to knee center
+                        grfNames = {'FX','FY','FZ','MX','MY','MZ'};
+                        GastL = obj.Cycles{cycleNames{c},'Forces'}.gaslat(1:26,s);
+                        GastL = GastL*obj.ScaleFactor*obj.MaxIsometric.gaslat;
+                        GastM = obj.Cycles{cycleNames{c},'Forces'}.gasmed(1:26,s);
+                        GastM = GastM*obj.ScaleFactor*obj.MaxIsometric.gasmed;
+                        sumGast = GastL+GastM;
+                        gastData = zeros(26,6);
+                        Gastrocs = dataset({gastData,grfNames{:}});
+                        % Force is posterior
+                        Gastrocs.FY = -1*sumGast*sind(2.75);
+                        % Force is up on the tibia
+                        Gastrocs.FZ = sumGast*cosd(2.75);
+                        % Torque is flexion
+                        Gastrocs.MX = -1*sumGast*sind(2.75)*(375);                    
+                        % Forces and moments at knee due to GRF (local coordinate system)
+                        % Experimental Sign Conventions:     Abaqus Model Sign Conventions:                    
+                        %   FX: Lateral +                      FX: Lateral +
+                        %   FY: Anterior +                     FY: Anterior + 
+                        %   FZ: Up +                           FZ: Up +
+                        %   MX: Flexion +          !~~~!       MX: Extension +
+                        %   MY: Adduction +                    MY: Adduction +
+                        %   MZ: External +         !~~~!       MZ: Internal +
+                        for k = 1:length(grfNames)
+                            fprintf(fid,['*Amplitude, name=TIBIA_',grfNames{k},', time=TOTAL TIME, definition=SMOOTH STEP\n']);
+                            if regexp(grfNames{k},'F[XYZ]')
+                                outFormat = '%5.3f, %7.2f, ';
+                            elseif regexp(grfNames{k},'M[XYZ]')
+                                outFormat = '%5.3f, %9.2f, ';
+                            end
+                            fprintf(fid,outFormat,[0 0]);
+                            % Forces, in Newtons
+                            if regexp(grfNames{k},'F[XYZ]')
+                                GRF = obj.Cycles{cycleNames{c},'ExpKnee'}.(grfNames{k})(1:26,s);
+                            % Moments, in Newton-millimeters
+                            elseif regexp(grfNames{k},'M[XYZ]')                       
+                                GRF = 1000*obj.Cycles{cycleNames{c},'ExpKnee'}.(grfNames{k})(1:26,s);                                   
+                                if regexp(grfNames{k},'M[XZ]')
+                                    GRF = -1*GRF;
+                                end
+                            end
+                            % Adjust out of plane based on flexion angle (see notes above)
+                            if regexp(grfNames{k},'[FM][YZ]')
+                                flexAngle = (pi/180)*obj.Cycles{cycleNames{c},'ExpKnee'}.RX(1:26,s);
+                                % Therefore, if we have a RHS where Flexion X is
+    %                           % positive, Adduction Y is positive, and External
+    %                           % Z is positive (e.g. axes points medially (in a
+    %                           % right knee), forward, and down).
+                                FY = obj.Cycles{cycleNames{c},'ExpKnee'}.FY(1:26,s);
+                                FZ = -1*obj.Cycles{cycleNames{c},'ExpKnee'}.FZ(1:26,s); % so down is positive
+                                MY = 1000*obj.Cycles{cycleNames{c},'ExpKnee'}.MY(1:26,s);
+                                MZ = 1000*obj.Cycles{cycleNames{c},'ExpKnee'}.MZ(1:26,s);
+                                if strcmp(grfNames{k},'FY')
+                                    GRF = cos(flexAngle).*FY+sin(flexAngle).*FZ;                                
+                                elseif strcmp(grfNames{k},'FZ')
+                                    GRF = -1*(-sin(flexAngle).*FY+cos(flexAngle).*FZ);
+                                elseif strcmp(grfNames{k},'MY')    
+                                    GRF = cos(flexAngle).*MY+sin(flexAngle).*MZ;
+                                elseif strcmp(grfNames{k},'MZ')
+                                    GRF = -1*(-sin(flexAngle).*MY+cos(flexAngle).*MZ);
+                                end
+                            end
+                            % Add to Gastrocs
+                            Gast = Gastrocs.(grfNames{k});
+                            GRFplusGast = GRF+Gast;
+                            timeTibia = reshape([time'; GRFplusGast'],1,[]);
+                            fprintf(fid,outFormat,timeTibia(1:6));
+                            fprintf(fid,'\n');
+                            iAmp = (7:8:52)';
+                            for n = 1:(length(iAmp)-1)
+                                fprintf(fid,outFormat,timeTibia(iAmp(n):(iAmp(n)+7)));
+                                fprintf(fid,'\n');                            
+                            end
+                            lastLine = sprintf(outFormat,timeTibia(iAmp(end):52));
+                            lastLine = [lastLine(1:end-2),'\n'];
+                            fprintf(fid,lastLine);
+                        end
+                        % Final common elements
+                        fprintf(fid,['**\n',...
+                                     '*Include, input=../../GenericFiles/History.inp\n']);                
+                        % Close file
+                        fclose(fid);
+                        % -----------------------------------------------------
+                        % Save Experimental Kinematics
+                        % -----------------------------------------------------
+                        fid = fopen([ABQdir,obj.SubID,'_',simNames{s},'_EXP.data'],'w');
+                        fprintf(fid,'PercentCycle\tFlexion\tAdduction\tExternal\n');
+                        fclose(fid);
+                        time = (0:25)';
+                        temp = obj.Cycles{cycleNames{c},'ExpKnee'};
+                        outputData = [time temp.RX(1:26,s) temp.RY(1:26,s) temp.RZ(1:26,s)];
+                        dlmwrite([ABQdir,obj.SubID,'_',simNames{s},'_EXP.data'],outputData,'-append','delimiter','\t','precision',8);
                     end
-                    % Final common elements
-                    fprintf(fid,['**\n',...
-                                 '*Include, input=../../GenericFiles/History.inp\n']);                
-                    % Close file
-                    fclose(fid);
-                    % -----------------------------------------------------
-                    % Save Experimental Kinematics
-                    % -----------------------------------------------------
-                    fid = fopen([ABQdir,obj.SubID,'_',cycleNames{c},'_EXP.data'],'w');
-                    fprintf(fid,'PercentCycle\tFlexion\tAdduction\tExternal\n');
-                    fclose(fid);
-                    time = (0:25)';
-                    temp = obj.Summary.Mean{['A_',cycleNames{c}],'ExpKnee'};
-                    outputData = [time temp.RX(1:26) temp.RY(1:26) temp.RZ(1:26)];
-                    dlmwrite([ABQdir,obj.SubID,'_',cycleNames{c},'_EXP.data'],outputData,'-append','delimiter','\t','precision',8);
                 end
             end
         end
