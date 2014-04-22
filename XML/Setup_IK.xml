@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<OpenSimDocument Version="20302">
+	<IKTool name="TrialName_IK">
+
+    <!-- ********************************************************************** -->
+    <!--      Input & Solver Specifications                                     -->
+    <!-- ********************************************************************** -->
+
+    <!--Directory used for writing results.-->
+		<results_directory> ./ </results_directory>
+		<!--Directory for input files-->
+		<input_directory>  </input_directory>
+		<!--Name of the .osim file used to construct a model.-->
+		<model_file> subjectID__Simbody.osim </model_file>
+		<!--A positive scalar that is used to weight the importance of satisfying
+		    constraints. A weighting of 'Infinity' or if it is unassigned results
+		    in the constraints being strictly enforced.-->
+		<constraint_weight> 20.00000000 </constraint_weight>
+		<!--The accuracy of the solution in absolute terms. (i.e. the number of
+		    significant digits to which the solution can be trusted.)-->
+		<accuracy> 0.00001000 </accuracy>
+
+    <!-- ********************************************************************** -->
+    <!--      Inverse Kinematics Tasks                                          -->
+    <!-- ********************************************************************** -->
+
+    <!--Markers and coordinates to be considered (tasks) and their weightings.-->
+		<IKTaskSet name="IK_Tasks">
+			<objects>
+
+        <!-- 
+        { IKMarkerTask Object } 
+          apply - whether or not this task will be used during the inverse kinematics solve
+          weight - weight given to a marker or coordinate for solving inverse kinematics 
+        -->
+        
+        <IKMarkerTask name="R.ACROMION">
+          <apply> true </apply>
+          <weight> 10.00000000 </weight>
+        </IKMarkerTask>
+        <IKMarkerTask name="L.ACROMION">
+          <apply> true </apply>
+          <weight> 10.00000000 </weight>
+        </IKMarkerTask>
+        <IKMarkerTask name="V.C7">
+          <apply> true </apply>
+          <weight> 10.00000000 </weight>
+        </IKMarkerTask>
+				<IKMarkerTask name="R.ASIS">
+					<apply> true </apply>
+					<weight> 10.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="L.ASIS">
+					<apply> true </apply>
+					<weight> 10.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="V.SACRAL">
+					<apply> true </apply>
+					<weight> 10.00000000 </weight>
+				</IKMarkerTask>
+        <IKMarkerTask name="R.HIP.POSTERIOR">
+          <apply> true </apply>
+          <weight> 1.00000000 </weight>
+        </IKMarkerTask>
+        <IKMarkerTask name="L.HIP.POSTERIOR">
+          <apply> true </apply>
+          <weight> 1.00000000 </weight>
+        </IKMarkerTask>
+				<IKMarkerTask name="R.THIGH.INFERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="R.THIGH.ANTERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="R.THIGH.POSTERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+        <IKMarkerTask name="R.KNEE.LATERAL">
+          <apply> true </apply>
+          <weight> 10.00000000 </weight>
+        </IKMarkerTask>
+        <IKMarkerTask name="R.KNEE.MEDIAL">
+          <apply> false </apply>
+          <weight> 0.00000000 </weight>
+        </IKMarkerTask>
+				<IKMarkerTask name="R.SHANK.SUPERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="R.SHANK.ANTERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="R.SHANK.POSTERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+        <IKMarkerTask name="R.ANKLE.LATERAL">
+          <apply> true </apply>
+          <weight> 10.00000000 </weight>
+        </IKMarkerTask>
+        <IKMarkerTask name="R.ANKLE.MEDIAL">
+          <apply> false </apply>
+          <weight> 0.00000000 </weight>
+        </IKMarkerTask>
+				<IKMarkerTask name="R.HEEL">
+					<apply> true </apply>
+					<weight> 10.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="R.TOE">
+					<apply> true </apply>
+					<weight> 10.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="L.THIGH.SUPERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="L.THIGH.ANTERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="L.THIGH.POSTERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+        <IKMarkerTask name="L.KNEE.LATERAL">
+          <apply> true </apply>
+          <weight> 10.00000000 </weight>
+        </IKMarkerTask>
+        <IKMarkerTask name="L.KNEE.MEDIAL">
+          <apply> false </apply>
+          <weight> 0.00000000 </weight>
+        </IKMarkerTask>
+				<IKMarkerTask name="L.SHANK.INFERIOR">
+					<apply> true </apply>
+					<weight> 1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="L.SHANK.ANTERIOR">
+					<apply> true </apply>
+					<weight>       1.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="L.SHANK.POSTERIOR">
+					<apply> true </apply>
+					<weight>       1.00000000 </weight>
+				</IKMarkerTask>
+        <IKMarkerTask name="L.ANKLE.LATERAL">
+          <apply> true </apply>
+          <weight> 10.00000000 </weight>
+        </IKMarkerTask>
+        <IKMarkerTask name="L.ANKLE.MEDIAL">
+          <apply> false </apply>
+          <weight> 0.00000000 </weight>
+        </IKMarkerTask>
+				<IKMarkerTask name="L.HEEL">
+					<apply> true </apply>
+					<weight>      10.00000000 </weight>
+				</IKMarkerTask>
+				<IKMarkerTask name="L.TOE">
+					<apply> true </apply>
+					<weight>      10.00000000 </weight>
+				</IKMarkerTask>
+
+        <!-- 
+        { IKCoordinateTask Object } 
+          apply - whether or not this task will be used during the inverse kinematics solve
+          weight - weight given to a marker or coordinate for solving inverse kinematics
+          value_type - Indicates the source of the coordinate value for this task. Possible
+				               values are default_value (use default value of coordinate, as
+				               specified in the model file, as the fixed target value), manual_value
+				               (use the value specified in the value property of this task as the
+				               fixed target value), or from_file (use the coordinate values from the
+				               coordinate data specified by the coordinates_file property).
+          value - This value will be used as the desired (or prescribed) coordinate
+					        value if value_type is set to manual_value. 
+        -->
+        
+        <IKCoordinateTask name="subtalar_angle_r">
+					<apply> true </apply>
+					<weight> 1000.00000000 </weight>
+					<value_type> default_value </value_type>
+					<value> 0.00000000 </value>
+				</IKCoordinateTask>
+				<IKCoordinateTask name="mtp_angle_r">
+					<apply> true </apply>
+					<weight> 1000.00000000 </weight>
+					<value_type> default_value </value_type>
+					<value> 0.00000000 </value>
+				</IKCoordinateTask>
+				<IKCoordinateTask name="subtalar_angle_l">
+					<apply> true </apply>
+					<weight> 1000.00000000 </weight>
+					<value_type> default_value </value_type>
+					<value> 0.00000000 </value>
+				</IKCoordinateTask>
+				<IKCoordinateTask name="mtp_angle_l">
+					<apply> true </apply>
+					<weight> 1000.00000000 </weight>
+					<value_type> default_value </value_type>
+					<value> 0.00000000 </value>
+				</IKCoordinateTask>
+			</objects>
+			<groups/>
+		</IKTaskSet>
+
+    <!-- ********************************************************************** -->
+    <!--      Output Specifications                                             -->
+    <!-- ********************************************************************** -->
+    
+    <!--TRC file (.trc) containing the time history of observations of marker
+		    positions.-->
+		<marker_file> TrialName.trc </marker_file>
+		<!--The name of the storage (.sto or .mot) file containing coordinate
+		    observations. Coordinate values from this file are included if there is
+		    a corresponding coordinate task.-->
+		<coordinate_file> </coordinate_file>
+		<!--Time range over which the inverse kinematics problem is solved.-->
+		<time_range> startTime endTime </time_range>
+    <!--Flag (true or false) indicating whether or not to report marker and
+		    coordinate errors from the inverse kinematics solution.-->
+		<report_errors> true </report_errors>
+		<!--Name of the motion file (.mot) to which the results should be written.-->
+		<output_motion_file> TrialName_IK.mot </output_motion_file>
+	</IKTool>
+</OpenSimDocument>
